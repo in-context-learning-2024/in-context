@@ -1,23 +1,21 @@
 import torch
+from models.context_model import ContextModel
 
 # xs and ys should be on cpu for this method. Otherwise the output maybe off in case when train_xs is not full rank due to the implementation of torch.linalg.lstsq.
-class LeastSquaresModel:
+class LeastSquaresModel(ContextModel):
     def __init__(self, driver=None):
-        self.driver = driver
+        super(LeastSquaresModel, self).__init__()
+
+        self._driver = driver
         self.name = f"OLS_driver={driver}"
-        self.sequence_model = False
+        self.context_length = -1
 
-    def __call__(self, xs, ys, inds=None):
+    def forward(self, xs, ys):
         xs, ys = xs.cpu(), ys.cpu()
-        if inds is None:
-            inds = range(ys.shape[1])
-        else:
-            if max(inds) >= ys.shape[1] or min(inds) < 0:
-                raise ValueError("inds contain indices where xs and ys are not defined")
-
+        
         preds = []
 
-        for i in inds:
+        for i in range(ys.shape[1]):
             if i == 0:
                 preds.append(torch.zeros_like(ys[:, 0]))  # predict zero for first point
                 continue
@@ -25,7 +23,7 @@ class LeastSquaresModel:
             test_x = xs[:, i : i + 1]
 
             ws, _, _, _ = torch.linalg.lstsq(
-                train_xs, train_ys.unsqueeze(2), driver=self.driver
+                train_xs, train_ys.unsqueeze(2), driver=self._driver
             )
 
             pred = test_x @ ws
@@ -34,21 +32,16 @@ class LeastSquaresModel:
         return torch.stack(preds, dim=1)
 
 
-class AveragingModel:
+class AveragingModel(ContextModel):
     def __init__(self):
+        super(AveragingModel, self).__init__()
         self.name = "averaging"
-        self.sequence_model = False
+        self.context_length = -1
 
-    def __call__(self, xs, ys, inds=None):
-        if inds is None:
-            inds = range(ys.shape[1])
-        else:
-            if max(inds) >= ys.shape[1] or min(inds) < 0:
-                raise ValueError("inds contain indices where xs and ys are not defined")
-
+    def forward(self, xs, ys):
         preds = []
 
-        for i in inds:
+        for i in range(ys.shape[1]):
             if i == 0:
                 preds.append(torch.zeros_like(ys[:, 0]))  # predict zero for first point
                 continue
@@ -65,30 +58,26 @@ class AveragingModel:
 
 # Lasso regression (for sparse linear regression).
 # Seems to take more time as we decrease alpha.
-class LassoModel:
+class LassoModel(ContextModel):
     def __init__(self, alpha, max_iter=100000):
+        super(LassoModel, self).__init__()
+
         # the l1 regularizer gets multiplied by alpha.
-        self.alpha = alpha
-        self.max_iter = max_iter
+        self._alpha = alpha
+        self._max_iter = max_iter
         self.name = f"lasso_alpha={alpha}_max_iter={max_iter}"
-        self.sequence_model = False
+        self.context_length = -1
 
     # inds is a list containing indices where we want the prediction.
     # prediction made at all indices by default.
-    def __call__(self, xs, ys, inds=None):
+    def forward(self, xs, ys):
         xs, ys = xs.cpu(), ys.cpu()
-
-        if inds is None:
-            inds = range(ys.shape[1])
-        else:
-            if max(inds) >= ys.shape[1] or min(inds) < 0:
-                raise ValueError("inds contain indices where xs and ys are not defined")
 
         preds = []  # predict one for first point
 
         # i: loop over num_points
         # j: loop over bsize
-        for i in inds:
+        for i in range(ys.shape[1]):
             pred = torch.zeros_like(ys[:, 0])
 
             if i > 0:
@@ -99,7 +88,7 @@ class LassoModel:
                     # If all points till now have the same label, predict that label.
 
                     clf = Lasso(
-                        alpha=self.alpha, fit_intercept=False, max_iter=self.max_iter
+                        alpha=self._alpha, fit_intercept=False, max_iter=self._max_iter
                     )
 
                     # Check for convergence.
@@ -121,84 +110,3 @@ class LassoModel:
 
         return torch.stack(preds, dim=1)
 
-
-##############################################################################
-
-
-class DecisionTreeModel:
-    def __init__(self, max_depth=None):
-        self.max_depth = max_depth
-        self.name = f"decision_tree_max_depth={max_depth}"
-        self.sequence_model = False
-
-    # inds is a list containing indices where we want the prediction.
-    # prediction made at all indices by default.
-    def __call__(self, xs, ys, inds=None):
-        xs, ys = xs.cpu(), ys.cpu()
-
-        if inds is None:
-            inds = range(ys.shape[1])
-        else:
-            if max(inds) >= ys.shape[1] or min(inds) < 0:
-                raise ValueError("inds contain indices where xs and ys are not defined")
-
-        preds = []
-
-        # i: loop over num_points
-        # j: loop over bsize
-        for i in inds:
-            pred = torch.zeros_like(ys[:, 0])
-
-            if i > 0:
-                pred = torch.zeros_like(ys[:, 0])
-                for j in range(ys.shape[0]):
-                    train_xs, train_ys = xs[j, :i], ys[j, :i]
-
-                    clf = tree.DecisionTreeRegressor(max_depth=self.max_depth)
-                    clf = clf.fit(train_xs, train_ys)
-                    test_x = xs[j, i : i + 1]
-                    y_pred = clf.predict(test_x)
-                    pred[j] = y_pred[0]
-
-            preds.append(pred)
-
-        return torch.stack(preds, dim=1)
-
-
-class XGBoostModel:
-    def __init__(self):
-        self.name = "xgboost"
-        self.sequence_model = False
-
-    # inds is a list containing indices where we want the prediction.
-    # prediction made at all indices by default.
-    def __call__(self, xs, ys, inds=None):
-        xs, ys = xs.cpu(), ys.cpu()
-
-        if inds is None:
-            inds = range(ys.shape[1])
-        else:
-            if max(inds) >= ys.shape[1] or min(inds) < 0:
-                raise ValueError("inds contain indices where xs and ys are not defined")
-
-        preds = []
-
-        # i: loop over num_points
-        # j: loop over bsize
-        for i in tqdm(inds):
-            pred = torch.zeros_like(ys[:, 0])
-            if i > 0:
-                pred = torch.zeros_like(ys[:, 0])
-                for j in range(ys.shape[0]):
-                    train_xs, train_ys = xs[j, :i], ys[j, :i]
-
-                    clf = xgb.XGBRegressor()
-
-                    clf = clf.fit(train_xs, train_ys)
-                    test_x = xs[j, i : i + 1]
-                    y_pred = clf.predict(test_x)
-                    pred[j] = y_pred[0].item()
-
-            preds.append(pred)
-
-        return torch.stack(preds, dim=1)
