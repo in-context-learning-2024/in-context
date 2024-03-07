@@ -1,6 +1,7 @@
 import torch
 from models.context_model import ContextModel
 from tqdm import trange
+import xgboost as xgb
 
 class XGBoostModel(ContextModel):
     def __init__(self):
@@ -12,10 +13,7 @@ class XGBoostModel(ContextModel):
     # prediction made at all indices by default.
     def forward(self, xs, ys):
         xs, ys = xs.cpu(), ys.cpu()
-
-
         preds = []
-
         # i: loop over num_points
         # j: loop over bsize
         for i in trange(ys.shape[1]):

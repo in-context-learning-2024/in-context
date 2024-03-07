@@ -1,5 +1,7 @@
 import torch
 from models.context_model import ContextModel
+from sklearn.linear_model import Lasso
+import warnings
 
 # xs and ys should be on cpu for this method. Otherwise the output maybe off in case when train_xs is not full rank due to the implementation of torch.linalg.lstsq.
 class LeastSquaresModel(ContextModel):

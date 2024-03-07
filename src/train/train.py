@@ -1,5 +1,3 @@
-
-
 class ContextTrainer(Serializable):
     def __init__(self, **config):
         # TODO: use config here

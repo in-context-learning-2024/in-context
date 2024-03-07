@@ -1,71 +1,112 @@
 import torch
+from torch import nn
+from typing import Literal
+
 from models.context_model import ContextModel
+from utils import curried_throw
 
-class KNNModel(ContextModel):
-    def __init__(self, n_neighbors, weights="uniform"):
-        # should we be picking k optimally
-        self._n_neighbors = n_neighbors
-        self._weights = weights
-        self.name = f"KNN_n={n_neighbors}_{weights}"
-        self.context_length = -1
+def get_activation(act: str) -> nn.Module:
+    return {
+        "relu" : nn.ReLU,
+        "gelu" : nn.GELU,
+    }[act]()
 
-    def forward(self, xs, ys):
-        
-        preds = []
+# class NeuralNetwork(nn.Module):
+#     def __init__(self, in_size=50, hidden_size=1000, out_size=1):
+#         super(NeuralNetwork, self).__init__()
 
-        for i in range(ys.shape[1]):
+#         self.net = nn.Sequential(
+#             nn.Linear(in_size, hidden_size),
+#             nn.ReLU(),
+#             nn.Linear(hidden_size, out_size),
+#         )
+
+#     def forward(self, x):
+#         out = self.net(x)
+#         return out
+
+class MLP(nn.Module):
+    def __init__(self, activation: Literal['relu', 'gelu'] = "relu", dimensions: list = [2,2,2]):
+        super(MLP, self).__init__()
+
+        layers = [ ]
+        last_dim = dimensions[0]
+        for dim in dimensions[1:]:
+            layers.append(
+                nn.Linear(last_dim, dim)
+            )
+
+            last_dim = dim
+            layers.append(
+                get_activation(activation)
+            )
+        layers = layers[:-1] # remove the extra activation
+
+        self.net = nn.Sequential(*layers)
+
+    def forward(self, x):
+        return self.net(x)
+
+class ParallelNetworks(nn.Module):
+    def __init__(self, num_models, model_class, init_args):
+        super(ParallelNetworks, self).__init__()
+        self.nets = nn.ModuleList(
+            [ model_class(**init_args) for _ in range(num_models) ]
+        )
+
+    def forward(self, xs):
+        assert xs.shape[0] == len(self.nets)
+
+        for i in range(len(self.nets)):
+            out = self.nets[i](xs[i])
             if i == 0:
-                preds.append(torch.zeros_like(ys[:, 0]))  # predict zero for first point
-                continue
-            train_xs, train_ys = xs[:, :i], ys[:, :i]
-            test_x = xs[:, i : i + 1]
-            dist = (train_xs - test_x).square().sum(dim=2).sqrt()
-
-            if self._weights == "uniform":
-                weights = torch.ones_like(dist)
-            else:
-                weights = 1.0 / dist
-                inf_mask = torch.isinf(weights).float()  # deal with exact match
-                inf_row = torch.any(inf_mask, axis=1)
-                weights[inf_row] = inf_mask[inf_row]
-
-            pred = []
-            k = min(i, self._n_neighbors)
-            ranks = dist.argsort()[:, :k]
-            for y, w, n in zip(train_ys, weights, ranks):
-                y, w = y[n], w[n]
-                pred.append((w * y).sum() / w.sum())
-            preds.append(torch.stack(pred))
-
-        return torch.stack(preds, dim=1)
+                outs = torch.zeros(
+                    [len(self.nets)] + list(out.shape), device=out.device
+                )
+            outs[i] = out
+        return outs
 
 # Gradient Descent and variants.
 # Example usage: gd_model = GDModel(NeuralNetwork, {'in_size': 50, 'hidden_size':400, 'out_size' :1}, opt_alg = 'adam', batch_size = 100, lr = 5e-3, num_steps = 200)
 class GDModel:
     def __init__(
         self,
-        model_class,
-        model_class_args,
-        opt_alg="sgd",
+        model_class_name: Literal["mlp", "parallel"],
+        model_class_args: dict,
+        opt_alg_name: Literal["sgd", "adam"]="sgd",
         batch_size=1,
         num_steps=1000,
         lr=1e-3,
         loss_name="squared",
+        ensemble_size=1,
     ):
         # model_class: torch.nn model class
         # model_class_args: a dict containing arguments for model_class
-        # opt_alg can be 'sgd' or 'adam'
         # verbose: whether to print the progress or not
         # batch_size: batch size for sgd
-        self.model_class = model_class
-        self.model_class_args = model_class_args
-        self.opt_alg = opt_alg
-        self.lr = lr
+        model_class = {
+            "mlp" : MLP,
+            # "parallel" : ParallelNetworks 
+        }.get(
+            model_class_name, 
+            curried_throw(ValueError(f"GDModel does not support \"{model_class_name}\" model!"))
+        )(**model_class_args)
+
+        self._model = ParallelNetworks(ensemble_size, model_class, **model_class_args)
+
+        self._opt = {
+            "sgd" : torch.optim.SGD,
+            "adam": torch.optim.Adam  
+        }.get(
+            opt_alg_name,
+            curried_throw(ValueError(f"GDModel does not support \"{opt_alg_name}\" optimizer!"))
+        )(self._model.parameters(), lr=lr)
+        
         self.batch_size = batch_size
         self.num_steps = num_steps
         self.loss_name = loss_name
 
-        self.name = f"gd_model_class={model_class}_model_class_args={model_class_args}_opt_alg={opt_alg}_lr={lr}_batch_size={batch_size}_num_steps={num_steps}_loss_name={loss_name}"
+        self.name = f"gdmodel_model={model_class_name}_model_kwargs={model_class_args}_opt={opt_alg_name}_lr={lr}_bsize={batch_size}_nsteps={num_steps}_loss={loss_name}"
         self.sequence_model = False
 
     def __call__(self, xs, ys, inds=None, verbose=False, print_step=100):
@@ -96,13 +137,6 @@ class GDModel:
                 train_xs, train_ys = xs[:, :i], ys[:, :i]
                 test_xs, test_ys = xs[:, i : i + 1], ys[:, i : i + 1]
 
-                if self.opt_alg == "sgd":
-                    optimizer = torch.optim.SGD(model.parameters(), lr=self.lr)
-                elif self.opt_alg == "adam":
-                    optimizer = torch.optim.Adam(model.parameters(), lr=self.lr)
-                else:
-                    raise NotImplementedError(f"{self.opt_alg} not implemented.")
-
                 if self.loss_name == "squared":
                     loss_criterion = nn.MSELoss()
                 else:
@@ -132,13 +166,13 @@ class GDModel:
                                 f"ind:{i},step:{j}, train_loss:{loss.item()}, test_loss:{test_loss.item()}"
                             )
 
-                    optimizer.zero_grad()
+                    self._opt.zero_grad()
 
                     model.train()
                     outputs = model(train_xs_cur)
                     loss = loss_criterion(outputs[:, :, 0], train_ys_cur)
                     loss.backward()
-                    optimizer.step()
+                    self._opt.step()
 
                 model.eval()
                 pred = model(test_xs).detach()
