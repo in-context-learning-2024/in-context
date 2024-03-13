@@ -1,6 +1,6 @@
 import torch
 from torch.distributions.distribution import Distribution
-from typing import Tuple
+from typing import Tuple, List
 
 class FunctionClass:
 
@@ -18,24 +18,31 @@ class FunctionClass:
         self.y_dim = y_dim
 
         self._x_dist = x_distribution
-        self._p_dist = param_distribution_class(
-            batch_shape = torch.Size([self.batch_size]),
-            event_shape = self._get_parameter_shape(self.x_dim, self.y_dim)
-        )
+        self._p_dist = self._get_param_dist(param_distribution_class)
 
     def __iter__(self):
         return self
 
     def __next__(self) -> Tuple[torch.Tensor, torch.Tensor]:
-        x_batch = self._x_dist.sample()
-        y_batch = self.evaluate(x_batch)
+        x_batch: torch.Tensor = self._x_dist.sample()
+        params: List[torch.Tensor] | torch.Tensor  = self._p_dist.sample()
+        y_batch: torch.Tensor = self.evaluate(x_batch, params)
         return x_batch, y_batch
 
-    @staticmethod
-    def _get_parameter_shape(x_dim: int, y_dim: int=1) -> torch.Size:
+    def _get_param_dist(self, param_distribution_class: type[Distribution]) -> Distribution:
+        """Produce the distribution with which to sample parameters using properties of this instance"""
+        return param_distribution_class(
+            batch_shape = torch.Size([self.batch_size]),
+            event_shape = self._parameter_shape
+        )
+
+    @property
+    def _parameter_shape(self) -> torch.Size:
+        """Produce the shape of a single sample of the parameters for a function from this function class. Supporting property for `_get_param_dist(...)`"""
         raise NotImplementedError(f"Abstract class FunctionClass does not have a parameter shape!")
 
-    def evaluate(self, x_batch: torch.Tensor) -> torch.Tensor:
+    def evaluate(self, x_batch: torch.Tensor, params: List[torch.Tensor] | torch.Tensor) -> torch.Tensor:
+        """Produce a Tensor of shape (batch_size, sequence_length, y_dim) given a Tensor of shape (batch_size, sequence_length, x_dim)"""
         raise NotImplementedError(f"Abstract class FunctionClass does not implement `.evaluate(xs)`!")
 
 """

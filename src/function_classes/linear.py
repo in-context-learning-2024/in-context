@@ -5,16 +5,14 @@ from function_classes.function_class import FunctionClass
 
 class LinearRegression(FunctionClass):
 
-    def __init__(self, x_distribution: Distribution, param_distribution_class: type[Distribution]):
-        super(LinearRegression, self).__init__(x_distribution, param_distribution_class)
+    def __init__(self, *args):
+        super(LinearRegression, self).__init__(*args)
 
-    @staticmethod
-    def _get_parameter_shape(x_dim: int, y_dim: int=1) -> torch.Size:
-        return torch.Size([y_dim, x_dim])
+    @property
+    def _parameter_shape(self) -> torch.Size:
+        return torch.Size([self.y_dim, self.x_dim])
 
-    def evaluate(self, x_batch: torch.Tensor) -> torch.Tensor:
-        params = self._p_dist.sample().to(x_batch.device)
-
+    def evaluate(self, x_batch: torch.Tensor, params: torch.Tensor) -> torch.Tensor:
         partial_sums = torch.bmm(params, x_batch.unsqueeze(-1))
         full_sums = torch.sum(partial_sums, dim=-2, keepdim=True)
         y_batch = full_sums.squeeze()
@@ -23,18 +21,12 @@ class LinearRegression(FunctionClass):
 
 class SparseLinearRegression(LinearRegression):
 
-    def __init__(self, 
-        x_distribution: Distribution, 
-        param_distribution_class: type[Distribution],
-        sparsity: int = 3
-    ):
-        super(SparseLinearRegression, self).__init__(x_distribution, param_distribution_class)
+    def __init__(self, sparsity: int = 3, *args):
+        super(SparseLinearRegression, self).__init__(*args)
         self._sparsity = sparsity
 
-    def evaluate(self, x_batch: torch.Tensor) -> torch.Tensor:
-        params = self._p_dist.sample().to(x_batch.device)
-
-        param_shape = self._get_parameter_shape(self.x_dim, self.y_dim)
+    def evaluate(self, x_batch: torch.Tensor, params: torch.Tensor) -> torch.Tensor:
+        param_shape = self._parameter_shape
         mask = torch.ones(param_shape).bool()
         mask[torch.randperm(self.x_dim)[:self._sparsity]] = False
         params[:, mask] = 0
@@ -46,21 +38,19 @@ class SparseLinearRegression(LinearRegression):
         return y_batch
 
 class LinearClassification(LinearRegression):
-    def __init__(self, x_distribution: Distribution, param_distribution_class: type[Distribution]):
-        super().__init__(x_distribution, param_distribution_class)
+    def __init__(self, *args):
+        super(LinearClassification, self).__init__(*args)
 
-    def evaluate(self, x_batch: torch.Tensor):
-        y_batch = super().evaluate(x_batch)
+    def evaluate(self, x_batch: torch.Tensor, params: torch.Tensor):
+        y_batch = super().evaluate(x_batch, params)
         return y_batch.sign()
 
 class QuadraticRegression(LinearRegression):
 
-    def __init__(self, x_distribution: Distribution, param_distribution_class: type[Distribution]):
-        super(QuadraticRegression, self).__init__(x_distribution, param_distribution_class)
+    def __init__(self, *args):
+        super(QuadraticRegression, self).__init__(*args)
 
-    def evaluate(self, x_batch: torch.Tensor) -> torch.Tensor:
-        params = self._p_dist.sample().to(x_batch.device)
-
+    def evaluate(self, x_batch: torch.Tensor, params: torch.Tensor) -> torch.Tensor:
         partial_sums = torch.bmm(params, (x_batch**2).unsqueeze(-1))
         full_sums = torch.sum(partial_sums, dim=-2, keepdim=True)
 

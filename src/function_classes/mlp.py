@@ -1,19 +1,17 @@
 import torch
 
-from torch.distributions.distribution import Distribution
 from function_classes.function_class import FunctionClass
 
 class MLPRegression(FunctionClass):
-    def __init__(self, x_distribution: Distribution, param_distribution_class: type[Distribution], hidden_dimension: int):
+    def __init__(self, hidden_dimension: int, *args):
         self._hidden_dim = hidden_dimension
-        super(MLPRegression, self).__init__(x_distribution, param_distribution_class)
+        super(MLPRegression, self).__init__(*args)
 
-    def __get_parameter_shape(self, x_dim: int, y_dim: int = 1):
-        return torch.Size([x_dim + y_dim, self._hidden_dim])
-    
-    def evaluate(self, x_batch: torch.Tensor) -> torch.Tensor:
-    
-        raw_params = self._p_dist.sample().to(x_batch.device)
+    @property
+    def _parameter_shape(self):
+        return torch.Size([self.x_dim + self.y_dim, self._hidden_dim])
+
+    def evaluate(self, x_batch: torch.Tensor, raw_params: torch.Tensor) -> torch.Tensor:
         input_weight_mat  = raw_params[:, :, :self.x_dim]
         output_weight_mat = raw_params[:, :, self.x_dim:].transpose(-1, -2)
 
