@@ -1,10 +1,10 @@
 import torch
 from torch.distributions.distribution import Distribution
-from typing import Type
+from typing import Tuple
 
 class FunctionClass:
 
-    def __init__(self, x_distribution: Distribution, param_distribution_class: Type[Distribution]):
+    def __init__(self, x_distribution: Distribution, param_distribution_class: type[Distribution], y_dim: int = 1):
 
         # we should pull as much information from the `x_distribution` if 
         #   we expect the instatiating code to provide it
@@ -15,17 +15,18 @@ class FunctionClass:
         self.batch_size = x_distribution.batch_shape[0]
         self.sequence_length = x_distribution.batch_shape[1]
         self.x_dim = x_distribution.event_shape[0]
+        self.y_dim = y_dim
 
         self._x_dist = x_distribution
         self._p_dist = param_distribution_class(
-            batch_shape = x_distribution.batch_shape,
-            event_shape = self._get_parameter_shape(self.x_dim)
+            batch_shape = torch.Size([self.batch_size]),
+            event_shape = self._get_parameter_shape(self.x_dim, self.y_dim)
         )
 
     def __iter__(self):
         return self
 
-    def __next__(self):
+    def __next__(self) -> Tuple[torch.Tensor, torch.Tensor]:
         x_batch = self._x_dist.sample()
         y_batch = self.evaluate(x_batch)
         return x_batch, y_batch

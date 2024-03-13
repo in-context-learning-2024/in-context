@@ -10,14 +10,16 @@ class LinearRegression(FunctionClass):
 
     @staticmethod
     def _get_parameter_shape(x_dim: int, y_dim: int=1) -> torch.Size:
-        return torch.Size([x_dim])
+        return torch.Size([y_dim, x_dim])
 
     def evaluate(self, x_batch: torch.Tensor) -> torch.Tensor:
-        params = self._p_dist.sample()
+        params = self._p_dist.sample().to(x_batch.device)
 
-        partial_sums = torch.bmm(x_batch, params)
+        partial_sums = torch.bmm(params, x_batch.unsqueeze(-1))
+        full_sums = torch.sum(partial_sums, dim=-2, keepdim=True)
+        y_batch = full_sums.squeeze()
 
-        return torch.sum(partial_sums, dim=-1, keepdim=True)
+        return y_batch
 
 class SparseLinearRegression(LinearRegression):
 
@@ -30,18 +32,18 @@ class SparseLinearRegression(LinearRegression):
         self._sparsity = sparsity
 
     def evaluate(self, x_batch: torch.Tensor) -> torch.Tensor:
-        _, _, x_dim = x_batch.shape
+        params = self._p_dist.sample().to(x_batch.device)
 
-        params = self._p_dist.sample()
-        
-        param_shape = self._get_parameter_shape(x_dim)
+        param_shape = self._get_parameter_shape(self.x_dim, self.y_dim)
         mask = torch.ones(param_shape).bool()
-        mask[torch.randperm(x_dim)[:self._sparsity]] = False
-        params[mask] = 0
+        mask[torch.randperm(self.x_dim)[:self._sparsity]] = False
+        params[:, mask] = 0
 
-        partial_sums = torch.bmm(x_batch, params)
+        partial_sums = torch.bmm(params, x_batch.unsqueeze(-1))
+        full_sums = torch.sum(partial_sums, dim=-2, keepdim=True)
+        y_batch = full_sums.squeeze()
 
-        return torch.sum(partial_sums, dim=-1, keepdim=True)
+        return y_batch
 
 class LinearClassification(LinearRegression):
     def __init__(self, x_distribution: Distribution, param_distribution_class: type[Distribution]):
@@ -57,11 +59,14 @@ class QuadraticRegression(LinearRegression):
         super(QuadraticRegression, self).__init__(x_distribution, param_distribution_class)
 
     def evaluate(self, x_batch: torch.Tensor) -> torch.Tensor:
-        params = self._p_dist.sample()
+        params = self._p_dist.sample().to(x_batch.device)
 
-        partial_sums = torch.bmm((x_batch**2), params)
+        partial_sums = torch.bmm(params, (x_batch**2).unsqueeze(-1))
+        full_sums = torch.sum(partial_sums, dim=-2, keepdim=True)
 
         # Renormalize to Linear Regression Scale
-        partial_sums /= torch.sqrt(torch.Tensor(3))
+        full_sums /= torch.sqrt(torch.Tensor(3))
 
-        return torch.sum(partial_sums, dim=-1, keepdim=True)
+        y_batch = full_sums.squeeze()
+
+        return y_batch
