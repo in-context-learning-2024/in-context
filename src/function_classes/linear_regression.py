@@ -1,18 +1,14 @@
 import torch
 
-from function_classes.function_class import FunctionClass, Function
-    
+from function_classes.function_class import FunctionClass
+
 class LinearRegressionClass(FunctionClass):
-    def __init__(self, in_distribution, parameter_distribution):
-        super().__init__(in_distribution, parameter_distribution)
-        self.function = LinearRegression
 
-    def sample_parameters(self) -> dict:
-        return {'w': self.parameter_distribution.sample()}
+    @staticmethod
+    def _parameter_shape(x_dim: int, y_dim: int=1):
+        return x_dim
 
-class LinearRegression(Function):
-    def __init__(self, in_distribution, parameters):
-        super().__init__(in_distribution, parameters)
+    def evaluate(self, x_batch) -> torch.Tensor:
+        params = self._p_dist.sample()
 
-    def evaluate(self, xs):
-        return (xs @ self.parameters['w'])[:, :, 0]
+        return torch.bmm(x_batch, params).sum(axis=-1, keepdim=True)
