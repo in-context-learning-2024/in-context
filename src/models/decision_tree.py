@@ -1,4 +1,5 @@
 import torch
+from sklearn import tree
 from models.context_model import ContextModel
 
 class DecisionTreeModel(ContextModel):

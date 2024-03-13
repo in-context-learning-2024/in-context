@@ -1,13 +1,14 @@
 import torch
 from torch import nn
+from typing import Sequence, Optional
 
 # from typing import Sequence
 
 class ContextModel(nn.Module, Serializeable):
     def __init__(self, **config):
         super(ContextModel, self).__init__()
-        self.context_length = None
-        self.name = "Unknown_ContextModel"
+        self.context_length: Optional[int] = None
+        self.name: str = "Unknown_ContextModel"
 
     def __repr__(self):
         return self.name
@@ -26,14 +27,14 @@ class ContextModel(nn.Module, Serializeable):
                 ys.view(bsize, points, 1),
                 torch.zeros(bsize, points, dim - 1, device=ys.device),
             ),
-            axis=2,
+            dim=2,
         )
         zs = torch.stack((xs, ys_wide), dim=2)
         zs = zs.view(bsize, 2 * points, dim)
         return zs
 
     # Helper for .forward
-    def stack(self, xs, ys, ctx_len=1) -> torch.Tensor:
+    def stack(self, xs: torch.Tensor, ys: torch.Tensor, ctx_len=1) -> torch.Tensor:
         """Stacks the x's and the y's into a single sequence with shape (batch_size, num_points, x_dim + ctx_len * (y_dim + x_dim). Relies on `self.context_len`"""
         bsize, points, dim = xs.shape
         try:
@@ -44,12 +45,12 @@ class ContextModel(nn.Module, Serializeable):
         xy_seq = torch.cat(
             (xs, 
              ys.view(ys.shape + (1,))), 
-            axis=2
+            dim=2
         )
 
         contexted = [
-            torch.cat((torch.zeros(bsize, i, dim+y_dim), xy_seq[:, :-i,:]), axis=1)
+            torch.cat((torch.zeros(bsize, i, dim+y_dim), xy_seq[:, :-i,:]), dim=1)
             for i in range(1, self.context_len + 1)
         ]
 
-        return torch.cat(contexted + [xs], axis=-1) # returns (b_size, seq_len, x_dim + ctx_len * (x_dim + y_dim))
+        return torch.cat(contexted + [xs], dim=-1) # returns (b_size, seq_len, x_dim + ctx_len * (x_dim + y_dim))
