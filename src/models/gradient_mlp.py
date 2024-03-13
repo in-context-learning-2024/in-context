@@ -9,21 +9,10 @@ def get_activation(act: str) -> nn.Module:
     return {
         "relu" : nn.ReLU,
         "gelu" : nn.GELU,
-    }[act]()
-
-# class NeuralNetwork(nn.Module):
-#     def __init__(self, in_size=50, hidden_size=1000, out_size=1):
-#         super(NeuralNetwork, self).__init__()
-
-#         self.net = nn.Sequential(
-#             nn.Linear(in_size, hidden_size),
-#             nn.ReLU(),
-#             nn.Linear(hidden_size, out_size),
-#         )
-
-#     def forward(self, x):
-#         out = self.net(x)
-#         return out
+    }.get(
+        act,
+        curried_throw(ValueError(f"Activation function {act} not implemented!"))
+    )()
 
 class MLP(nn.Module):
     def __init__(self, activation: Literal['relu', 'gelu'] = "relu", dimensions: list = [2,2,2]):
@@ -67,7 +56,7 @@ class ParallelNetworks(nn.Module):
         return outs
 
 # Gradient Descent and variants.
-# Example usage: gd_model = GDModel(NeuralNetwork, {'in_size': 50, 'hidden_size':400, 'out_size' :1}, opt_alg = 'adam', batch_size = 100, lr = 5e-3, num_steps = 200)
+# Example usage: gd_model = GDModel("mlp", {'dimensions': [20, 256, 1]}, opt_alg_name = 'adam', batch_size = 100, lr = 5e-3, num_steps = 200)
 class GDModel:
     def __init__(
         self,
@@ -78,21 +67,21 @@ class GDModel:
         num_steps=1000,
         lr=1e-3,
         loss_name="squared",
-        ensemble_size=1,
     ):
         # model_class: torch.nn model class
         # model_class_args: a dict containing arguments for model_class
         # verbose: whether to print the progress or not
         # batch_size: batch size for sgd
+
         model_class = {
             "mlp" : MLP,
             # "parallel" : ParallelNetworks 
         }.get(
             model_class_name, 
             curried_throw(ValueError(f"GDModel does not support \"{model_class_name}\" model!"))
-        )(**model_class_args)
+        )
 
-        self._model = ParallelNetworks(ensemble_size, model_class, **model_class_args)
+        self._get_new_model = lambda: ParallelNetworks(batch_size, model_class, model_class_args)
 
         self._opt = {
             "sgd" : torch.optim.SGD,
@@ -101,20 +90,28 @@ class GDModel:
             opt_alg_name,
             curried_throw(ValueError(f"GDModel does not support \"{opt_alg_name}\" optimizer!"))
         )(self._model.parameters(), lr=lr)
+
+        self._loss_fn = {
+            "squared" : nn.MSELoss
+        }.get(loss_name,
+            curried_throw(ValueError(f"GDModel does not support \"{loss_name}\" loss function!"))
+        )()
         
-        self.batch_size = batch_size
-        self.num_steps = num_steps
-        self.loss_name = loss_name
+        self._batch_size = batch_size
+        self._num_steps = num_steps
 
         self.name = f"gdmodel_model={model_class_name}_model_kwargs={model_class_args}_opt={opt_alg_name}_lr={lr}_bsize={batch_size}_nsteps={num_steps}_loss={loss_name}"
-        self.sequence_model = False
+        self.context_length = -1
 
-    def __call__(self, xs, ys, inds=None, verbose=False, print_step=100):
+    def forward(self, xs, ys, inds=None, verbose=False, print_step=100):
         # inds is a list containing indices where we want the prediction.
         # prediction made at all indices by default.
         # xs: bsize X npoints X ndim.
         # ys: bsize X npoints.
-        xs, ys = xs.to(DEVICE), ys.to(DEVICE)
+        ys = ys.to(xs.device)
+
+        assert xs.shape[0] == ys.shape[0] == self._batch_size, 
+            f"Input values are not of the right batch size! Expected: `{self._batch_size}' Got: {xs.shape[0]}, {ys.shape[0]}"
 
         if inds is None:
             inds = range(ys.shape[1])
@@ -127,9 +124,7 @@ class GDModel:
         # i: loop over num_points
         for i in tqdm(inds):
             pred = torch.zeros_like(ys[:, 0])
-            model = ParallelNetworks(
-                ys.shape[0], self.model_class, **self.model_class_args
-            )
+            model = self._get_new_model()
             model.to(DEVICE)
             if i > 0:
                 pred = torch.zeros_like(ys[:, 0])
@@ -137,29 +132,24 @@ class GDModel:
                 train_xs, train_ys = xs[:, :i], ys[:, :i]
                 test_xs, test_ys = xs[:, i : i + 1], ys[:, i : i + 1]
 
-                if self.loss_name == "squared":
-                    loss_criterion = nn.MSELoss()
-                else:
-                    raise NotImplementedError(f"{self.loss_name} not implemented.")
-
                 # Training loop
-                for j in range(self.num_steps):
+                for j in range(self._num_steps):
 
                     # Prepare batch
                     mask = torch.zeros(i).bool()
                     perm = torch.randperm(i)
-                    mask[perm[: self.batch_size]] = True
+                    mask[perm[: self._batch_size]] = True
                     train_xs_cur, train_ys_cur = train_xs[:, mask, :], train_ys[:, mask]
 
                     if verbose and j % print_step == 0:
                         model.eval()
                         with torch.no_grad():
                             outputs = model(train_xs_cur)
-                            loss = loss_criterion(
+                            loss = self._loss_fn(
                                 outputs[:, :, 0], train_ys_cur
                             ).detach()
                             outputs_test = model(test_xs)
-                            test_loss = loss_criterion(
+                            test_loss = self._loss_fn(
                                 outputs_test[:, :, 0], test_ys
                             ).detach()
                             print(
@@ -170,7 +160,7 @@ class GDModel:
 
                     model.train()
                     outputs = model(train_xs_cur)
-                    loss = loss_criterion(outputs[:, :, 0], train_ys_cur)
+                    loss = self._loss_fn(outputs[:, :, 0], train_ys_cur)
                     loss.backward()
                     self._opt.step()
 

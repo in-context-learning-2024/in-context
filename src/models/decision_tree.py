@@ -11,7 +11,7 @@ class DecisionTreeModel(ContextModel):
 
     # inds is a list containing indices where we want the prediction.
     # prediction made at all indices by default.
-    def __call__(self, xs, ys, inds=None):
+    def forward(self, xs, ys):
         xs, ys = xs.cpu(), ys.cpu()
 
         preds = []
