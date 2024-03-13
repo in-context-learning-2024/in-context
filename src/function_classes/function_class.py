@@ -2,13 +2,11 @@ import torch
 from torch.distributions.distribution import Distribution
 from typing import Type
 
-# question: why make Function an iterable?
-# reply: good point, it's kinda meaningless
 class FunctionClass:
 
     def __init__(self, x_distribution: Distribution, param_distribution_class: Type[Distribution]):
 
-        # we should pull as much information from the `in_distribution` if 
+        # we should pull as much information from the `x_distribution` if 
         #   we expect the instatiating code to provide it
         #   torch.(...).Distribution docs: https://pytorch.org/docs/stable/distributions.html
 
@@ -19,26 +17,24 @@ class FunctionClass:
         self.x_dim = x_distribution.event_shape[0]
 
         self._x_dist = x_distribution
-        self._p_dist = parameter_distribution_class(
+        self._p_dist = param_distribution_class(
             batch_shape = x_distribution.batch_shape,
-            event_shape = self.__class__._get_parameter_shape(self.x_dim)
+            event_shape = self._get_parameter_shape(self.x_dim)
         )
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        # TODO: when to raise a StopIteration error? 
-        # reply: we don't! there isn't a meaningful sequence length that is a "maximum"
         x_batch = self._x_dist.sample()
         y_batch = self.evaluate(x_batch)
         return x_batch, y_batch
 
     @staticmethod
-    def _parameter_shape(x_dim: int, y_dim: int=1):
+    def _get_parameter_shape(x_dim: int, y_dim: int=1) -> torch.Size:
         raise NotImplementedError(f"Abstract class FunctionClass does not have a parameter shape!")
 
-    def evaluate(self, x_batch) -> torch.Tensor:
+    def evaluate(self, x_batch: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError(f"Abstract class FunctionClass does not implement `.evaluate(xs)`!")
 
 """
