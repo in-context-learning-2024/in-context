@@ -2,6 +2,8 @@ import torch
 from torch import nn
 from typing import Literal
 
+from tqdm import tqdm
+
 from models.context_model import ContextModel
 from utils import curried_throw
 
@@ -57,7 +59,7 @@ class ParallelNetworks(nn.Module):
 
 # Gradient Descent and variants.
 # Example usage: gd_model = GDModel("mlp", {'dimensions': [20, 256, 1]}, opt_alg_name = 'adam', batch_size = 100, lr = 5e-3, num_steps = 200)
-class GDModel:
+class GDModel(ContextModel):
     def __init__(
         self,
         model_class_name: Literal["mlp", "parallel"],
@@ -83,13 +85,13 @@ class GDModel:
 
         self._get_new_model = lambda: ParallelNetworks(batch_size, model_class, model_class_args)
 
-        self._opt = {
+        self._opt = lambda params: {
             "sgd" : torch.optim.SGD,
             "adam": torch.optim.Adam  
         }.get(
             opt_alg_name,
             curried_throw(ValueError(f"GDModel does not support \"{opt_alg_name}\" optimizer!"))
-        )(self._model.parameters(), lr=lr)
+        )(params, lr=lr)
 
         self._loss_fn = {
             "squared" : nn.MSELoss
@@ -110,7 +112,7 @@ class GDModel:
         # ys: bsize X npoints.
         ys = ys.to(xs.device)
 
-        assert xs.shape[0] == ys.shape[0] == self._batch_size, 
+        assert xs.shape[0] == ys.shape[0] == self._batch_size, \
             f"Input values are not of the right batch size! Expected: `{self._batch_size}' Got: {xs.shape[0]}, {ys.shape[0]}"
 
         if inds is None:
@@ -125,7 +127,8 @@ class GDModel:
         for i in tqdm(inds):
             pred = torch.zeros_like(ys[:, 0])
             model = self._get_new_model()
-            model.to(DEVICE)
+            optim = self._opt(model.parameters())
+            # model.to(DEVICE)
             if i > 0:
                 pred = torch.zeros_like(ys[:, 0])
 
@@ -148,6 +151,7 @@ class GDModel:
                             loss = self._loss_fn(
                                 outputs[:, :, 0], train_ys_cur
                             ).detach()
+
                             outputs_test = model(test_xs)
                             test_loss = self._loss_fn(
                                 outputs_test[:, :, 0], test_ys
@@ -156,13 +160,13 @@ class GDModel:
                                 f"ind:{i},step:{j}, train_loss:{loss.item()}, test_loss:{test_loss.item()}"
                             )
 
-                    self._opt.zero_grad()
+                    optim.zero_grad()
 
                     model.train()
                     outputs = model(train_xs_cur)
                     loss = self._loss_fn(outputs[:, :, 0], train_ys_cur)
                     loss.backward()
-                    self._opt.step()
+                    optim.step()
 
                 model.eval()
                 pred = model(test_xs).detach()

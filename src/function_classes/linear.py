@@ -5,8 +5,8 @@ from function_classes.function_class import FunctionClass
 
 class LinearRegression(FunctionClass):
 
-    def __init__(self, *args):
-        super(LinearRegression, self).__init__(*args)
+    def __init__(self, *args, **kwargs):
+        super(LinearRegression, self).__init__(*args, **kwargs)
 
     @property
     def _parameter_shape(self) -> torch.Size:
@@ -21,8 +21,8 @@ class LinearRegression(FunctionClass):
 
 class SparseLinearRegression(LinearRegression):
 
-    def __init__(self, sparsity: int = 3, *args):
-        super(SparseLinearRegression, self).__init__(*args)
+    def __init__(self, sparsity: int = 3, *args, **kwargs):
+        super(SparseLinearRegression, self).__init__(*args, **kwargs)
         self._sparsity = sparsity
 
     def evaluate(self, x_batch: torch.Tensor, params: torch.Tensor) -> torch.Tensor:
@@ -38,8 +38,8 @@ class SparseLinearRegression(LinearRegression):
         return y_batch
 
 class LinearClassification(LinearRegression):
-    def __init__(self, *args):
-        super(LinearClassification, self).__init__(*args)
+    def __init__(self, *args, **kwargs):
+        super(LinearClassification, self).__init__(*args, **kwargs)
 
     def evaluate(self, x_batch: torch.Tensor, params: torch.Tensor):
         y_batch = super().evaluate(x_batch, params)
@@ -47,8 +47,8 @@ class LinearClassification(LinearRegression):
 
 class QuadraticRegression(LinearRegression):
 
-    def __init__(self, *args):
-        super(QuadraticRegression, self).__init__(*args)
+    def __init__(self, *args, **kwargs):
+        super(QuadraticRegression, self).__init__(*args, **kwargs)
 
     def evaluate(self, x_batch: torch.Tensor, params: torch.Tensor) -> torch.Tensor:
         partial_sums = torch.bmm(params, (x_batch**2).unsqueeze(-1))

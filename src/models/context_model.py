@@ -4,7 +4,7 @@ from typing import Sequence, Optional
 
 # from typing import Sequence
 
-class ContextModel(nn.Module, Serializeable):
+class ContextModel(nn.Module):
     def __init__(self, **config):
         super(ContextModel, self).__init__()
         self.context_length: Optional[int] = None
@@ -13,7 +13,7 @@ class ContextModel(nn.Module, Serializeable):
     def __repr__(self):
         return self.name
 
-    def forward(self, xs, ys, **kwargs) -> Sequence[y]:
+    def forward(self, xs, ys, **kwargs) -> Sequence[torch.Tensor]:
         """Translate from a sequence of x,y pairs to predicted y values for each presented x value. `xs` must be the same length as or exactly one longer than `ys`"""
         raise NotImplementedError(f"Abstract class ContextModel does not implement `.forward()`!")
 

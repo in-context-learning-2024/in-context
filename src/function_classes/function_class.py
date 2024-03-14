@@ -1,10 +1,10 @@
 import torch
 from torch.distributions.distribution import Distribution
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 
 class FunctionClass:
 
-    def __init__(self, x_distribution: Distribution, param_distribution_class: type[Distribution], y_dim: int = 1):
+    def __init__(self, x_distribution: Distribution, param_distribution_class: type[Distribution], x_curriculum_dim: Optional[int] = None, y_dim: int = 1):
 
         # we should pull as much information from the `x_distribution` if 
         #   we expect the instatiating code to provide it
@@ -17,6 +17,8 @@ class FunctionClass:
         self.x_dim = x_distribution.event_shape[0]
         self.y_dim = y_dim
 
+        self.x_curriculum_dim = x_curriculum_dim or self.x_dim
+
         self._x_dist = x_distribution
         self._p_dist = self._get_param_dist(param_distribution_class)
 
@@ -24,7 +26,10 @@ class FunctionClass:
         return self
 
     def __next__(self) -> Tuple[torch.Tensor, torch.Tensor]:
-        x_batch: torch.Tensor = self._x_dist.sample()
+        x_batch_tmp: torch.Tensor = self._x_dist.sample()
+        x_batch = torch.zeros_like(x_batch_tmp)
+        x_batch[..., :self.x_curriculum_dim] = x_batch_tmp[..., :self.x_curriculum_dim]
+
         params: List[torch.Tensor] | torch.Tensor  = self._p_dist.sample()
         y_batch: torch.Tensor = self.evaluate(x_batch, params)
         return x_batch, y_batch

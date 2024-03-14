@@ -3,9 +3,9 @@ import torch
 from function_classes.function_class import FunctionClass
 
 class MLPRegression(FunctionClass):
-    def __init__(self, hidden_dimension: int, *args):
+    def __init__(self, hidden_dimension: int, *args, **kwargs):
         self._hidden_dim = hidden_dimension
-        super(MLPRegression, self).__init__(*args)
+        super(MLPRegression, self).__init__(*args, **kwargs)
 
     @property
     def _parameter_shape(self):
