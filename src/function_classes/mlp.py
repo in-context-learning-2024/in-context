@@ -1,5 +1,7 @@
 import torch
+import torch.distributions as D
 
+from torch.distributions import Distribution
 from function_classes.function_class import FunctionClass
 
 class MLPRegression(FunctionClass):
@@ -7,9 +9,17 @@ class MLPRegression(FunctionClass):
         self._hidden_dim = hidden_dimension
         super(MLPRegression, self).__init__(*args, **kwargs)
 
-    @property
-    def _parameter_shape(self):
-        return torch.Size([self.x_dim + self.y_dim, self._hidden_dim])
+    def _init_param_dist(self) -> Distribution:
+        """Produce the distribution with which to sample parameters"""
+        batch_shape = self.x_dist.batch_shape[:2]
+        param_event_shape = torch.Size([self.x_dim + self.y_dim,self._hidden_dim])
+
+        param_dist_shape = torch.Size(batch_shape + param_event_shape)
+
+        param_dist = D.Normal( torch.zeros(param_dist_shape), 
+                               torch.ones(param_dist_shape)   )
+
+        return param_dist
 
     def evaluate(self, x_batch: torch.Tensor, raw_params: torch.Tensor) -> torch.Tensor:
         input_weight_mat  = raw_params[:, :, :self.x_dim]
@@ -21,6 +31,8 @@ class MLPRegression(FunctionClass):
 
         y_batch = torch.bmm(output_weight_mat, activations).squeeze()
         assert y_batch.shape == (self.batch_size, self.sequence_length, self.y_dim), \
-            f"Produced wrong output shape in MLP function class! Expected: {(self.batch_size, self.sequence_length, self.y_dim)}  Got: {tuple(y_batch.shape)}"
+            f"Produced wrong output shape in MLP function class!" + \
+            f"Expected: {(self.batch_size, self.sequence_length, self.y_dim)}" + \
+            f"Got: {tuple(y_batch.shape)}"
 
         return y_batch

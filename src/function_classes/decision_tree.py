@@ -15,7 +15,7 @@ class DecisionTreeRegression(FunctionClass):
         self._depth = depth
         super(DecisionTreeRegression, self).__init__(*args)
 
-    def _get_param_dist(self, param_distribution_class) -> Distribution:
+    def _init_param_dist(self) -> Distribution:
         # Represent the tree using an array. Root node is at index 0, its 2 children at index 1 and 2...
         # Values correspond to the coordinate used at each node of the decision tree.
         
