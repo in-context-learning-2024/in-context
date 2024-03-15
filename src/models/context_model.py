@@ -1,8 +1,7 @@
 import torch
 from torch import nn
-from typing import Sequence, Optional
+from typing import Optional
 
-# from typing import Sequence
 
 class ContextModel(nn.Module):
     def __init__(self, **config):
@@ -13,8 +12,11 @@ class ContextModel(nn.Module):
     def __repr__(self):
         return self.name
 
-    def forward(self, xs, ys, **kwargs) -> Sequence[torch.Tensor]:
-        """Translate from a sequence of x,y pairs to predicted y values for each presented x value. `xs` must be the same length as or exactly one longer than `ys`"""
+    def forward(self, xs: torch.Tensor, ys: torch.Tensor, **kwargs) -> torch.Tensor:
+        """Translate from a sequence of x,y pairs to predicted y 
+           values for each presented x value. `xs` must be the 
+           same length as or exactly one longer than `ys`
+        """
         raise NotImplementedError(f"Abstract class ContextModel does not implement `.forward()`!")
 
     @staticmethod    # Helper for .forward
@@ -34,7 +36,7 @@ class ContextModel(nn.Module):
         return zs
 
     # Helper for .forward
-    def stack(self, xs: torch.Tensor, ys: torch.Tensor, ctx_len=1) -> torch.Tensor:
+    def stack(self, xs: torch.Tensor, ys: torch.Tensor, ctx_len: int = 1) -> torch.Tensor:
         """Stacks the x's and the y's into a single sequence with shape (batch_size, num_points, x_dim + ctx_len * (y_dim + x_dim). Relies on `self.context_len`"""
         bsize, points, dim = xs.shape
         try:
