@@ -1,4 +1,9 @@
-from transformer import TransformerModel
+from .transformer import TransformerModel
+from .linear import *
+from .gradient_mlp import GDModel
+from .nearest_neighbors import KNNModel
+from .xgboost import XGBoostModel
+from .decision_tree import DecisionTreeModel
 
 def throw(ex):
     raise ex
@@ -31,27 +36,27 @@ def get_relevant_baselines(task_name):
     task_to_baselines = {
         "linear_regression": [
             (LeastSquaresModel, {}),
-            (NNModel, {"n_neighbors": 3}),
+            (KNNModel, {"n_neighbors": 3}),
             (AveragingModel, {}),
         ],
         "linear_classification": [
-            (NNModel, {"n_neighbors": 3}),
+            (KNNModel, {"n_neighbors": 3}),
             (AveragingModel, {}),
         ],
         "sparse_linear_regression": [
             (LeastSquaresModel, {}),
-            (NNModel, {"n_neighbors": 3}),
+            (KNNModel, {"n_neighbors": 3}),
             (AveragingModel, {}),
         ]
         + [(LassoModel, {"alpha": alpha}) for alpha in [1, 0.1, 0.01, 0.001, 0.0001]],
         "relu_2nn_regression": [
             (LeastSquaresModel, {}),
-            (NNModel, {"n_neighbors": 3}),
+            (KNNModel, {"n_neighbors": 3}),
             (AveragingModel, {}),
             (
                 GDModel,
                 {
-                    "model_class": NeuralNetwork,
+                    "model_class": "mlp",
                     "model_class_args": {
                         "in_size": 20,
                         "hidden_size": 100,
@@ -66,7 +71,7 @@ def get_relevant_baselines(task_name):
         ],
         "decision_tree": [
             (LeastSquaresModel, {}),
-            (NNModel, {"n_neighbors": 3}),
+            (KNNModel, {"n_neighbors": 3}),
             (DecisionTreeModel, {"max_depth": 4}),
             (DecisionTreeModel, {"max_depth": None}),
             (XGBoostModel, {}),
