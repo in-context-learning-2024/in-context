@@ -1,6 +1,4 @@
 
-function_class:
-    type: 2 layer mlp regression
 
 model: &std_gpt2
     type: gpt2
@@ -14,8 +12,11 @@ model: &knn_3
     n_neighbors: 3
 
 
-
 train:
+    optim:
+        type: sgd
+    loss_fn:
+        type: squared
     function_class: 
         type: linear regression
     b_size: 32
@@ -31,10 +32,15 @@ train:
         step_len: 5000
     x_dist:
         type: normal
+    steps: 5000
     model: *std_gpt2
     baseline_models: [*knn_3, *knn_3]
     
 
+
+# thing: !trainer
+#     oof: 123
+#     abc: foo
 
     # param_dist: "normal"
     # y_dim: 1
