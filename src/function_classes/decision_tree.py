@@ -5,7 +5,7 @@ import torch.distributions as dist
 from torch.distributions.distribution import Distribution
 from typing import List
 
-from function_classes.function_class import FunctionClass
+from core import FunctionClass
 from utils import CombinedDistribution
 
 

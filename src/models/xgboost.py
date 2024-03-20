@@ -1,10 +1,10 @@
 import torch
-from models.context_model import ContextModel
+from core import ContextModel
 from tqdm import trange
 import xgboost as xgb
 
 class XGBoostModel(ContextModel):
-    def __init__(self):
+    def __init__(self, **kwargs):
         super(XGBoostModel, self).__init__()
         self.name = "xgboost"
         self.context_length = -1

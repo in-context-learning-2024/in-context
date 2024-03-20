@@ -1,21 +1,7 @@
 from typing import List
 from torch import Tensor
 from torch.distributions.distribution import Distribution
-from function_class import FunctionClass
-
-class ModifiedFunctionClass(FunctionClass):
-
-    def __init__(self, inner_function_class: FunctionClass):
-        self._in_fc = inner_function_class
-
-        self.x_dist = self._in_fc.x_dist
-        self.p_dist = self._in_fc.p_dist
-
-        self.batch_size = self._in_fc.batch_size
-        self.sequence_length = self._in_fc.sequence_length
-        self.x_dim = self._in_fc.x_dim
-        self.x_curriculum_dim = self._in_fc.x_curriculum_dim
-        self.y_dim = self._in_fc.y_dim
+from core import FunctionClass, ModifiedFunctionClass
 
 class NoisyRegression(ModifiedFunctionClass):
     def __init__(

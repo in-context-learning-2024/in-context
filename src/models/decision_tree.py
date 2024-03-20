@@ -1,9 +1,9 @@
 import torch
 from sklearn import tree
-from models.context_model import ContextModel
+from core import ContextModel
 
 class DecisionTreeModel(ContextModel):
-    def __init__(self, max_depth=None):
+    def __init__(self, max_depth=None, **kwargs):
         super(DecisionTreeModel, self).__init__()
 
         self._max_depth = max_depth

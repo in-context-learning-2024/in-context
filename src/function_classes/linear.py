@@ -3,7 +3,7 @@ import torch.distributions as D
 
 from torch.distributions.distribution import Distribution
 
-from function_classes.function_class import FunctionClass
+from core import FunctionClass
 
 class LinearRegression(FunctionClass):
 

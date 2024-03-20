@@ -2,11 +2,11 @@ import torch
 from transformers import GPT2Config, GPT2Model
 from torch import nn
 
-from models.context_model import ContextModel
+from core import ContextModel
 
 
 class TransformerModel(ContextModel):
-    def __init__(self, n_dims, n_positions, n_embd=128, n_layer=12, n_head=4):
+    def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, **kwargs):
         super(TransformerModel, self).__init__()
         configuration = GPT2Config(
             n_positions=2 * n_positions,
@@ -21,8 +21,8 @@ class TransformerModel(ContextModel):
         self.name = f"gpt2_embd={n_embd}_layer={n_layer}_head={n_head}"
 
         self.context_length = n_positions
-        self._n_dims = n_dims
-        self._read_in = nn.Linear(n_dims, n_embd)
+        self._n_dims = x_dim
+        self._read_in = nn.Linear(x_dim, n_embd)
         self._backbone = GPT2Model(configuration)
         self._read_out = nn.Linear(n_embd, 1)
 

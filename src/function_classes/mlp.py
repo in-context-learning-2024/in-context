@@ -2,7 +2,7 @@ import torch
 import torch.distributions as D
 
 from torch.distributions import Distribution
-from function_classes.function_class import FunctionClass
+from core import FunctionClass
 
 class MLPRegression(FunctionClass):
     def __init__(self, hidden_dimension: int, *args, **kwargs):

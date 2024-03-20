@@ -17,7 +17,7 @@ class FunctionClass:
 
         assert len(x_distribution.event_shape) == 1 or len(x_distribution.batch_shape) == 3, \
             f"Supplied x dimension is not 1. Inputs must be vectors!" + \
-            f"Expected: [(]batch_size, seq_len, x_dim]" + \
+            f"Expected: [batch_size, seq_len, x_dim]" + \
             f"Got: {x_distribution.batch_shape + x_distribution.event_shape}"
 
         if len(x_distribution.event_shape) == 1:
@@ -55,6 +55,20 @@ class FunctionClass:
     def evaluate(self, x_batch: torch.Tensor, params: List[torch.Tensor] | torch.Tensor) -> torch.Tensor:
         """Produce a Tensor of shape (batch_size, sequence_length, y_dim) given a Tensor of shape (batch_size, sequence_length, x_dim)"""
         raise NotImplementedError(f"Abstract class FunctionClass does not implement `.evaluate(xs)`!")
+
+class ModifiedFunctionClass(FunctionClass):
+
+    def __init__(self, inner_function_class: FunctionClass):
+        self._in_fc = inner_function_class
+
+        self.x_dist = self._in_fc.x_dist
+        self.p_dist = self._in_fc.p_dist
+
+        self.batch_size = self._in_fc.batch_size
+        self.sequence_length = self._in_fc.sequence_length
+        self.x_dim = self._in_fc.x_dim
+        self.x_curriculum_dim = self._in_fc.x_curriculum_dim
+        self.y_dim = self._in_fc.y_dim
 
 """
 Perhaps some pseudo-implementation-code is in order:

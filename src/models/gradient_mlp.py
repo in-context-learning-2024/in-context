@@ -4,7 +4,7 @@ from typing import Literal
 
 from tqdm import tqdm
 
-from models.context_model import ContextModel
+from core import ContextModel
 from utils import curried_throw
 
 def get_activation(act: str) -> nn.Module:
@@ -62,13 +62,14 @@ class ParallelNetworks(nn.Module):
 class GDModel(ContextModel):
     def __init__(
         self,
-        model_class_name: Literal["mlp", "parallel"],
+        model_class_name: Literal["mlp"],
         model_class_args: dict,
         opt_alg_name: Literal["sgd", "adam"]="sgd",
         batch_size=1,
         num_steps=1000,
         lr=1e-3,
         loss_name="squared",
+        **kwargs
     ):
         # model_class: torch.nn model class
         # model_class_args: a dict containing arguments for model_class

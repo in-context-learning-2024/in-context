@@ -1,9 +1,9 @@
 import torch
-from models.context_model import ContextModel
+from core import ContextModel
 
 
 class KNNModel(ContextModel):
-    def __init__(self, n_neighbors, weights="uniform"):
+    def __init__(self, n_neighbors, weights="uniform", **kwargs):
         # should we be picking k optimally
         self._n_neighbors = n_neighbors
         self._weights = weights
@@ -27,7 +27,7 @@ class KNNModel(ContextModel):
             else:
                 weights = 1.0 / dist
                 inf_mask = torch.isinf(weights).float()  # deal with exact match
-                inf_row = torch.any(inf_mask, axis=1)
+                inf_row = torch.any(inf_mask, dim=1)
                 weights[inf_row] = inf_mask[inf_row]
 
             pred = []
