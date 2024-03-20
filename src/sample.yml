@@ -9,13 +9,6 @@ model: &std_gpt2
     n_embd: 64
     n_head: 2
 
-model: &other_model
-    type: relu gpt2
-    n_positions: 101
-    n_layer: 3
-    n_embd: 64
-    n_head: 2
-
 model: &knn_3
     type: knn
     n_neighbors: 3
@@ -39,6 +32,7 @@ train:
     x_dist:
         type: normal
     model: *std_gpt2
+    baseline_models: [*knn_3, *knn_3]
     
 
 

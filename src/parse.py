@@ -146,16 +146,24 @@ def get_model(data: dict) -> Optional[ContextModel]:
         print(f"Unexpected error when instantiating model!: \n\t{e}")
 
 
-# def get_function_class(func_class: str) -> Optional[FunctionClass]:
-#     f_class_type: type[ContextModel] | Callable = FUNCTION_CLASSES.get(func_class, 
-#         curried_throw(NotImplementedError(f"Invalid function class! Got: `{func_class}`"))
-#     )
+def get_function_class(x_dist: D.Distribution, x_curr_dim: int, data: dict) -> Optional[FunctionClass]:
+    if 'type' not in data:
+        raise KeyError(f"Function Class type not specified!")
 
+    f_class_type: type[FunctionClass] | Callable[[], None] = FUNCTION_CLASSES.get(data['type'], 
+        curried_throw(NotImplementedError(f"Invalid function class! Got: `{data['type']}`"))
+    )
 
-#     try:
-#         return f_class_type(**data)
-#     except Exception as e:
-#         print(f"Unexpected error when instantiating model!: \n\t>>> {e.__class__}: {e.args[0]}")
+    data.update({
+        "x_distribution" : x_dist,
+        "x_curriculum_dim" : x_curr_dim,
+    })
+
+    del data['type']
+    try:
+        return f_class_type(**data)
+    except Exception as e:
+        print(f"Unexpected error when instantiating model!: \n\t{e}")
 
 # def get_relevant_baselines(task_name):
 #     task_to_baselines = {
@@ -208,35 +216,45 @@ def get_model(data: dict) -> Optional[ContextModel]:
 #     return models
 
 
+def elaborate_stages(stages, x_dim):
+    for stage in stages:
+        b_size  = stage['train']['b_size']
+        seq_len = stage['train']['seq_len']
+        x_curriculum_dim = stage['train']['x_dim']
 
-# yaml.add_constructor("distribution", lambda loader, node: get_x_distribution(_, _, _, loader.construct_document(node)))
+        stage['train']['x_dist'] = get_x_distribution(
+            b_size, seq_len, x_dim, stage['train'].get('x_dist', {})
+        )
+
+        stage['train']['model'] = get_model(
+            stage['train']['model'] | { "x_dim" : x_dim }
+        )
+
+        stage['train']['baseline_models'] = list(map(
+            lambda d: get_model(
+                d | {"x_dim" : x_dim}
+            ), 
+            stage['train']['baseline_models']
+        ))
+
+        stage['train']['function_class'] = get_function_class(
+            stage['train']['x_dist'],
+            x_curriculum_dim,
+            stage['train']['function_class']
+        )
+    return stages
 
 
-filename = "sample.yml"
-with open(filename, 'r') as f:
-    content = f.read()
+def parse_elaborated_stages(filename: str) -> tuple[list[dict], list[int]]:
+    with open(filename, 'r') as f:
+        content = f.read()
 
-d = yaml.load(content, Loader=yaml.Loader)
+    d = yaml.load(content, Loader=yaml.Loader)
 
-stages, step_counts = expand_curriculum(d, int(1e4))
+    x_dim: int = _get_value(d['train']['x_dim'], int(1e99)) 
+    stages, step_counts = expand_curriculum(d, int(1e4)) # TODO: pull from dict
+    stages = elaborate_stages(stages, x_dim)
 
-x_dim = max(map(lambda stage: stage['train']['x_dim'], stages))
-for stage in stages:
-    b_size  = stage['train']['b_size']
-    seq_len = stage['train']['seq_len']
-    x_curriculum_dim   = stage['train']['x_dim']
+    return stages, step_counts
 
-    stage['train']['x_dist'] = get_x_distribution(
-        b_size, seq_len, x_dim, stage['train'].get('x_dist', {})
-    )
-
-    model_dict = stage['train']['model']
-    model_dict.update({ "x_dim" : x_dim })
-    stage['train']['model'] = get_model(model_dict)
-
-    # stage['train']['function_class'] = get_function_class(stage['train']['funtion_class'])
-
-# fc_dicts, step_counts = expand_curriculum(d['train'], int(1e4))
-
-# import code
-# code.interact(local=locals())
+stages, step_counts = parse_elaborated_stages("sample.yml")
