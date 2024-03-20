@@ -207,7 +207,7 @@ def get_loss_fn(data: dict) -> Optional[torch.nn.Module]:
 #     def __init__(self, *args, **kwargs):
 #         print(kwargs)
 #         print(f"For step_count: {kwargs['steps']}")
-        
+
 from train.context_trainer import ContextTrainer
 
 def produce_trainer_stages(data: dict) -> tuple[list[ContextTrainer], Optional[ContextModel]]:
@@ -285,7 +285,7 @@ from train.context_trainer import TrainerSteps
 
 # yaml.add_constructor("!trainer", train_constructor)
 
-stages, yaml_str = parse_training("sample.yml")
-trainer = TrainerSteps(stages)
-trainer.train()
+# stages, yaml_str = parse_training("sample.yml")
+# trainer = TrainerSteps(stages)
+# trainer.train()
 
