@@ -20,7 +20,8 @@ class LinearRegression(FunctionClass):
         return param_dist
 
     def evaluate(self, x_batch: torch.Tensor, params: torch.Tensor) -> torch.Tensor:
-        partial_sums = torch.bmm(params, x_batch.unsqueeze(-1))
+        # TODO: changed this line so it would run, but it's probably wrong!
+        partial_sums = torch.bmm(params.squeeze(-2), x_batch.permute(0, 2, 1))
         full_sums = torch.sum(partial_sums, dim=-2, keepdim=True)
         y_batch = full_sums.squeeze()
 

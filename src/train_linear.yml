@@ -1,19 +1,9 @@
-
-function_class:
-    type: 2 layer mlp regression
-
 model: &std_gpt2
     type: gpt2
     n_positions: 101
     n_layer: 3
     n_embd: 64
     n_head: 2
-
-model: &knn_3
-    type: knn
-    n_neighbors: 3
-
-
 
 train:
     function_class: 
@@ -23,26 +13,13 @@ train:
         start: 11
         stop: 42
         step_size: 2
-        step_len: 2000
+        step_len: 5000
     x_dim: !curriculum
         start: 5
         stop: 20
         step_size: 1
-        step_len: 5000
+        step_len: 10000
     x_dist:
         type: normal
     model: *std_gpt2
-    baseline_models: [*knn_3, *knn_3]
-    
-
-
-    # param_dist: "normal"
-    # y_dim: 1
-
-
-    # layers: 12
-    # heads: 6
-
-    # in_dim: 20
-    # embed_dim: 192
-    # out_dim: 1
+    baseline_models: []
