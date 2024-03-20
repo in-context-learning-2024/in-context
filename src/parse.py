@@ -4,11 +4,15 @@ import torch
 
 from typing import Any, Callable, Optional
 
+from train import ContextTrainer, TrainerSteps
 from models import MODELS
 from function_classes import FUNCTION_CLASSES
 from core import ContextModel, FunctionClass
 from utils import curried_throw
 
+######################################
+###      Curriculum Expansion      ###
+######################################
 class Curriculum(yaml.YAMLObject):
 
     yaml_tag = u'!curriculum'
@@ -57,7 +61,6 @@ def _get_value(
     casted_result = type(obj.start)(result)
     return casted_result
 
-
 def expand_curriculum(raw_data: dict) -> tuple[list[dict], list[int]]:
 
     def identify_curriculum_params(data: dict) -> list[list]:
@@ -93,7 +96,14 @@ def expand_curriculum(raw_data: dict) -> tuple[list[dict], list[int]]:
 
     return stages, durations
 
+######################################
+###   END: Curriculum Expansion    ###
+######################################
 
+
+######################################
+###     Trainer Initialization     ###
+######################################
 def get_x_distribution(batch_size: int, seq_len: int, x_dim: int, data: dict) -> Optional[D.Distribution]:
     batch_shape = torch.Size([batch_size, seq_len])
     event_shape = torch.Size([x_dim, ])
@@ -165,6 +175,7 @@ def get_function_class(x_dist: D.Distribution, x_curr_dim: int, data: dict) -> O
     except Exception as e:
         print(f"Unexpected error when instantiating model!: \n\t{e}")
 
+
 def get_optimizer(model: ContextModel, data: dict) -> Optional[torch.optim.Optimizer]:
     if 'type' not in data:
         raise KeyError(f"Optimizer type not specified!")
@@ -183,6 +194,7 @@ def get_optimizer(model: ContextModel, data: dict) -> Optional[torch.optim.Optim
         return optim_type(model.parameters(), **data)
     except Exception as e:
         print(f"Unexpected error when instantiating optimizer!: \n\t{e}")
+
 
 def get_loss_fn(data: dict) -> Optional[torch.nn.Module]:
     if 'type' not in data:
@@ -203,19 +215,11 @@ def get_loss_fn(data: dict) -> Optional[torch.nn.Module]:
         print(f"Unexpected error when instantiating loss function!: \n\t{e}")
 
 
-# class ContextTrainer:
-#     def __init__(self, *args, **kwargs):
-#         print(kwargs)
-#         print(f"For step_count: {kwargs['steps']}")
-
-from train.context_trainer import ContextTrainer
-
-def produce_trainer_stages(data: dict) -> tuple[list[ContextTrainer], Optional[ContextModel]]:
+def produce_trainer_stages(data: dict) -> list[ContextTrainer]:
     """Convert a list of YAML primitive stage dicts to a list of dictionaries with instantiated objects"""
 
     x_dim: int = _get_value(data['x_dim'], int(1e99)) 
     stages, step_counts = expand_curriculum(data)
-    model = None
     for i in range(len(stages)):
         stages[i]['steps'] = step_counts[i]
     
@@ -231,8 +235,6 @@ def produce_trainer_stages(data: dict) -> tuple[list[ContextTrainer], Optional[C
         stage['model'] = get_model(
             stage['model'] | { "x_dim" : x_dim }
         )
-
-        model = model or stage['model']
 
         stage['baseline_models'] = list(map(
             lambda d: get_model(
@@ -257,9 +259,9 @@ def produce_trainer_stages(data: dict) -> tuple[list[ContextTrainer], Optional[C
             stage['function_class']
         )
 
-    return [ ContextTrainer(**stage) for stage in stages ], model
+    return [ ContextTrainer(**stage) for stage in stages ]
 
-def parse_training(filename: str) -> tuple[list[ContextTrainer], str]:
+def parse_training(filename: str) -> tuple[TrainerSteps, str]:
     with open(filename, 'r') as f:
         content = f.read()
 
@@ -268,24 +270,16 @@ def parse_training(filename: str) -> tuple[list[ContextTrainer], str]:
 
     trainers = produce_trainer_stages(d['train'])
 
-    return trainers, reingestible_yaml
+    big_trainer = TrainerSteps(trainers)
 
-# def train_constructor(loader: yaml.Loader | yaml.FullLoader | yaml.UnsafeLoader, node: yaml.Node) -> Optional[ContextTrainer]:
+    return big_trainer, reingestible_yaml
 
-    # import code
-    # code.interact(local=locals())
-
-    # x_dim: int = _get_value(d['train']['x_dim'], int(1e99)) 
-    # stages, step_counts = expand_curriculum(d, int(1e4)) # TODO: pull from dict
-    # stages = elaborate_stages(stages, x_dim)
-
-    # reingestible_yaml = yaml.dump(d, Dumper=yaml.Dumper)dir(l)
-
-from train.context_trainer import TrainerSteps
-
-# yaml.add_constructor("!trainer", train_constructor)
-
-# stages, yaml_str = parse_training("sample.yml")
-# trainer = TrainerSteps(stages)
+## an example usage of the above function:
+# from parse import parse_training
+# trainer, yaml_str = parse_training("sample.yml")
 # trainer.train()
+
+######################################
+###  END: Trainer Initialization   ###
+######################################
 
