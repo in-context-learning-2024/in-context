@@ -1,10 +1,11 @@
 from function_classes.function_class import FunctionClass
 from torch.optim import Optimizer
-from models.context_model import ContextModel
+from core import ContextModel
+import torch
 from torch import nn
 
-# import wandb
-from typing import Optional, Any
+import wandb
+from typing import Optional, List, Any
 
 class ContextTrainer:
     def __init__(
@@ -14,6 +15,7 @@ class ContextTrainer:
         optim: Optimizer, 
         loss_fn: nn.Module,
         num_steps: int,
+        baseline_models: List,
         log_freq: int
     ):
         self.func_class = function_class
@@ -21,12 +23,16 @@ class ContextTrainer:
         self.optimizer = optim 
         self.loss_func = loss_fn
         self.num_steps = num_steps
+        self.baseline_models = baseline_models
         self.log_freq = log_freq 
+        wandb.log(self.metadata)
         #self.metadata = ... # config stuff here ********* TODO: excuse me what
-        # wandb.log(self.metadata)
+
 
 
     def train(self, pbar: Optional[Any] = None) -> ContextModel:
+
+        baseline_loss = {}
 
         for i, (x_batch, y_batch) in zip(range(self.num_steps), self.func_class):
             
@@ -39,18 +45,26 @@ class ContextTrainer:
             if pbar is not None:
                 pbar.update(1)
                 pbar.set_description(f"loss {loss}")
-            # TODO: curriculum?
+
+            if i % self.log_freq == 0:
+
+                for baseline in self.baseline_models:
+                    baseline_output = baseline(x_batch, y_batch)
+                    with torch.no_grad():
+                        baseline_loss[baseline.name] = self.loss_func(baseline_output, y_batch)
+
+                log_dict = {
+                        "overall_loss": loss,
+                    } 
+                log_dict |= {f"baseline_loss_{baseline.name}": baseline_loss[baseline.name] for baseline in self.baseline_models}
+
+                wandb.log(
+                    data=log_dict,
+                    step=i,
+                )
 
             # TODO: stretch goal: log functions / precompute dataset?
-
-            # if i % self.log_freq == 0:
-            #     wandb.log(
-            #         {
-            #             "overall_loss": loss,
-            #             # TODO: log the xs, ys? 
-            #         },
-            #         step=i,
-            #     )
+            # TODO: log the xs, ys?
 
         return self.model
 

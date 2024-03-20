@@ -1,77 +1,17 @@
-class ContextTrainer(Serializable):
-    def __init__(self, **config):
-        # TODO: use config here
-        self.optimizer = config.get("optimizer") # torch.optim.Adam(config)
-        self.loss_func = ... # config.get("loss_func")
-        self.func_class = ...
-        self.metadata = ... # config stuff here
-        pass
-
-    def step_train(self, model, ...) -> None:
-        # TODO: optimize the next three lines
-        seq_batch = [[(x, y) for x, y in function] for function in self.func_class.get_function_iter()]
-        xs = [[xy_pair[0] for xy_pair in seq] for seq in seq_batch]
-        ys = [[xy_pair[1] for xy_pair in seq] for seq in seq_batch]
-
-        self.optimizer.zero_grad()
-        output = model(xs, ys)
-        loss = self.loss_func(output, ys)
-        loss.backward()
-        self.optimizer.step()
-
-        # TODO: log the loss
-        # TODO: log the xs, ys? functions?
-
-    def train(self, model, steps, ...) -> None:
-        for _ in range(steps):
-            self.step_train(model)
-            # TODO: curriculum?
-
-    @property
-    def metadata(self) -> dict:
-        return self.metadata
-
-
 import os
 from random import randint
 import uuid
 
-from quinine import QuinineArgumentParser
 from tqdm import tqdm
 import torch
 import yaml
-
-from eval import get_run_metrics
-from tasks import get_task_sampler
-from samplers import get_data_sampler
-from curriculum import Curriculum
-from schema import schema
-from models import build_model
-
-import wandb
+# import wandb
 
 torch.backends.cudnn.benchmark = True
 
-
-def train_step(model, xs, ys, optimizer, loss_func):
-    optimizer.zero_grad()
-    output = model(xs, ys)
-    loss = loss_func(output, ys)
-    loss.backward()
-    optimizer.step()
-    return loss.detach().item(), output.detach()
-
-
-def sample_seeds(total_seeds, count):
-    seeds = set()
-    while len(seeds) < count:
-        seeds.add(randint(0, total_seeds - 1))
-    return seeds
-
-
 def train(model, args):
     optimizer = torch.optim.Adam(model.parameters(), lr=args.training.learning_rate)
-    curriculum = Curriculum(args.training.curriculum)
+    # TODO: curriculum = Curriculum(args.training.curriculum)
 
     starting_step = 0
     state_path = os.path.join(args.out_dir, "state.pt")
