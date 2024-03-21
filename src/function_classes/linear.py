@@ -1,13 +1,11 @@
 import torch
 import torch.distributions as D
 
-from torch.distributions.distribution import Distribution
-
 from core import FunctionClass
 
 class LinearRegression(FunctionClass):
 
-    def _init_param_dist(self) -> Distribution:
+    def _init_param_dist(self) -> D.Distribution:
         """Produce the distribution with which to sample parameters"""
         batch_shape = self.x_dist.batch_shape[:2]
         param_event_shape = torch.Size([self.y_dim, self.x_dim])

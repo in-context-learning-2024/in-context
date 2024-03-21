@@ -1,8 +1,7 @@
 
 import torch
-import torch.distributions as dist
+import torch.distributions as D
 
-from torch.distributions.distribution import Distribution
 from typing import List
 
 from core import FunctionClass
@@ -15,18 +14,18 @@ class DecisionTreeRegression(FunctionClass):
         self._depth = depth
         super(DecisionTreeRegression, self).__init__(*args)
 
-    def _init_param_dist(self) -> Distribution:
+    def _init_param_dist(self) -> D.Distribution:
         # Represent the tree using an array. Root node is at index 0, its 2 children at index 1 and 2...
         # Values correspond to the coordinate used at each node of the decision tree.
         
         # Only indices corresponding to non-leaf nodes are relevant
         # return torch.Size([2 ** (self._depth + 1) - 1])
         s = torch.Size([self.batch_size, 2 ** (self._depth + 1) - 1, self.x_dim])
-        condition_indices_dist = dist.Categorical(
+        condition_indices_dist = D.Categorical(
             torch.full(s, 1 / self.x_dim)
         )
 
-        target_values_dist = dist.Normal(
+        target_values_dist = D.Normal(
             loc=torch.zeros(s[:-1]), scale=torch.ones(s[:-1])
         )
 

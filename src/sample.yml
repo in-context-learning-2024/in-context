@@ -33,16 +33,3 @@ train:
         type: normal
     model: *std_gpt2
     baseline_models: [*knn_3, *knn_3]
-    
-
-
-    # param_dist: "normal"
-    # y_dim: 1
-
-
-    # layers: 12
-    # heads: 6
-
-    # in_dim: 20
-    # embed_dim: 192
-    # out_dim: 1

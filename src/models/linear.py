@@ -70,8 +70,6 @@ class LassoModel(ContextModel):
         self.name = f"lasso_alpha={alpha}_max_iter={max_iter}"
         self.context_length = -1
 
-    # inds is a list containing indices where we want the prediction.
-    # prediction made at all indices by default.
     def forward(self, xs, ys):
         xs, ys = xs.cpu(), ys.cpu()
 

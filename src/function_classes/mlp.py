@@ -1,7 +1,6 @@
 import torch
 import torch.distributions as D
 
-from torch.distributions import Distribution
 from core import FunctionClass
 
 class MLPRegression(FunctionClass):
@@ -9,7 +8,7 @@ class MLPRegression(FunctionClass):
         self._hidden_dim = hidden_dimension
         super(MLPRegression, self).__init__(*args, **kwargs)
 
-    def _init_param_dist(self) -> Distribution:
+    def _init_param_dist(self) -> D.Distribution:
         """Produce the distribution with which to sample parameters"""
         batch_shape = self.x_dist.batch_shape[:2]
         param_event_shape = torch.Size([self.x_dim + self.y_dim,self._hidden_dim])

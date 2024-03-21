@@ -12,7 +12,7 @@ def curried_throw(ex):
 
 
 class CombinedDistribution(dist.Distribution):
-    """Combine a number of unrelated distributions. i.e. combine a set of distributions to sample from in a combined call"""
+    """Combine a number of unrelated distributions. i.e. combine a list of distributions to sample from in a combined call"""
 
     def __init__(self, *distributions: dist.Distribution):
         self._dists = distributions
