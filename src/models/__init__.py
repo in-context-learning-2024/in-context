@@ -1,5 +1,10 @@
+from core import ContextModel
 from .transformer import TransformerModel
-from .linear import *
+from .linear import (
+    LeastSquaresModel,
+    AveragingModel,
+    LassoModel,
+)
 from .gradient_mlp import GDModel
 from .nearest_neighbors import KNNModel
 from .xgboost import XGBoostModel
@@ -16,3 +21,7 @@ MODELS: dict[str, type[ContextModel]] = {
     "decision tree" : DecisionTreeModel,
     "xgboost"       : XGBoostModel
 }
+
+__all__ = [
+    "MODELS"
+]

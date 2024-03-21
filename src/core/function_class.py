@@ -11,8 +11,7 @@ class FunctionClass:
             y_dim: int = 1
         ):
 
-        # we should pull as much information from the `x_distribution` if 
-        #   we expect the instatiating code to provide it
+        # we pull as much information from the `x_distribution` as possible, so all 
         #   torch.(...).Distribution docs: https://pytorch.org/docs/stable/distributions.html
 
         assert len(x_distribution.event_shape) == 1 or len(x_distribution.batch_shape) == 3, \
@@ -69,14 +68,3 @@ class ModifiedFunctionClass(FunctionClass):
         self.x_dim = self._in_fc.x_dim
         self.x_curriculum_dim = self._in_fc.x_curriculum_dim
         self.y_dim = self._in_fc.y_dim
-
-"""
-Perhaps some pseudo-implementation-code is in order:
-
-for i, (x_batch, y_batch) in zip(range(training_steps), MyFunctionClass(*my_args, **my_kwargs)):
-    
-    ys_pred = model.predict(x_batch, y_batch)
-    loss = loss_fn(ys_pred, y_batch)
-
-    loss.backward()
-"""
