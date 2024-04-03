@@ -21,12 +21,12 @@ train:
         start: 11
         stop: 42
         step_size: 2
-        step_len: 5000
+        step_len: 1000
     x_dim: !curriculum
         start: 5
         stop: 20
         step_size: 1
-        step_len: 10000
+        step_len: 2000
     x_dist:
         type: normal
     steps: 500000

@@ -26,10 +26,7 @@ class ContextTrainer:
         self.num_steps = steps
         self.baseline_models = baseline_models
         self.log_freq = log_freq 
-        # wandb.log(self.metadata)
-        #self.metadata = ... # config stuff here ********* TODO: excuse me what
-
-
+        self.metadata = {k:v for k, v in zip(kwargs.keys(), kwargs.values()) if isinstance(v, (int, float))}
 
     def train(self, pbar: Optional[Any] = None) -> ContextModel:
 
@@ -59,22 +56,12 @@ class ContextTrainer:
                     } 
                 log_dict |= {f"baseline_loss_{baseline.name}": baseline_loss[baseline.name] for baseline in self.baseline_models}
 
-                # wandb.log(
-                #     data=log_dict,
-                #     step=i,
-                # )
                 wandb.log(
                     data=log_dict
                 )
 
-            # TODO: stretch goal: log functions / precompute dataset?
-            # TODO: log the xs, ys?
-
         return self.model
 
-    # @property
-    # def metadata(self) -> dict:
-    #     return self.metadata
 class TrainerSteps(ContextTrainer):
 
     def __init__(self, 
@@ -84,11 +71,14 @@ class TrainerSteps(ContextTrainer):
         loss_fn: nn.Module, 
         num_steps: list[int], 
         baseline_models: list[ContextModel],
-        log_freq: int
+        log_freq: int = -1,
+        metadatas: Any = None
     ):
 
         assert len(function_classes) == len(num_steps), \
             f"The number of training stages does not match between step counts and function classes!"
+        assert metadatas and len(metadatas) == len(function_classes), \
+            f"Metadata for each function class is provided but does not match the number of function classes provided!"
 
         self.fcs = function_classes
         self.model = model.cuda()
@@ -97,6 +87,7 @@ class TrainerSteps(ContextTrainer):
         self.num_steps = num_steps
         self.baseline_models = baseline_models
         self.log_freq = log_freq
+        self.metadatas = metadatas
 
         self.trainers = [
             ContextTrainer(
@@ -113,7 +104,10 @@ class TrainerSteps(ContextTrainer):
 
     def train(self, pbar: Optional[Any] = None) -> ContextModel:
 
-        for fc, step_count, baseline_model in zip(self.fcs, self.num_steps, self.baseline_models):
+        for fc, step_count, baseline_model, metadata in zip(self.fcs, self.num_steps, self.baseline_models, self.metadatas if self.metadatas else [None] * len(self.fcs)):
+            if self.metadatas:
+                wandb.log(data=metadata, commit=False)
+
             trainer = ContextTrainer(
                 fc,
                 self.model,
@@ -123,6 +117,7 @@ class TrainerSteps(ContextTrainer):
                 baseline_model,
                 self.log_freq
             )
+
             self.model = trainer.train(pbar)
 
         return self.model

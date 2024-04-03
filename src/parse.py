@@ -282,7 +282,8 @@ def parse_training(filename: str) -> tuple[TrainerSteps, str]:
         loss_fn=trainers[0].loss_func, 
         num_steps=[trainer.num_steps for trainer in trainers], 
         baseline_models=[trainer.baseline_models for trainer in trainers],
-        log_freq=trainers[0].log_freq)
+        log_freq=trainers[0].log_freq,
+        metadatas=[trainer.metadata for trainer in trainers])
 
     return big_trainer, reingestible_yaml
 
