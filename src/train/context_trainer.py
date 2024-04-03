@@ -83,6 +83,7 @@ class TrainerSteps(ContextTrainer):
         optim: Optimizer, 
         loss_fn: nn.Module, 
         num_steps: list[int], 
+        baseline_models: list[ContextModel],
         log_freq: int
     ):
 
@@ -94,6 +95,7 @@ class TrainerSteps(ContextTrainer):
         self.optim = optim
         self.loss_fn = loss_fn
         self.num_steps = num_steps
+        self.baseline_models = baseline_models
         self.log_freq = log_freq
 
         self.trainers = [
@@ -103,20 +105,22 @@ class TrainerSteps(ContextTrainer):
                 optim,
                 loss_fn,
                 step_count,
+                baseline_model,
                 log_freq
             )
-            for fc, step_count in zip(function_classes, num_steps)
+            for fc, step_count, baseline_model in zip(function_classes, num_steps, baseline_models)
         ]
 
     def train(self, pbar: Optional[Any] = None) -> ContextModel:
 
-        for fc, step_count in zip(self.fcs, self.num_steps):
+        for fc, step_count, baseline_model in zip(self.fcs, self.num_steps, self.baseline_models):
             trainer = ContextTrainer(
                 fc,
                 self.model,
                 self.optim,
                 self.loss_fn,
                 step_count,
+                baseline_model,
                 self.log_freq
             )
             self.model = trainer.train(pbar)
