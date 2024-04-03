@@ -77,7 +77,7 @@ def expand_curriculum(raw_data: dict) -> tuple[list[dict], list[int]]:
         for *route, curriculum in identify_curriculum_params(raw_data)
     }
 
-    partitioning_steps = set([ ])
+    partitioning_steps = set([ raw_data['steps'] ])
     currs = list(curriculums.keys())
     for c in currs:
         partitioning_steps = partitioning_steps.union(set(c.partitioning_steps))
@@ -201,7 +201,8 @@ def get_loss_fn(data: dict) -> Optional[torch.nn.Module]:
         raise KeyError(f"Loss function type not specified!")
     
     LOSS_FNS = {
-        "squared" : torch.nn.MSELoss
+        "squared" : torch.nn.MSELoss,
+        "mse" : torch.nn.MSELoss
     }
 
     loss_fn_type: type[torch.nn.Module] | Callable[[], None] = LOSS_FNS.get(data['type'],
@@ -218,7 +219,10 @@ def get_loss_fn(data: dict) -> Optional[torch.nn.Module]:
 def produce_trainer_stages(data: dict) -> list[ContextTrainer]:
     """Convert a list of YAML primitive stage dicts to a list of dictionaries with instantiated objects"""
 
-    x_dim: int = _get_value(data['x_dim'], int(1e99)) 
+    x_dim: int = max(
+        _get_value(data['x_dim'], data['steps']),
+        _get_value(data['x_dim'], 0),
+    )
     stages, step_counts = expand_curriculum(data)
 
     model = get_model(stages[0]['model'] | { "x_dim" : x_dim })
