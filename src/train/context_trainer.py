@@ -81,7 +81,10 @@ class TrainerSteps(ContextTrainer):
             f"Metadata for each function class is provided but does not match the number of function classes provided!"
 
         self.fcs = function_classes
-        self.model = model.cuda()
+        if torch.cuda.is_available():
+            self.model = model.cuda()
+        else:
+            self.model = model
         self.optim = optim
         self.loss_fn = loss_fn
         self.num_steps = num_steps
