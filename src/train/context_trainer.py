@@ -52,7 +52,7 @@ class ContextTrainer:
                 for baseline in self.baseline_models:
                     baseline_output = baseline(x_batch, y_batch)
                     with torch.no_grad():
-                        baseline_loss[baseline.name] = self.loss_func(baseline_output, y_batch)
+                        baseline_loss[baseline.name] = self.loss_func(baseline_output, y_batch.cpu())
 
                 log_dict = {
                         "overall_loss": loss,
@@ -91,7 +91,7 @@ class TrainerSteps(ContextTrainer):
             f"The number of training stages does not match between step counts and function classes!"
 
         self.fcs = function_classes
-        self.model = model
+        self.model = model.cuda()
         self.optim = optim
         self.loss_fn = loss_fn
         self.num_steps = num_steps
@@ -101,7 +101,7 @@ class TrainerSteps(ContextTrainer):
         self.trainers = [
             ContextTrainer(
                 fc,
-                model,
+                self.model,
                 optim,
                 loss_fn,
                 step_count,
