@@ -19,11 +19,11 @@ class ContextTrainer:
         log_freq: int = -1,
         **kwargs
     ):
-        self.func_class = function_class
+        self.function_class = function_class
         self.model = model
-        self.optimizer = optim 
-        self.loss_func = loss_fn
-        self.num_steps = steps
+        self.optim = optim 
+        self.loss_fn = loss_fn
+        self.steps = steps
         self.baseline_models = baseline_models
         self.log_freq = log_freq 
         self.metadata = {k:v for k, v in zip(kwargs.keys(), kwargs.values()) if isinstance(v, (int, float))}
@@ -32,14 +32,14 @@ class ContextTrainer:
 
         baseline_loss = {}
 
-        for i, (x_batch, y_batch) in zip(range(self.num_steps), self.func_class):
+        for i, (x_batch, y_batch) in zip(range(self.steps), self.function_class):
             
             output = self.model(x_batch, y_batch)
-            loss = self.loss_func(output, y_batch)
+            loss = self.loss_fn(output, y_batch)
 
-            self.optimizer.zero_grad()
+            self.optim.zero_grad()
             loss.backward()
-            self.optimizer.step()
+            self.optim.step()
             if pbar is not None:
                 pbar.update(1)
                 pbar.set_description(f"loss {loss}")
@@ -49,7 +49,7 @@ class ContextTrainer:
                 for baseline in self.baseline_models:
                     baseline_output = baseline(x_batch, y_batch)
                     with torch.no_grad():
-                        baseline_loss[baseline.name] = self.loss_func(baseline_output, y_batch.cpu())
+                        baseline_loss[baseline.name] = self.loss_fn(baseline_output, y_batch.cpu())
 
                 log_dict = {
                         "overall_loss": loss,
@@ -69,25 +69,25 @@ class TrainerSteps(ContextTrainer):
         model: ContextModel, 
         optim: Optimizer, 
         loss_fn: nn.Module, 
-        num_steps: list[int], 
+        steps: list[int], 
         baseline_models: list[ContextModel],
         log_freq: int = -1,
         metadatas: Any = None
     ):
 
-        assert len(function_classes) == len(num_steps), \
+        assert len(function_classes) == len(steps), \
             f"The number of training stages does not match between step counts and function classes!"
         assert metadatas and len(metadatas) == len(function_classes), \
             f"Metadata for each function class is provided but does not match the number of function classes provided!"
 
-        self.fcs = function_classes
+        self.function_classes = function_classes
         if torch.cuda.is_available():
             self.model = model.cuda()
         else:
             self.model = model
         self.optim = optim
         self.loss_fn = loss_fn
-        self.num_steps = num_steps
+        self.steps = steps
         self.baseline_models = baseline_models
         self.log_freq = log_freq
         self.metadatas = metadatas
@@ -102,12 +102,16 @@ class TrainerSteps(ContextTrainer):
                 baseline_model,
                 log_freq
             )
-            for fc, step_count, baseline_model in zip(function_classes, num_steps, baseline_models)
+            for fc, step_count, baseline_model in zip(function_classes, steps, baseline_models)
         ]
 
     def train(self, pbar: Optional[Any] = None) -> ContextModel:
 
-        for fc, step_count, baseline_model, metadata in zip(self.fcs, self.num_steps, self.baseline_models, self.metadatas if self.metadatas else [None] * len(self.fcs)):
+        for fc, step_count, baseline_model, metadata in zip(self.function_classes, 
+                                                            self.steps, 
+                                                            self.baseline_models, 
+                                                            self.metadatas if self.metadatas else [None] * len(self.fcs)):
+            
             if self.metadatas:
                 wandb.log(data=metadata, commit=False)
 
