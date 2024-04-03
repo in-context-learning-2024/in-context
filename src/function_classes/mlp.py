@@ -25,13 +25,13 @@ class MLPRegression(FunctionClass):
         output_weight_mat = raw_params[:, :, self.x_dim:].transpose(-1, -2)
 
         activations = torch.nn.functional.relu(
-            torch.bmm(input_weight_mat, x_batch[..., None])
+            torch.bmm(x_batch[..., None].squeeze(-1), input_weight_mat[:, 0, :, :])
         )
 
-        y_batch = torch.bmm(output_weight_mat, activations).squeeze()
+        y_batch = torch.bmm(activations, output_weight_mat[:, 0, :, :])
         assert y_batch.shape == (self.batch_size, self.sequence_length, self.y_dim), \
             f"Produced wrong output shape in MLP function class!" + \
             f"Expected: {(self.batch_size, self.sequence_length, self.y_dim)}" + \
             f"Got: {tuple(y_batch.shape)}"
 
-        return y_batch
+        return y_batch.squeeze(-1)
