@@ -5,7 +5,15 @@ model: &std_gpt2
     n_embd: 64
     n_head: 2
 
+model: &least_squares
+    type: least squares
+
 train:
+    optim:
+        type: adam
+        lr: 0.0001
+    loss_fn:
+        type: squared
     function_class: 
         type: linear regression
     b_size: 32
@@ -21,5 +29,6 @@ train:
         step_len: 10000
     x_dist:
         type: normal
+    steps: 500000
     model: *std_gpt2
-    baseline_models: []
+    baseline_models: [*least_squares]
