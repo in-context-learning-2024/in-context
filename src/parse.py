@@ -220,6 +220,9 @@ def produce_trainer_stages(data: dict) -> list[ContextTrainer]:
 
     x_dim: int = _get_value(data['x_dim'], int(1e99)) 
     stages, step_counts = expand_curriculum(data)
+
+    model = get_model(stages[0]['model'] | { "x_dim" : x_dim })
+
     for i in range(len(stages)):
         stages[i]['steps'] = step_counts[i]
     
@@ -232,9 +235,7 @@ def produce_trainer_stages(data: dict) -> list[ContextTrainer]:
             b_size, seq_len, x_dim, stage.get('x_dist', {})
         )
 
-        stage['model'] = get_model(
-            stage['model'] | { "x_dim" : x_dim }
-        )
+        stage['model'] = model
 
         stage['baseline_models'] = list(map(
             lambda d: get_model(
