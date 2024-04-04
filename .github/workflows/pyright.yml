@@ -38,4 +38,4 @@ jobs:
               uses: jakebailey/pyright-action@v2
               with:
                   pylance-version: latest-release
-                  venv-path: $CONDA/envs/test
+                  python-path: ${{'$CONDA/envs/in-context-learning'}}
