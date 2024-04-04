@@ -8,7 +8,6 @@ from train import TrainerSteps
 from models import MODELS
 from function_classes import FUNCTION_CLASSES
 from core import ContextModel, FunctionClass
-from utils import curried_throw
 
 from .curriculum import expand_curriculum, get_value
 
@@ -65,12 +64,9 @@ def get_x_distribution(batch_size: int, seq_len: int, x_dim: int, data: dict) ->
 
 def get_model(data: dict) -> ContextModel:
 
-    if 'type' not in data:
-        raise KeyError(f"Model type not specified!")
+    _check_kwargs(MODELS, data, "model")
 
-    model_class: type[ContextModel] | Callable = MODELS.get(data['type'], 
-        curried_throw(NotImplementedError(f"Invalid model type! Got: `{data['type']}`"))
-    )
+    model_class: type[ContextModel] = MODELS[data['type']]
 
     return _clean_instantiate(model_class, **data)
 
@@ -131,36 +127,36 @@ def _produce_trainer_stages(data: dict) -> TrainerSteps:
     _x_dist = get_x_distribution(
         stages[0]['b_size'], stages[0]['seq_len'], x_dim, stages[0].get('x_dist', {})
     )
+
+    f_classes = [
+        get_function_class(
+            _x_dist,
+            stage['x_dim'],
+            stage['function_class']
+        ) 
+        for stage in stages
+    ]
+
     model = get_model(stages[0]['model'] | { "x_dim" : x_dim })
-    loss_fn = get_loss_fn(stages[0].get('loss_fn', {}))
-    log_freq = stages[0].get('log_freq', -1)
-    checkpoint_freq = stages[0].get('checkpoint_freq', -1)
-    optimizer = get_optimizer(model, stages[0].get('optim', {}))
+    optimizer = get_optimizer(model, stages[0]['optim'])
+    loss_fn = get_loss_fn(stages[0]['loss_fn'])
     baseline_models = list(map(
         lambda d: get_model(
             d | {"x_dim" : x_dim}
         ), 
         stages[0]['baseline_models']
     ))
-    f_classes = [ ]
 
-    for stage in stages:
-        x_curriculum_dim = stage['x_dim']
+    log_freq = stages[0].get('log_freq', -1)
+    checkpoint_freq = stages[0].get('checkpoint_freq', -1)
 
-        f_classes.append(
-            get_function_class(
-                _x_dist,
-                x_curriculum_dim,
-                stage['function_class']
-            )
-        )
 
     big_trainer = TrainerSteps(
         function_classes=f_classes,
-        steps=step_counts,
         model=model,
         optim=optimizer, 
         loss_fn=loss_fn,
+        steps=step_counts,
         baseline_models=baseline_models,
         log_freq=log_freq,
         checkpoint_freq=checkpoint_freq,

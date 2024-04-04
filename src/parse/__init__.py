@@ -10,6 +10,5 @@ from .trainer import (
 )
 
 __all__ = [
-    parse_training,
-    parse_training_from_file
+    "parse_training",
 ]

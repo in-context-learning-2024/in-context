@@ -2,7 +2,7 @@ __pycache__
 .venv
 .vscode
 wandb
-models
+/models
 .idea
 *.pkl
 *.pth

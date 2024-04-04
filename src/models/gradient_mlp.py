@@ -71,15 +71,10 @@ class GDModel(ContextModel):
         loss_name="squared",
         **kwargs
     ):
-        # model_class: torch.nn model class
-        # model_class_args: a dict containing arguments for model_class
-        # verbose: whether to print the progress or not
-        # batch_size: batch size for sgd
         super(GDModel, self).__init__()
 
         model_class = {
             "mlp" : MLP,
-            # "parallel" : ParallelNetworks 
         }.get(
             model_class_name, 
             curried_throw(ValueError(f"GDModel does not support \"{model_class_name}\" model!"))
@@ -112,25 +107,22 @@ class GDModel(ContextModel):
         # prediction made at all indices by default.
         # xs: bsize X npoints X ndim.
         # ys: bsize X npoints.
-        ys = ys.to(xs.device)
+        DEVICE = xs.device
+        ys = ys.to(DEVICE)
 
         assert xs.shape[0] == ys.shape[0] == self._batch_size, \
             f"Input values are not of the right batch size! Expected: `{self._batch_size}' Got: {xs.shape[0]}, {ys.shape[0]}"
 
-        if inds is None:
-            inds = range(ys.shape[1])
-        else:
-            if max(inds) >= ys.shape[1] or min(inds) < 0:
-                raise ValueError("inds contain indices where xs and ys are not defined")
+        inds = range(ys.shape[1])
 
         preds = []  # predict one for first point
 
-        # i: loop over num_points
+        # i: loop over sequence length
         for i in tqdm(inds):
             pred = torch.zeros_like(ys[:, 0])
             model = self._get_new_model()
             optim = self._opt(model.parameters())
-            # model.to(DEVICE)
+            model.to(DEVICE)
             if i > 0:
                 pred = torch.zeros_like(ys[:, 0])
 

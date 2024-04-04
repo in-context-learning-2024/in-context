@@ -2,6 +2,8 @@ function_class:
     type: linear regression
 b_size: 32
 steps: 500000
+log_freq: 100
+checkpoint_freq: 1000
 optim:
     type: adam
 loss_fn:
@@ -19,4 +21,4 @@ x_dim: !curriculum
 x_dist:
     type: normal
 model: *std_gpt2
-baseline_models: [*knn_3, *linear]
+baseline_models: [*knn_3, *least_squares]

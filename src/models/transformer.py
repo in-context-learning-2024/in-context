@@ -27,8 +27,9 @@ class TransformerModel(ContextModel):
         self._read_out = nn.Linear(n_embd, 1)
 
     def forward(self, xs, ys):
+        self._backbone.to(xs.device) # type: ignore
         inds = torch.arange(ys.shape[1])
-        
+
         zs = ContextModel.interleave(xs, ys)
         embeds = self._read_in(zs)
         output = self._backbone(inputs_embeds=embeds).last_hidden_state # type: ignore

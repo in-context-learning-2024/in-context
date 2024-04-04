@@ -15,18 +15,18 @@ def nest_yaml(tag: str, content: str, indent_size:int=4) -> str:
 def log_yaml(full_yaml: str) -> None:
     # save locally
     local_dir_path = f"models/{os.path.basename(os.path.dirname(wandb.run.dir)).replace('run-', '')}"
-    if not os.path.exists(local_dir_path):
-        os.makedirs(local_dir_path)
-    with open(os.path.join(local_dir_path, "full_yaml.yml"), 'w') as f:
+    local_config_path = os.path.join(local_dir_path, "config.yml")
+    os.makedirs(local_dir_path, exist_ok=True)
+    with open(local_config_path, 'w') as f:
         f.write(full_yaml)
 
     # save in wandb
     wandb_dir_path = os.path.join(wandb.run.dir, "conf/")
-    if not os.path.exists(wandb_dir_path):
-        os.makedirs(wandb_dir_path)
-    with open(os.path.join(wandb_dir_path, "full_yaml.yml"), 'w') as f:
+    wandb_conf_path = os.path.join(wandb_dir_path, "config.yml")
+    os.makedirs(wandb_dir_path, exist_ok=True)
+    with open(wandb_conf_path, 'w') as f:
         f.write(full_yaml)
-    wandb.save(os.path.join(wandb_dir_path, "full_yaml.yml"), base_path=wandb.run.dir)
+    wandb.save(wandb_conf_path, base_path=wandb.run.dir)
 
 def main(args: arg.Namespace):
     wandb.init()
@@ -49,6 +49,7 @@ def main(args: arg.Namespace):
 if __name__ == "__main__":
     parser = arg.ArgumentParser()
 
-    parser.add_argument("--config-file", action='store', dest="conffile")
+    parser.add_argument("--config", '-c', type=str, action='store', dest="conffile",
+                        help="name of the config file to use for training")
     args = parser.parse_args()
     main(args)

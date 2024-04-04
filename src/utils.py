@@ -29,7 +29,6 @@ class CombinedDistribution(dist.Distribution):
 
     @property
     def event_shape(self) -> List[torch.Size]:
-        # raise TypeError(f"Combined distributions do not have an event_shape!")
         return [ dist.event_shape for dist in self._dists ]
 
     def entropy(self) -> List[torch.Tensor]:

@@ -13,6 +13,7 @@ class LeastSquaresModel(ContextModel):
         self.context_length = -1
 
     def forward(self, xs, ys):
+        DEVICE = xs.device
         xs, ys = xs.cpu(), ys.cpu()
         
         preds = []
@@ -31,7 +32,7 @@ class LeastSquaresModel(ContextModel):
             pred = test_x @ ws
             preds.append(pred[:, 0, 0])
 
-        return torch.stack(preds, dim=1)
+        return torch.stack(preds, dim=1).to(device=DEVICE)
 
 
 class AveragingModel(ContextModel):
@@ -71,6 +72,7 @@ class LassoModel(ContextModel):
         self.context_length = -1
 
     def forward(self, xs, ys):
+        DEVICE = xs.device
         xs, ys = xs.cpu(), ys.cpu()
 
         preds = []  # predict one for first point
@@ -108,5 +110,5 @@ class LassoModel(ContextModel):
 
             preds.append(pred)
 
-        return torch.stack(preds, dim=1)
+        return torch.stack(preds, dim=1).to(device=DEVICE)
 

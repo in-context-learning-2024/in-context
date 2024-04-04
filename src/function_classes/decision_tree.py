@@ -2,8 +2,6 @@
 import torch
 import torch.distributions as D
 
-from typing import List
-
 from core import FunctionClass
 from utils import CombinedDistribution
 
@@ -17,9 +15,8 @@ class DecisionTreeRegression(FunctionClass):
     def _init_param_dist(self) -> D.Distribution:
         # Represent the tree using an array. Root node is at index 0, its 2 children at index 1 and 2...
         # Values correspond to the coordinate used at each node of the decision tree.
-        
+
         # Only indices corresponding to non-leaf nodes are relevant
-        # return torch.Size([2 ** (self._depth + 1) - 1])
         s = torch.Size([self.batch_size, 2 ** (self._depth + 1) - 1, self.x_dim])
         condition_indices_dist = D.Categorical(
             torch.full(s, 1 / self.x_dim)
@@ -34,7 +31,7 @@ class DecisionTreeRegression(FunctionClass):
             target_values_dist
         )
 
-    def evaluate(self, x_batch: torch.Tensor, params: List[torch.Tensor]) -> torch.Tensor:
+    def evaluate(self, x_batch: torch.Tensor, params: list[torch.Tensor]) -> torch.Tensor:
         dt_tensor, target_tensor = params
         y_batch = torch.zeros(*x_batch.shape[:2], device=x_batch.device)
         for i in range(self.batch_size):

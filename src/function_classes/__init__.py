@@ -7,7 +7,6 @@ from .linear import (
 )
 from .mlp import MLPRegression
 from .wrappers import (
-    ModifiedFunctionClass,
     NoisyRegression,
     ScaledRegression
 )
