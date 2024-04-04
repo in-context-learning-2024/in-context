@@ -13,8 +13,6 @@ jobs:
         steps:
             - uses: actions/checkout@v3
 
-            - run: echo `pwd` && echo `ls`
-
             - name: Setup Miniconda
               uses: conda-incubator/setup-miniconda@v3.0.3
               with:
@@ -23,7 +21,7 @@ jobs:
                   #    available "conda" versions.
                   # conda-version: # something, this may be useful later
                   # Environment.yml to create an environment.
-                  environment-file: environment.yml
+                  environment-file: environment.yaml
                   # Environment name (or path) to activate on all shells. Default 
                   #    is `test` which will be created in `$CONDA/envs/test`. If the 
                   #    environment does not exist, it will be created and activated. 
