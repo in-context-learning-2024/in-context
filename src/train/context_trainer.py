@@ -5,6 +5,7 @@ import torch
 from torch import nn
 
 import wandb
+import os
 from typing import Optional, List, Any
 
 class ContextTrainer:
@@ -15,8 +16,10 @@ class ContextTrainer:
         optim: Optimizer, 
         loss_fn: nn.Module,
         steps: int,
-        baseline_models: List,
+        baseline_models: List[ContextModel],
         log_freq: int = -1,
+        checkpoint_freq: int = -1,
+        step_offset: int = 0,
         **kwargs
     ):
         self.function_class = function_class
@@ -26,7 +29,8 @@ class ContextTrainer:
         self.steps = steps
         self.baseline_models = baseline_models
         self.log_freq = log_freq 
-        self.metadata = {k:v for k, v in zip(kwargs.keys(), kwargs.values()) if isinstance(v, (int, float))}
+        self.checkpoint_freq = checkpoint_freq
+        self.step_offset = step_offset
 
     def train(self, pbar: Optional[Any] = None) -> ContextModel:
 
@@ -44,11 +48,11 @@ class ContextTrainer:
                 pbar.update(1)
                 pbar.set_description(f"loss {loss}")
 
-            if i % self.log_freq == 0:
+            if self.log_freq > 0 and i % self.log_freq == 0:
 
-                for baseline in self.baseline_models:
-                    baseline_output = baseline(x_batch, y_batch)
-                    with torch.no_grad():
+                with torch.no_grad():
+                    for baseline in self.baseline_models:
+                        baseline_output = baseline(x_batch, y_batch)
                         baseline_loss[baseline.name] = self.loss_fn(baseline_output, y_batch.cpu())
 
                 log_dict = {
@@ -59,6 +63,11 @@ class ContextTrainer:
                 wandb.log(
                     data=log_dict
                 )
+            
+            if self.checkpoint_freq > 0 and (i + self.step_offset) % self.checkpoint_freq == 0:
+                checkpoint_path = f"models/checkpoint_{i + self.step_offset}"
+                torch.save(self.model.state_dict(), checkpoint_path)
+                wandb.save(os.path.join(wandb.run.dir, checkpoint_path))
 
         return self.model
 
@@ -72,14 +81,12 @@ class TrainerSteps(ContextTrainer):
         steps: list[int], 
         baseline_models: list[ContextModel],
         log_freq: int = -1,
-        metadatas: Any = None
+        checkpoint_freq: int = -1,
     ):
 
         assert len(function_classes) == len(steps), \
             f"The number of training stages does not match between step counts and function classes!"
-        assert metadatas and len(metadatas) == len(function_classes), \
-            f"Metadata for each function class is provided but does not match the number of function classes provided!"
-
+        
         self.function_classes = function_classes
         if torch.cuda.is_available():
             self.model = model.cuda()
@@ -90,7 +97,7 @@ class TrainerSteps(ContextTrainer):
         self.steps = steps
         self.baseline_models = baseline_models
         self.log_freq = log_freq
-        self.metadatas = metadatas
+        self.checkpoint_freq = checkpoint_freq
 
         self.trainers = [
             ContextTrainer(
@@ -99,21 +106,17 @@ class TrainerSteps(ContextTrainer):
                 optim,
                 loss_fn,
                 step_count,
-                baseline_model,
+                self.baseline_models,
                 log_freq
             )
-            for fc, step_count, baseline_model in zip(function_classes, steps, baseline_models)
+            for fc, step_count, in zip(function_classes, steps)
         ]
 
     def train(self, pbar: Optional[Any] = None) -> ContextModel:
 
-        for fc, step_count, baseline_model, metadata in zip(self.function_classes, 
-                                                            self.steps, 
-                                                            self.baseline_models, 
-                                                            self.metadatas if self.metadatas else [None] * len(self.fcs)):
-            
-            if self.metadatas:
-                wandb.log(data=metadata, commit=False)
+        global_step = 0
+
+        for fc, step_count, in zip(self.function_classes, self.steps):
 
             trainer = ContextTrainer(
                 fc,
@@ -121,10 +124,14 @@ class TrainerSteps(ContextTrainer):
                 self.optim,
                 self.loss_fn,
                 step_count,
-                baseline_model,
-                self.log_freq
+                self.baseline_models,
+                self.log_freq,
+                self.checkpoint_freq,
+                global_step
             )
 
             self.model = trainer.train(pbar)
+
+            global_step += step_count
 
         return self.model

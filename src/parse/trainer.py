@@ -134,6 +134,7 @@ def _produce_trainer_stages(data: dict) -> TrainerSteps:
     model = get_model(stages[0]['model'] | { "x_dim" : x_dim })
     loss_fn = get_loss_fn(stages[0].get('loss_fn', {}))
     log_freq = stages[0].get('log_freq', -1)
+    checkpoint_freq = stages[0].get('checkpoint_freq', -1)
     optimizer = get_optimizer(model, stages[0].get('optim', {}))
     baseline_models = list(map(
         lambda d: get_model(
@@ -162,6 +163,7 @@ def _produce_trainer_stages(data: dict) -> TrainerSteps:
         loss_fn=loss_fn,
         baseline_models=baseline_models,
         log_freq=log_freq,
+        checkpoint_freq=checkpoint_freq,
     )
 
     return big_trainer
