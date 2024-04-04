@@ -1,7 +1,7 @@
 __pycache__
 .venv
 .vscode
-src/wandb
+wandb
 .idea
 *.pkl
 *.pth

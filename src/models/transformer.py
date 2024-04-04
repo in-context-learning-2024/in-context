@@ -1,5 +1,5 @@
 import torch
-from transformers import GPT2Config, GPT2Model
+from transformers import GPT2Config, GPT2Model # type: ignore
 from torch import nn
 
 from core import ContextModel
@@ -31,6 +31,6 @@ class TransformerModel(ContextModel):
         
         zs = ContextModel.interleave(xs, ys)
         embeds = self._read_in(zs)
-        output = self._backbone(inputs_embeds=embeds).last_hidden_state
+        output = self._backbone(inputs_embeds=embeds).last_hidden_state # type: ignore
         prediction = self._read_out(output)
         return prediction[:, ::2, 0][:, inds]  # predict only on xs
