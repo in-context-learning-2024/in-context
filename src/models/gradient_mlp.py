@@ -75,6 +75,7 @@ class GDModel(ContextModel):
         # model_class_args: a dict containing arguments for model_class
         # verbose: whether to print the progress or not
         # batch_size: batch size for sgd
+        super(GDModel, self).__init__()
 
         model_class = {
             "mlp" : MLP,

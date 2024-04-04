@@ -1,0 +1,15 @@
+
+function_class: 
+    type: linear regression
+loss_fn:
+    type: squared
+optim:
+    type: adam
+b_size: 32
+steps: 500
+seq_len: 17
+x_dim: 12
+x_dist:
+    type: normal
+model: *std_gpt2
+baseline_models: []

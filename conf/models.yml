@@ -1,0 +1,13 @@
+model: &std_gpt2
+    type: gpt2
+    n_positions: 101
+    n_layer: 3
+    n_embd: 64
+    n_head: 2
+
+model: &knn_3
+    type: knn
+    n_neighbors: 3
+
+model: &least_squares
+    type: least squares

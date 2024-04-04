@@ -5,6 +5,7 @@ from core import ContextModel
 class KNNModel(ContextModel):
     def __init__(self, n_neighbors, weights="uniform", **kwargs):
         # should we be picking k optimally
+        super(KNNModel, self).__init__()
         self._n_neighbors = n_neighbors
         self._weights = weights
         self.name = f"KNN_n={n_neighbors}_{weights}"

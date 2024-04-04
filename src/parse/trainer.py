@@ -118,16 +118,15 @@ def get_loss_fn(data: dict) -> torch.nn.Module:
 def _produce_trainer_stages(data: dict) -> TrainerSteps:
     """Convert a list of YAML primitive stage dicts to a list of dictionaries with instantiated objects"""
 
+    for key in ['b_size','seq_len', 'steps', 'model', 'loss_fn', 'baseline_models', 'optim']:
+        if key not in data:
+            raise ValueError(f"{key} not provided in training config!")
+
     x_dim: int = max(
         get_value(data['x_dim'], data['steps']),
         get_value(data['x_dim'], 0),
     )
     stages, step_counts = expand_curriculum(data)
-
-
-    for key in ['b_size','seq_len', 'steps', 'model', 'loss_fn', 'baseline_models', 'optim']:
-        if key not in stages[0]:
-            raise ValueError(f"{key} not provided in training config!")
 
     _x_dist = get_x_distribution(
         stages[0]['b_size'], stages[0]['seq_len'], x_dim, stages[0].get('x_dist', {})
