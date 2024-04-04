@@ -61,13 +61,26 @@ class ContextTrainer:
                 log_dict |= {f"baseline_loss_{baseline.name}": baseline_loss[baseline.name] for baseline in self.baseline_models}
 
                 wandb.log(
-                    data=log_dict
+                    data=log_dict,
+                    step=i + self.step_offset,
+                    commit=True
                 )
             
             if self.checkpoint_freq > 0 and (i + self.step_offset) % self.checkpoint_freq == 0:
-                checkpoint_path = f"models/checkpoint_{i + self.step_offset}"
-                torch.save(self.model.state_dict(), checkpoint_path)
-                wandb.save(os.path.join(wandb.run.dir, checkpoint_path))
+
+                # save locally
+                local_dir_path = f"models/{os.path.basename(os.path.dirname(wandb.run.dir)).replace('run-', '')}"
+                if not os.path.exists(local_dir_path):
+                    os.makedirs(local_dir_path)
+                torch.save(self.model.state_dict(), os.path.join(local_dir_path, f"checkpoint_{i + self.step_offset}"))
+
+                # save in wandb
+                wandb_dir_path = os.path.join(wandb.run.dir, 'models')
+                if not os.path.exists(wandb_dir_path):
+                    os.makedirs(wandb_dir_path)
+                wandb_path = os.path.join(wandb_dir_path, f"checkpoint_{i + self.step_offset}")
+                torch.save(self.model.state_dict(), wandb_path)
+                wandb.save(wandb_path, base_path=wandb.run.dir)
 
         return self.model
 

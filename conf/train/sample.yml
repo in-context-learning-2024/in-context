@@ -19,4 +19,4 @@ x_dim: !curriculum
 x_dist:
     type: normal
 model: *std_gpt2
-baseline_models: [*knn_3, *knn_3]
+baseline_models: [*knn_3, *linear]
