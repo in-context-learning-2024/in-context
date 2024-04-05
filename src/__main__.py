@@ -1,8 +1,9 @@
 import argparse as arg
 import wandb
 import os
+import yaml
 
-from parse import parse_training
+from parse import parse_training, parse_resume_training
 
 def nest_yaml(tag: str, content: str, indent_size:int=4) -> str:
     indent = indent_size * ' '
@@ -43,22 +44,18 @@ def train_from_scratch(args: arg.Namespace):
 
 def resume_training(args):
     train_dir = os.path.join("models/", args.resumetrainid)
-    with open(os.path.join(train_dir, "full_yaml.yml"), 'r') as f:
+    with open(os.path.join(train_dir, "config.yml"), 'r') as f:
         full_yaml = f.read()
-    checkpoints = list(filter(lambda f: f != "full_yaml.yml", os.listdir(train_dir)))
+    checkpoints = list(filter(lambda f: f != "config.yml", os.listdir(train_dir)))
     latest_checkpoint = sorted(checkpoints, key=lambda f: int(f.split('_')[-1]))[-1]
+    latest_checkpoint_path = os.path.join(train_dir, latest_checkpoint)
     latest_step = int(latest_checkpoint.split('_')[-1])
 
-    # TODO: use latest_step to make a new full_yaml file that has current the curriculum information, also has checkpointed model as the initial model
-    full_yaml = ...
+    trainer = parse_resume_training(full_yaml, latest_checkpoint_path, latest_step)
+
     log_yaml(full_yaml)
 
-    # TODO: use latest_checkpoint to reinstantiate the model, need another way of creating contextmodels
-    trainer = parse_training(full_yaml)
     trainer.train()
-    
-    print(latest_checkpoint)
-    print(latest_step)
 
 def main(args: arg.Namespace):
     wandb.init()

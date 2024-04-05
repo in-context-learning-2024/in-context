@@ -6,9 +6,14 @@ from .trainer import (
     get_model, 
     get_optimizer, 
     get_value, 
-    get_x_distribution
+    get_x_distribution,
+)
+
+from .resume import (
+    parse_resume_training,
 )
 
 __all__ = [
     "parse_training",
+    "parse_resume_training"
 ]
