@@ -1,14 +1,18 @@
 import torch
-from transformers import GPT2Config, GPT2Model # type: ignore
+from transformers import GPT2Config, GPT2Model, LlamaConfig, LlamaModel
 from torch import nn
 
 from core import ContextModel
 
-
+ARCHITECTURES = {
+    "gpt2": {'config': GPT2Config, 'model': GPT2Model},
+    "llama2": {'config': LlamaConfig, 'model': LlamaModel}
+} 
 class TransformerModel(ContextModel):
     def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, **kwargs):
         super(TransformerModel, self).__init__()
-        configuration = GPT2Config(
+        architecture = ARCHITECTURES[kwargs["architecture"]]
+        configuration = architecture['config'](
             n_positions=2 * n_positions,
             n_embd=n_embd,
             n_layer=n_layer,
@@ -23,7 +27,7 @@ class TransformerModel(ContextModel):
         self.context_length = n_positions
         self._n_dims = x_dim
         self._read_in = nn.Linear(x_dim, n_embd)
-        self._backbone = GPT2Model(configuration)
+        self._backbone = architecture['model'](configuration)
         self._read_out = nn.Linear(n_embd, 1)
 
     def forward(self, xs, ys):

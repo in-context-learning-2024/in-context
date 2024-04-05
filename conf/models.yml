@@ -1,5 +1,14 @@
 model: &std_gpt2
-    type: gpt2
+    type: transformer
+    architecture: gpt2
+    n_positions: 101
+    n_layer: 3
+    n_embd: 64
+    n_head: 2
+
+model: &std_llama2
+    type: transformer
+    architecture: llama2
     n_positions: 101
     n_layer: 3
     n_embd: 64

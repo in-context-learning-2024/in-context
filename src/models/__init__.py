@@ -11,7 +11,7 @@ from .xgboost import XGBoostModel
 from .decision_tree import DecisionTreeModel
 
 MODELS: dict[str, type[ContextModel]] = {
-    "gpt2" : TransformerModel,
+    "transformer" : TransformerModel,
 
     "least squares" : LeastSquaresModel,
     "knn"           : KNNModel,
