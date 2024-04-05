@@ -14,15 +14,19 @@ class TransformerModel(ContextModel):
         architecture = ARCHITECTURES[kwargs["architecture"]]
         configuration = architecture['config'](
             n_positions=2 * n_positions,
+            max_position_embeddings=2 * n_positions,
             n_embd=n_embd,
+            hidden_size=n_embd,
             n_layer=n_layer,
+            num_hidden_layers=n_layer,
             n_head=n_head,
+            num_attention_heads=n_head,
             resid_pdrop=0.0,
             embd_pdrop=0.0,
             attn_pdrop=0.0,
             use_cache=False,
         )
-        self.name = f"gpt2_embd={n_embd}_layer={n_layer}_head={n_head}"
+        self.name = f"{kwargs['architecture']}_embd={n_embd}_layer={n_layer}_head={n_head}"
 
         self.context_length = n_positions
         self._n_dims = x_dim
