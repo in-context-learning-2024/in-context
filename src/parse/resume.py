@@ -63,6 +63,7 @@ def parse_resume_training(content: str, latest_checkpoint_path: str, latest_step
         baseline_models=baseline_models,
         log_freq=log_freq,
         checkpoint_freq=checkpoint_freq,
+        step_offset=latest_step,
     )
 
     return big_trainer

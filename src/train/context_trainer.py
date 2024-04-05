@@ -97,6 +97,7 @@ class TrainerSteps(ContextTrainer):
         baseline_models: list[ContextModel],
         log_freq: int = -1,
         checkpoint_freq: int = -1,
+        step_offset: int = 0,
     ):
 
         assert len(function_classes) == len(steps), \
@@ -113,23 +114,9 @@ class TrainerSteps(ContextTrainer):
         self.baseline_models = baseline_models
         self.log_freq = log_freq
         self.checkpoint_freq = checkpoint_freq
-
-        self.trainers = [
-            ContextTrainer(
-                fc,
-                self.model,
-                optim,
-                loss_fn,
-                step_count,
-                self.baseline_models,
-                log_freq
-            )
-            for fc, step_count, in zip(function_classes, steps)
-        ]
+        self.step_offset = step_offset
 
     def train(self, pbar: Optional[Any] = None) -> ContextModel:
-
-        global_step = 0
 
         for fc, step_count, in zip(self.function_classes, self.steps):
 
@@ -142,11 +129,11 @@ class TrainerSteps(ContextTrainer):
                 self.baseline_models,
                 self.log_freq,
                 self.checkpoint_freq,
-                global_step
+                self.step_offset
             )
 
             self.model = trainer.train(pbar)
 
-            global_step += step_count
+            self.step_offset += step_count
 
         return self.model
