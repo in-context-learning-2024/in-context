@@ -40,9 +40,12 @@ def parse_resume_training(content: str, latest_checkpoint_path: str, latest_step
     ]
 
     model = get_model(stages[0]['model'] | { "x_dim" : x_dim })
-    model.load_state_dict(torch.load(latest_checkpoint_path))
-
     optimizer = get_optimizer(model, stages[0]['optim'])
+
+    latest_checkpoint = torch.load(latest_checkpoint_path)
+    model.load_state_dict(latest_checkpoint['model_state_dict'])
+    optimizer.load_state_dict(latest_checkpoint['optimizer_state_dict'])
+
     loss_fn = get_loss_fn(stages[0]['loss_fn'])
     baseline_models = list(map(
         lambda d: get_model(
