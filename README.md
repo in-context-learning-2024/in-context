@@ -13,3 +13,8 @@ Run a training run specified by `<config_file>` with:
 ```
 python src/ --config conf/train/<config_file>.yml
 ```
+
+Resume a training run specified by `<run_id>` with:
+```
+python src/ --resume <run_id>
+```
