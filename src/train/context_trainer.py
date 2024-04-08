@@ -73,16 +73,16 @@ class ContextTrainer:
             if self.checkpoint_freq > 0 and (i + self.step_offset) % self.checkpoint_freq == 0:
 
                 # save locally
-                local_dir_path = f"models/{os.path.basename(os.path.dirname(wandb.run.dir)).replace('run-', '')}"
+                local_dir_path = f"models/{os.path.basename(os.path.dirname(wandb.run.dir)).replace('run-', '')}" # pyright: ignore [reportOptionalMemberAccess]
                 os.makedirs(local_dir_path, exist_ok=True)
                 torch.save(self.model.state_dict(), os.path.join(local_dir_path, f"checkpoint_{i + self.step_offset}"))
 
                 # save in wandb
-                wandb_dir_path = os.path.join(wandb.run.dir, 'models')
+                wandb_dir_path = os.path.join(wandb.run.dir, 'models') # pyright: ignore [reportOptionalMemberAccess]
                 wandb_path = os.path.join(wandb_dir_path, f"checkpoint_{i + self.step_offset}")
                 os.makedirs(wandb_dir_path, exist_ok=True)
                 torch.save(self.model.state_dict(), wandb_path)
-                wandb.save(wandb_path, base_path=wandb.run.dir)
+                wandb.save(wandb_path, base_path=wandb.run.dir) # pyright: ignore [reportOptionalMemberAccess]
 
         return self.model
 

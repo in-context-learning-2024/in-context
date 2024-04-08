@@ -1,0 +1,12 @@
+{
+    "include" : [
+        "src/"
+    ],
+    "executionEnvironments": [
+        {"root": "src"}
+    ],
+
+    "typeCheckingMode" : "standard",
+
+    "reportIncompatibleMethodOverride": "warning",
+}
