@@ -38,7 +38,7 @@ jobs:
               uses: jakebailey/pyright-action@v2
               with:
                   pylance-version: latest-release
-                  python-path: /usr/share/miniconda/envs/in-context-learning/
+                  python-path: /usr/share/miniconda/envs/in-context-learning/bin/python
             - name: Setup tmate session
               if: success() || failure()
               uses: mxschmitt/action-tmate@v3
