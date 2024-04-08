@@ -32,6 +32,6 @@ class TransformerModel(ContextModel):
 
         zs = ContextModel.interleave(xs, ys)
         embeds = self._read_in(zs)
-        output = self._backbone(inputs_embeds=embeds).last_hidden_state # type: ignore
+        output = self._backbone(inputs_embeds=embeds).last_hidden_state # pyright: ignore [reportOptionalMemberAccess]
         prediction = self._read_out(output)
         return prediction[:, ::2, 0][:, inds]  # predict only on xs

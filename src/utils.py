@@ -1,4 +1,4 @@
-
+# pyright: reportIncompatibleMethodOverride=false
 import torch.distributions as dist
 import torch
 

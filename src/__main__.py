@@ -14,19 +14,19 @@ def nest_yaml(tag: str, content: str, indent_size:int=4) -> str:
 
 def log_yaml(full_yaml: str) -> None:
     # save locally
-    local_dir_path = f"models/{os.path.basename(os.path.dirname(wandb.run.dir)).replace('run-', '')}"
+    local_dir_path = f"models/{os.path.basename(os.path.dirname(wandb.run.dir)).replace('run-', '')}" # pyright: ignore [reportOptionalMemberAccess]
     local_config_path = os.path.join(local_dir_path, "config.yml")
     os.makedirs(local_dir_path, exist_ok=True)
     with open(local_config_path, 'w') as f:
         f.write(full_yaml)
 
     # save in wandb
-    wandb_dir_path = os.path.join(wandb.run.dir, "conf/")
+    wandb_dir_path = os.path.join(wandb.run.dir, "conf/") # pyright: ignore [reportOptionalMemberAccess]
     wandb_conf_path = os.path.join(wandb_dir_path, "config.yml")
     os.makedirs(wandb_dir_path, exist_ok=True)
     with open(wandb_conf_path, 'w') as f:
         f.write(full_yaml)
-    wandb.save(wandb_conf_path, base_path=wandb.run.dir)
+    wandb.save(wandb_conf_path, base_path=wandb.run.dir) # pyright: ignore [reportOptionalMemberAccess]
 
 def main(args: arg.Namespace):
     wandb.init()
