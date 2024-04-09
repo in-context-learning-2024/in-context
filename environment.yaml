@@ -19,3 +19,4 @@ dependencies:
     - wandb==0.12.11
     - xgboost==1.6.1
     - protobuf==3.20.1
+prefix: /ext3/miniconda3/envs/in-context-learning
