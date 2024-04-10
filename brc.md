@@ -11,13 +11,17 @@
    - To create one-time passwords for logging in to BRC, follow the instructions [here](https://docs-research-it.berkeley.edu/services/high-performance-computing/user-guide/setting-otp/).
 
 ## Accessing BRC via SSH
+First, export your username (will need to do this in both BRC environment and local machine) so commands in this guide can work through copy and paste: 
+```
+export UNAME=<yourusername>
+```
 
 To access BRC, use the following SSH command:
 ```
 ssh yourusername@hpc.brc.berkeley.edu
 ```
 
-- At the `Password:` prompt, enter your token PIN followed immediately (without spaces) by the 6-digit one-time password from the Google Authenticator app.
+- At the `Password:` prompt, enter your password (called Token Pin in the official documentation) followed immediately (without spaces) by the 6-digit one-time password from the Google Authenticator app.
   - **Example**: If your password is `ilovebrc` and the one-time code is `123456`, you would type `ilovebrc123456`.
 
 ## Transferring Singularity Containers
@@ -30,12 +34,12 @@ ssh yourusername@hpc.brc.berkeley.edu
 2. **Upload Containers to Scratch Directory**
    - Use the `scp` command to transfer the downloaded containers to your scratch directory on BRC:
      ```
-     scp -r ~/Downloads/overlay-50G-10M.ext3.gz <username>@dtn.brc.berkeley.edu:/global/scratch/users/<username>/singularity/
-     scp -r ~/Downloads/cuda11.5-cudnn8-devel-ubuntu18.04.sif <username>@dtn.brc.berkeley.edu:/global/scratch/users/<username>/singularity/
+     scp -r ~/Downloads/overlay-50G-10M.ext3.gz $UNAME@dtn.brc.berkeley.edu:/global/scratch/users/$UNAME/singularity/
+     scp -r ~/Downloads/cuda11.5-cudnn8-devel-ubuntu18.04.sif $UNAME@dtn.brc.berkeley.edu:/global/scratch/users/$UNAME/singularity/
      ```
    - Unzip the file in the target directory:
      ```
-     gunzip /global/scratch/users/<username>/singularity/overlay-50G-10M.ext3.gz
+     gunzip /global/scratch/users/$UNAME/singularity/overlay-50G-10M.ext3.gz
      ```
 
 ## Setting Up the Environment
@@ -53,7 +57,7 @@ ssh yourusername@hpc.brc.berkeley.edu
 2. **Start Singularity Container**
    - Set the scratch directory variable and execute the singularity container:
      ```
-     export SCRATCH='/global/scratch/users/<username>'
+     export SCRATCH=/global/scratch/users/$UNAME
      singularity exec --userns --fakeroot --nv -B /usr/lib64 -B /var/lib/dcv-gl --overlay $SCRATCH/singularity/overlay-50G-10M.ext3:rw $SCRATCH/singularity/cuda11.5-cudnn8-devel-ubuntu18.04.sif /bin/bash
      ```
 
@@ -75,7 +79,7 @@ ssh yourusername@hpc.brc.berkeley.edu
    - Copy `generate_jobs.py` to your project directory.
    - Use the template command to generate jobs:
      ```
-     python3 generate_jobs.py -j JOBS_PER_GPU --name PROJECT_NAME --conda_env_name CONDA_ENV_NAME --partition PARTITION --qos QOS --cpus_per_task CPUS_PER_TASK --gpu GPU --memory GPU_MEMORY PYTHON COMMAND
+     python3 generate_jobs.py -j JOBS_PER_GPU --name PROJECT_NAME --conda_env_name CONDA_ENV_NAME --partition PARTITION --qos QOS --cpus_per_task CPUS_PER_TASK --gpu GPU --memory CPU_MEMORY PYTHON_COMMAND
      ```
    - Example usage to create multiple job combinations.
 
