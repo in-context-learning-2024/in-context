@@ -1,5 +1,6 @@
 import argparse as arg
 import wandb
+import torch
 import os
 import yaml
 
@@ -29,51 +30,44 @@ def log_yaml(full_yaml: str) -> None:
         f.write(full_yaml)
     wandb.save(wandb_conf_path, base_path=wandb.run.dir)
 
-def train_from_scratch(args: arg.Namespace):
+def load_config(conffile: str) -> str:
     with open("conf/models.yml", 'r') as f:
         model_conf = f.read()
-    with open(args.conffile, 'r') as f:
+    with open(conffile, 'r') as f:
         train_conf = f.read()
 
     full_yaml = model_conf.strip() + '\n\n' \
                 + nest_yaml("train", train_conf.strip())
     log_yaml(full_yaml)
 
-    trainer = parse_training(full_yaml)
-    trainer.train()
+    return full_yaml
 
-def resume_training(args):
-    train_dir = os.path.join("models/", args.resumetrainid)
-    with open(os.path.join(train_dir, "config.yml"), 'r') as f:
-        full_yaml = f.read()
-    checkpoints = list(filter(lambda f: f != "config.yml", os.listdir(train_dir)))
-    latest_checkpoint = sorted(checkpoints, key=lambda f: int(f.split('_')[-1]))[-1]
-    latest_checkpoint_path = os.path.join(train_dir, latest_checkpoint)
-    latest_step = int(latest_checkpoint.split('_')[-1])
+def load_checkpoint(checkpointfile: str) -> tuple:
+    latest_checkpoint = torch.load(checkpointfile)
+    return latest_checkpoint['model_state_dict'], latest_checkpoint['optim_state_dict']
 
-    trainer = parse_resume_training(full_yaml, latest_checkpoint_path, latest_step)
-
-    log_yaml(full_yaml)
-
-    trainer.train()
 
 def main(args: arg.Namespace):
     wandb.init()
 
-    if args.conffile:
-        train_from_scratch(args)
-    elif args.resumetrainid:
-        resume_training(args)
-    else:
-        raise AssertionError(f"Invalid Arguments: {args}")
+    yaml_str = load_config(args.conffile)
+    latest_step = int(os.path.basename(args.checkpointfile).split("_")[-1])
+    model_weights, optim_state = load_checkpoint(args.checkpointfile)
+    
+    log_yaml(yaml_str)
+
+    trainer = ... # do the parsing with (yaml_str, latest_step, model_weights, optim_state)
+
+    trainer.train()
+
 
 
 if __name__ == "__main__":
     parser = arg.ArgumentParser()
 
     parser.add_argument("--config", '-c', type=str, default="", action='store', dest="conffile",
-                        help="name of the config file to use for training")
-    parser.add_argument("--resume", '-r', type=str, default="", action='store', dest="resumetrainid",
-                        help="id of the training run to resume training of latest checkpoint")
+                        help="path to the config file to use for training")
+    parser.add_argument("--resume", '-r', type=str, default="", action='store', dest="checkpointfile",
+                        help="path to the checkpoint to resume training with")
     args = parser.parse_args()
     main(args)

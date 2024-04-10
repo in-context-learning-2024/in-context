@@ -14,11 +14,18 @@ def parse_resume_training(content: str, latest_checkpoint_path: str, latest_step
         step += step_count
         steps.append(step)
     steps_past = list(filter(lambda s: s <= latest_step, steps))
+
+    print("step_counts:", step_counts)
+    print("steps:", steps)
+    print("steps_past", steps_past)
+
     if not steps_past:
         resume_idx = 0
     else:
         resume_idx = steps.index(steps_past[-1])
     resume_stages, resume_step_counts = stages[resume_idx:], step_counts[resume_idx:]
+
+    print("resume_step_counts:", resume_step_counts)
 
 
     x_dim: int = max(
