@@ -18,7 +18,7 @@ export UNAME=<yourusername>
 
 To access BRC, use the following SSH command:
 ```
-ssh yourusername@hpc.brc.berkeley.edu
+ssh $UNAME@hpc.brc.berkeley.edu
 ```
 
 - At the `Password:` prompt, enter your password (called Token Pin in the official documentation) followed immediately (without spaces) by the 6-digit one-time password from the Google Authenticator app.
@@ -29,7 +29,7 @@ ssh yourusername@hpc.brc.berkeley.edu
 1. **Download Required Containers**
    - Libraries container: [Download Link](https://drive.google.com/file/d/1syZVEb0l5d75q7NDaQRyS7FJQCqSxlDq/view?usp=sharing)
    - CUDA container: [Download Link](https://drive.google.com/file/d/1gF3-sQoQewP6Dhv1jVxbYvqRbrLT2idS/view?usp=sharing)
-   - **Note**: Store files other than code repositories and some models in the scratch directory (`/global/scratch/users/<username>/`).
+   - **Note**: Store files other than code repositories and some models in the scratch directory (`/global/scratch/users/$UNAME/`).
 
 2. **Upload Containers to Scratch Directory**
    - Use the `scp` command to transfer the downloaded containers to your scratch directory on BRC:
