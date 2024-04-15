@@ -13,6 +13,8 @@ from .wrappers import (
 
 from .chebychev_specials import (
     ChebychevSharedRoots,
+    ChebychevSliced,
+    ChebychevMixedSliced
 )
 
 FUNCTION_CLASSES = {
@@ -23,6 +25,8 @@ FUNCTION_CLASSES = {
     "2 layer mlp regression" : MLPRegression,
     "decision tree" : DecisionTreeRegression,
     "chebychev shared roots" : ChebychevSharedRoots,
+    "chebychev sliced" : ChebychevSliced,
+    "chebychev mixed sliced" : ChebychevMixedSliced,
 }
 
 __all__ = [

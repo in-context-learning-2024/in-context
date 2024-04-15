@@ -4,8 +4,11 @@ optim:
 loss_fn:
     type: squared
 function_class: 
-    type: chebychev shared roots
-    degree: 5
+    type: chebychev sliced
+    min_slices: 1
+    max_slices: 5 
+    lowest_degree: 3
+    highest_degree: 11
     perturbation: 0.2
     scaling_perc: 0.2
 b_size: 32
