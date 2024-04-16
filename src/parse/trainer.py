@@ -152,7 +152,8 @@ def _produce_trainer_stages(data: dict) -> TrainerSteps:
 
     log_freq = stages[0].get('log_freq', -1)
     checkpoint_freq = stages[0].get('checkpoint_freq', -1)
-    skip_steps = data['skip_steps']
+    
+    skip_steps = data.get('skip_steps', 0)
 
 
     big_trainer = TrainerSteps(
@@ -171,7 +172,11 @@ def _produce_trainer_stages(data: dict) -> TrainerSteps:
 
 def parse_training(content: str, skip_steps: int = 0, model_weights: Optional[Any] = None, optim_state: Optional[Any] = None) -> TrainerSteps:
     d = yaml.load(content, Loader=yaml.Loader)
-    d['train'] |= {'skip_steps': skip_steps, 'model_weights': model_weights, 'optim_state': optim_state}
+
+    if skip_steps > 0:
+        d['train'] |= {'skip_steps': skip_steps}
+    if model_weights is not None and optim_state is not None:
+        d['train'] |= {'model_weights': model_weights, 'optim_state': optim_state}
 
     big_trainer = _produce_trainer_stages(d['train'])
 

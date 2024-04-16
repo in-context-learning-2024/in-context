@@ -44,7 +44,7 @@ def load_config(conffile: str) -> str:
 
 def load_checkpoint(checkpointfile: str) -> tuple:
     latest_checkpoint = torch.load(checkpointfile)
-    return latest_checkpoint['model_state_dict'], latest_checkpoint['optim_state_dict']
+    return latest_checkpoint['model_state_dict'], latest_checkpoint['optimizer_state_dict']
 
 
 def main(args: arg.Namespace):

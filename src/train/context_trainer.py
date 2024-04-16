@@ -126,8 +126,9 @@ class TrainerSteps(ContextTrainer):
         self.baseline_models = baseline_models
         self.log_freq = log_freq
         self.checkpoint_freq = checkpoint_freq
-        self.skip_steps = skip_steps
+        # self.skip_steps = skip_steps
         self.skip_steps_left = skip_steps
+        self.step_offset = 0
 
         # if self.skip_steps > 0:
 
@@ -174,6 +175,6 @@ class TrainerSteps(ContextTrainer):
             self.model = trainer.train(pbar)
 
             self.step_offset += step_count
-            self.skip_steps_left -= step_count
+            self.skip_steps_left = max(0, self.skip_steps_left - step_count)
 
         return self.model
