@@ -112,7 +112,7 @@ def get_loss_fn(data: dict) -> torch.nn.Module:
 
 
 def _produce_trainer_stages(data: dict) -> TrainerSteps:
-    """Convert a list of YAML primitive stage dicts to a list of dictionaries with instantiated objects"""
+    """Convert a YAML primitive stage dicts to a instantiated Trainer object"""
 
     for key in ['b_size','seq_len', 'steps', 'model', 'loss_fn', 'baseline_models', 'optim']:
         if key not in data:
@@ -139,10 +139,9 @@ def _produce_trainer_stages(data: dict) -> TrainerSteps:
 
     model = get_model(stages[0]['model'] | { "x_dim" : x_dim })
     optimizer = get_optimizer(model, stages[0]['optim'])
-    if data['latest_checkpoint_path']:
-        latest_checkpoint = torch.load(data['latest_checkpoint_path'])
-        model.load_state_dict(latest_checkpoint['model_state_dict'])
-        optimizer.load_state_dict(latest_checkpoint['optimizer_state_dict'])
+    if 'model_weights' in data and 'optim_state' in data:
+        model.load_state_dict(data['model_weights'])
+        optimizer.load_state_dict(data['optim_state'])
     loss_fn = get_loss_fn(stages[0]['loss_fn'])
     baseline_models = list(map(
         lambda d: get_model(

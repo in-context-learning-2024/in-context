@@ -51,12 +51,20 @@ def main(args: arg.Namespace):
     wandb.init()
 
     yaml_str = load_config(args.conffile)
-    latest_step = int(os.path.basename(args.checkpointfile).split("_")[-1])
-    model_weights, optim_state = load_checkpoint(args.checkpointfile)
-    
     log_yaml(yaml_str)
 
-    trainer = ... # do the parsing with (yaml_str, latest_step, model_weights, optim_state)
+    if args.checkpointfile == "":
+        trainer = parse_training(yaml_str)
+    else:
+        latest_step = int(os.path.basename(args.checkpointfile).split("_")[-1])
+        model_weights, optim_state = load_checkpoint(args.checkpointfile)
+
+        trainer = parse_training(
+            yaml_str,
+            skip_steps=latest_step,
+            model_weights=model_weights,
+            optim_state=optim_state
+        )
 
     trainer.train()
 
