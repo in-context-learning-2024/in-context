@@ -17,6 +17,10 @@ from .chebychev_specials import (
     ChebychevMixedSliced
 )
 
+from .polynomials import (
+    PolynomialMixedSliced,
+)
+
 FUNCTION_CLASSES = {
     "linear regression" : LinearRegression,
     "linear classification" : LinearClassification,
@@ -27,6 +31,7 @@ FUNCTION_CLASSES = {
     "chebychev shared roots" : ChebychevSharedRoots,
     "chebychev sliced" : ChebychevSliced,
     "chebychev mixed sliced" : ChebychevMixedSliced,
+    "polynomial mixed sliced" : PolynomialMixedSliced,
 }
 
 __all__ = [
