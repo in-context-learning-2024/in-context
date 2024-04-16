@@ -208,7 +208,7 @@ class ChebychevMixedSliced(FunctionClass):
         # self.chebyshev_roots (batch_size, different_roots)
         # chebychev_roots (batch_size, slices, different_roots)
         chebychev_roots = self.chebychev_roots.unsqueeze(1).expand(-1, len(idx_slices), -1)
-        roots = chebychev_roots + 2*self.perturbation*torch.rand(chebychev_roots.shape) - self.perturbation
+        roots = chebychev_roots + 2*self.perturbation*torch.rand((x_batch.shape[0], 1, chebychev_roots.shape[-1])) - self.perturbation
 
         # (batch_size, slices, x_points, different_roots)
         roots = roots.unsqueeze(2).expand(-1, -1, x_batch.shape[1], -1)
@@ -226,12 +226,12 @@ class ChebychevMixedSliced(FunctionClass):
         # Add some randomness to sign, and partially random scaling
         poly_val_collection = []
         for i, idx_slice in enumerate(idx_slices):
-            relevant_polys = poly_values[:, i]
-            max_per_sample = torch.max(torch.abs(relevant_polys), dim=1).values
+            relevant_poly_values = poly_values[:, i, idx_slice]
 
-            relevant_poly_values = relevant_polys[:, idx_slice]
-            relevant_poly_values = relevant_poly_values * self._one_minus_one[torch.randint(0, 2, (self.batch_size, 1))] * (self.scaling_perc * torch.rand((self.batch_size, 1)) + (1-self.scaling_perc))
-            relevant_poly_values = relevant_poly_values / max_per_sample.unsqueeze(1)
+            if relevant_poly_values.shape[1] != 0:
+                max_val = torch.max(torch.abs(relevant_poly_values), dim=1).values
+                relevant_poly_values = relevant_poly_values * self._one_minus_one[torch.randint(0, 2, (self.batch_size, 1))] * (self.scaling_perc * torch.rand((self.batch_size, 1)) + (1-self.scaling_perc))
+                relevant_poly_values = relevant_poly_values / max_val.unsqueeze(1)
             
             poly_val_collection.append(relevant_poly_values)
 
