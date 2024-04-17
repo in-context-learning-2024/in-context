@@ -1,23 +1,23 @@
 function_class: 
     type: linear regression
 b_size: 32
-steps: 500
-log_freq: 10
-checkpoint_freq: 100
+steps: 500000
+log_freq: 100
+checkpoint_freq: 1000
 optim:
     type: adam
 loss_fn:
     type: mse
 seq_len: !curriculum
     start: 11
-    stop: 21
+    stop: 42
     step_size: 2
-    step_len: 50
+    step_len: 2000
 x_dim: !curriculum
     start: 5
-    stop: 10
+    stop: 20
     step_size: 1
-    step_len: 50
+    step_len: 5000
 x_dist:
     type: normal
 model: *std_gpt2

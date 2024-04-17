@@ -18,6 +18,3 @@ model: &knn_3
 
 model: &least_squares
     type: least squares
-
-model: &xgboost
-    type: xgboost
