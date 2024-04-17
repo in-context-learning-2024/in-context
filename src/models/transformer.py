@@ -1,5 +1,5 @@
 import torch
-from transformers import GPT2Config, GPT2Model
+from transformers import GPT2Config, GPT2Model # pyright: ignore[reportPrivateImportUsage]
 from torch import nn
 
 from core import ContextModel
@@ -27,7 +27,7 @@ class TransformerModel(ContextModel):
         self._read_out = nn.Linear(n_embd, 1)
 
     def forward(self, xs, ys):
-        self._backbone.to(xs.device) # pyright: ignore [reportArgumentType]
+        self._backbone.to(xs.device) # pyright: ignore [reportArgumentType,reportAttributeAccessIssue]
         inds = torch.arange(ys.shape[1])
 
         zs = ContextModel.interleave(xs, ys)
