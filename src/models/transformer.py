@@ -31,14 +31,13 @@ class GPT2(TransformerModel):
 
         configuration = GPT2Config(
             n_positions=2 * n_positions,
-            max_position_embeddings=2 * n_positions,
             n_embd=n_embd,
             n_layer=n_layer,
             n_head=n_head,
-            # resid_pdrop=0.0,
-            # embd_pdrop=0.0,
-            # attn_pdrop=0.0,
-            # use_cache=False,
+            resid_pdrop=0.0,
+            embd_pdrop=0.0,
+            attn_pdrop=0.0,
+            use_cache=False,
         )
         backbone: nn.Module = GPT2Model(configuration) # pyright: ignore[reportAssignmentType]
 
@@ -46,23 +45,19 @@ class GPT2(TransformerModel):
 
         self.name = f"gpt2_embd={n_embd}_layer={n_layer}_head={n_head}"
 
+
 class Llama(TransformerModel):
 
-    def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, **kwargs):
+    def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, hidden_act: str = 'silu', rope_theta: float = 1e4, **kwargs):
 
         configuration = LlamaConfig(
-            # n_positions=2 * n_positions,
             max_position_embeddings=2 * n_positions,
-            # n_embd=n_embd,
             hidden_size=n_embd,
-            # n_layer=n_layer,
             num_hidden_layers=n_layer,
-            # n_head=n_head,
             num_attention_heads=n_head,
-            # resid_pdrop=0.0,
-            # embd_pdrop=0.0,
-            # attn_pdrop=0.0,
-            use_cache=False,
+            hidden_act=hidden_act,
+            rope_theta=rope_theta,
+            use_cache=True,
         )
         backbone: nn.Module = LlamaModel(configuration) # pyright: ignore[reportAssignmentType]
 
