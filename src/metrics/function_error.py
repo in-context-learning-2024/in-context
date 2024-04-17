@@ -10,14 +10,16 @@ from core import ContextModel
 import numpy as np
 
 class FunctionClassError(Benchmark):
-    def __init__(self, function_class: FunctionClass):
+    def __init__(self, function_class: FunctionClass, num_batches=1, save_path=None):
         self.fn_cls = function_class
+        self.num_batches=num_batches
+        self.save_path=save_path
 
     def _metric(self, ground_truth: Tensor, predictions: Tensor) -> Tensor:
         """Compute a metric between a prediction and a "ground truth" """
         raise NotImplementedError("Abstract class FunctionClassError does not implement a metric!")
 
-    def PostProcessingStats(self, errs, model_names, save_path=None, prefix=None):
+    def PostProcessingStats(self, errs, model_names, prefix=None):
         stats={}
 
         num_models, samples, sequence_length=errs.size()
@@ -27,34 +29,30 @@ class FunctionClassError(Benchmark):
         else:
             prefix=""
 
-        print(errs.size())
-
         std=torch.std(errs, dim=1)
         quantiles=torch.quantile(errs, torch.Tensor([0, 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 1]), dim=1)
         for i, name in enumerate(model_names):
             stats[prefix+"accuracy_"+name]=errs[i].mean(dim=0)
             stats[prefix+"std_"+name]= std[i],
-            stats[prefix+"std_mean_"+name]= std[i]/np.sqrt(samples-1)
+            stats[prefix+"std_mean_"+name]= std[i]/np.sqrt(samples)
             stats[prefix+"max_"+name]=quantiles[len(quantiles)-1, i]
             stats[prefix+"min_"+name]=quantiles[0, i]
             for j in range(1, len(quantiles)-1):
                 stats[prefix+"quantile_"+name+str([0, 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 1][j])]=quantiles[j, i]
-        if save_path!=None:
-            os.makedirs(save_path, exist_ok=True)
-            torch.save(stats, os.path.join(save_path,self.fn_cls.name))
+        if self.save_path!=None:
+            os.makedirs(self.save_path, exist_ok=True)
+            torch.save(stats, os.path.join(self.save_path,self.fn_cls.name))
 
         return stats
 
     def evaluate(self, models: Iterable[ContextModel]):# -> Iterable[Tensor]:
 
-        samples=10 #should not be hardcoded, but unsure where this input should be.
-        save_path=None
         
         sequence_length=self.fn_cls.sequence_length
         batch_size=self.fn_cls.batch_size
-        errs=torch.zeros((len(models), samples, batch_size, sequence_length))
+        errs=torch.zeros((len(models), self.num_batches, batch_size, sequence_length))
 
-        for i, (x_batch, y_batch) in zip(range(samples), self.fn_cls):
+        for i, (x_batch, y_batch) in zip(range(self.num_batches), self.fn_cls):
             with torch.no_grad():
                 errs[:, i] = torch.stack([
                   
@@ -65,15 +63,11 @@ class FunctionClassError(Benchmark):
                     for model in models
                 ])
         
-        num_models, samples, batch_size, sequence_length=errs.size()
+        errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))
 
-        errs=torch.reshape(errs, (num_models, samples*batch_size, sequence_length))
+        return self.PostProcessingStats(errs, [model.name for model in models]), errs
 
-        return self.PostProcessingStats(errs, [model.name for model in models], save_path), errs
-
-    def evaluateRobustness(self, models: Iterable[ContextModel]):
-        samples=10 #should not be hardcoded, but unsure where this input should be.
-        save_path=None
+    def evaluateRobustness(self, models: Iterable[ContextModel], noise_x_func, noise_y_func):
         
         robustness_tasks=[]
 
@@ -90,13 +84,11 @@ class FunctionClassError(Benchmark):
 
         sequence_length=self.fn_cls.sequence_length
         batch_size=self.fn_cls.batch_size
-        errs=torch.zeros((len(models), samples, batch_size, sequence_length))
-        
 
         for j, task in enumerate(robustness_tasks):
-            errs=torch.zeros((samples, batch_size, seq_length))
+            errs=torch.zeros((samples, self.num_batches, batch_size, sequence_length))
     
-            for i, (x_batch, y_batch) in zip(range(samples), function_class):
+            for i, (x_batch, y_batch) in zip(range(self.num_batches), self.fn_cls):
 
                 curxs=x_batch
                 curys=y_batch
@@ -111,7 +103,7 @@ class FunctionClassError(Benchmark):
                     curys=noise_y_func(task[1])(curys)
                 
                 with torch.no_grad():
-                    errs[:, i] = torch.tensor([
+                    errs[:, i] = torch.stack([
                   
                         self._metric(
                             curys,
@@ -120,15 +112,9 @@ class FunctionClassError(Benchmark):
                         for model in models
                     ])
 
-                output = model(curxs, curys)
-        
-                errs[i] = accuracy_func(output, curys)
-        
-            num_models, samples, batch_size, sequence_length=errs.size()
+            errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))
 
-            errs=torch.reshape(errs, (num+models, samples*batch_size, sequence_length))
-
-            robustness_nums.update(PostProcessingStats(errs, [model.name for model in models], save_path, task[0]+str(task[1])))
+            robustness_nums.update(self.PostProcessingStats(errs, [model.name for model in models], save_path, task[0]+str(task[1])))
         
         return robustness_nums
 
