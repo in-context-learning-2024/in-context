@@ -6,12 +6,12 @@ from typing import Iterable
 
 from metrics.benchmark import Benchmark
 from core import FunctionClass
-from src.core import ContextModel
+from core import ContextModel
+import numpy as np
 
 class FunctionClassError(Benchmark):
     def __init__(self, function_class: FunctionClass):
         self.fn_cls = function_class
-        super().__init__()
 
     def _metric(self, ground_truth: Tensor, predictions: Tensor) -> Tensor:
         """Compute a metric between a prediction and a "ground truth" """
@@ -20,19 +20,25 @@ class FunctionClassError(Benchmark):
     def PostProcessingStats(self, errs, model_names, save_path=None, prefix=None):
         stats={}
 
-        num_models, samples, batch_size, sequence_length=errs.size()
+        num_models, samples, sequence_length=errs.size()
         
         if (prefix!=None):
             prefix+="_"
+        else:
+            prefix=""
+
+        print(errs.size())
 
         std=torch.std(errs, dim=1)
-        stats={prefix+"accuracy_"+name: errs.mean(i, dim=1), prefix+"std_"+name: std[i], prefix+"std_mean_"+name: std[i]/np.sqrt(samples*batch_size) for i, name in enumerate(model_names)}
         quantiles=torch.quantile(errs, torch.Tensor([0, 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 1]), dim=1)
         for i, name in enumerate(model_names):
-            stats[prefix+"max_"+name]=quantiles[i, len(quantiles)-1]
-            stats[prefix+"min_"+name]=quantiles[i, 0]
+            stats[prefix+"accuracy_"+name]=errs[i].mean(dim=0)
+            stats[prefix+"std_"+name]= std[i],
+            stats[prefix+"std_mean_"+name]= std[i]/np.sqrt(samples-1)
+            stats[prefix+"max_"+name]=quantiles[len(quantiles)-1, i]
+            stats[prefix+"min_"+name]=quantiles[0, i]
             for j in range(1, len(quantiles)-1):
-                stats[:, prefix+"quantile_"+name+str([0, 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 1][j])]=quantiles[i, j]
+                stats[prefix+"quantile_"+name+str([0, 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 1][j])]=quantiles[j, i]
         if save_path!=None:
             os.makedirs(save_path, exist_ok=True)
             torch.save(stats, os.path.join(save_path,self.fn_cls.name))
@@ -48,9 +54,9 @@ class FunctionClassError(Benchmark):
         batch_size=self.fn_cls.batch_size
         errs=torch.zeros((len(models), samples, batch_size, sequence_length))
 
-        for i, (x_batch, y_batch) in zip(range(samples), function_class):
+        for i, (x_batch, y_batch) in zip(range(samples), self.fn_cls):
             with torch.no_grad():
-                errs[:, i] = torch.tensor([
+                errs[:, i] = torch.stack([
                   
                     self._metric(
                         y_batch,
@@ -61,7 +67,7 @@ class FunctionClassError(Benchmark):
         
         num_models, samples, batch_size, sequence_length=errs.size()
 
-        errs=torch.reshape(errs, (num+models, samples*batch_size, sequence_length))
+        errs=torch.reshape(errs, (num_models, samples*batch_size, sequence_length))
 
         return self.PostProcessingStats(errs, [model.name for model in models], save_path), errs
 
@@ -124,7 +130,7 @@ class FunctionClassError(Benchmark):
 
             robustness_nums.update(PostProcessingStats(errs, [model.name for model in models], save_path, task[0]+str(task[1])))
         
-    return robustness_nums
+        return robustness_nums
 
 
 class SquaredError(FunctionClassError):
