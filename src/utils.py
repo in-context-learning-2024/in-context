@@ -20,7 +20,7 @@ class CombinedDistribution(dist.Distribution):
         for dist in self._dists:
             assert dist.batch_shape == batch_shape, \
                 f"Batch shapes do not match between all distributions! {batch_shape} != {dist.batch_shape} for {dist}"
-        
+
 
     @property
     def batch_shape(self) -> torch.Size:
@@ -49,8 +49,8 @@ class CombinedDistribution(dist.Distribution):
 
     def rsample(self, sample_shape: torch.Size) -> List[torch.Tensor]:
         return [ dist.rsample(sample_shape) for dist in self._dists ]
-    
-    def sample(self, sample_shape: torch.Size) -> List[torch.Tensor]:
+
+    def sample(self, sample_shape: torch.Size = torch.Size([])) -> List[torch.Tensor]:
         return [ dist.sample(sample_shape) for dist in self._dists ]
 
     def sample_n(self, n: int) -> List[torch.Tensor]:

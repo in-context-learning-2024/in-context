@@ -20,7 +20,8 @@ class ContextTrainer:
         log_freq: int = -1,
         checkpoint_freq: int = -1,
         step_offset: int = 0,
-        **kwargs
+        skip_steps: int = 0,
+        **kwargs, 
     ):
         self.function_class = function_class
         self.model = model
@@ -31,13 +32,40 @@ class ContextTrainer:
         self.log_freq = log_freq 
         self.checkpoint_freq = checkpoint_freq
         self.step_offset = step_offset
+        self.skip_steps = skip_steps
+
+    def _log(self, step: int, data: dict) -> None:
+        global_step_num = step + self.step_offset
+        wandb.log(
+            data=data,
+            step=global_step_num,
+            commit=True
+        )
+
+    def _checkpoint(self, step: int) -> None:
+        global_step_num = step + self.step_offset
+        if self.checkpoint_freq > 0 and global_step_num % self.checkpoint_freq == 0:
+            checkpoint = {'model_state_dict': self.model.state_dict(),
+                        'optimizer_state_dict': self.optim.state_dict()}
+
+            # save locally
+            local_dir_path = f"models/{os.path.basename(os.path.dirname(wandb.run.dir)).replace('run-', '')}" # pyright: ignore [reportOptionalMemberAccess]
+            os.makedirs(local_dir_path, exist_ok=True)
+            torch.save(checkpoint, os.path.join(local_dir_path, f"checkpoint_{global_step_num}"))
+
+            # save in wandb
+            wandb_dir_path = os.path.join(wandb.run.dir, 'models') # pyright: ignore [reportOptionalMemberAccess]
+            wandb_path = os.path.join(wandb_dir_path, f"checkpoint_{global_step_num}")
+            os.makedirs(wandb_dir_path, exist_ok=True)
+            torch.save(checkpoint, wandb_path)
+            wandb.save(wandb_path, base_path=wandb.run.dir) # pyright: ignore [reportOptionalMemberAccess]
 
     def train(self, pbar: Optional[Any] = None) -> ContextModel:
 
         baseline_loss = {}
 
-        for i, (x_batch, y_batch) in zip(range(self.steps), self.function_class):
-            
+        for i, (x_batch, y_batch) in zip(range(self.skip_steps, self.steps), self.function_class):
+
             output = self.model(x_batch, y_batch)
             loss = self.loss_fn(output, y_batch)
 
@@ -64,25 +92,9 @@ class ContextTrainer:
                     for baseline in self.baseline_models
                 }
 
-                wandb.log(
-                    data=log_dict,
-                    step=i + self.step_offset,
-                    commit=True
-                )
-            
-            if self.checkpoint_freq > 0 and (i + self.step_offset) % self.checkpoint_freq == 0:
+                self._log(step=i, data=log_dict)
 
-                # save locally
-                local_dir_path = f"models/{os.path.basename(os.path.dirname(wandb.run.dir)).replace('run-', '')}" # pyright: ignore [reportOptionalMemberAccess]
-                os.makedirs(local_dir_path, exist_ok=True)
-                torch.save(self.model.state_dict(), os.path.join(local_dir_path, f"checkpoint_{i + self.step_offset}"))
-
-                # save in wandb
-                wandb_dir_path = os.path.join(wandb.run.dir, 'models') # pyright: ignore [reportOptionalMemberAccess]
-                wandb_path = os.path.join(wandb_dir_path, f"checkpoint_{i + self.step_offset}")
-                os.makedirs(wandb_dir_path, exist_ok=True)
-                torch.save(self.model.state_dict(), wandb_path)
-                wandb.save(wandb_path, base_path=wandb.run.dir) # pyright: ignore [reportOptionalMemberAccess]
+            self._checkpoint(step=i)
 
         return self.model
 
@@ -97,6 +109,7 @@ class TrainerSteps(ContextTrainer):
         baseline_models: list[ContextModel],
         log_freq: int = -1,
         checkpoint_freq: int = -1,
+        skip_steps: int = 0,
     ):
 
         assert len(function_classes) == len(steps), \
@@ -113,23 +126,10 @@ class TrainerSteps(ContextTrainer):
         self.baseline_models = baseline_models
         self.log_freq = log_freq
         self.checkpoint_freq = checkpoint_freq
-
-        self.trainers = [
-            ContextTrainer(
-                fc,
-                self.model,
-                optim,
-                loss_fn,
-                step_count,
-                self.baseline_models,
-                log_freq
-            )
-            for fc, step_count, in zip(function_classes, steps)
-        ]
+        self.skip_steps_left = skip_steps
+        self.step_offset = 0
 
     def train(self, pbar: Optional[Any] = None) -> ContextModel:
-
-        global_step = 0
 
         for fc, step_count, in zip(self.function_classes, self.steps):
 
@@ -142,11 +142,13 @@ class TrainerSteps(ContextTrainer):
                 self.baseline_models,
                 self.log_freq,
                 self.checkpoint_freq,
-                global_step
+                self.step_offset,
+                self.skip_steps_left
             )
 
             self.model = trainer.train(pbar)
 
-            global_step += step_count
+            self.step_offset += step_count
+            self.skip_steps_left = max(0, self.skip_steps_left - step_count)
 
         return self.model
