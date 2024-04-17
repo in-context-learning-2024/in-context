@@ -2,9 +2,8 @@ import argparse as arg
 import wandb
 import torch
 import os
-import yaml
 
-from parse import parse_training, parse_resume_training
+from parse import parse_training
 
 def nest_yaml(tag: str, content: str, indent_size:int=4) -> str:
     indent = indent_size * ' '

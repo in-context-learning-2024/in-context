@@ -9,11 +9,6 @@ from .trainer import (
     get_x_distribution,
 )
 
-from .resume import (
-    parse_resume_training,
-)
-
 __all__ = [
     "parse_training",
-    "parse_resume_training"
 ]

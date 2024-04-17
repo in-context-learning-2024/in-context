@@ -21,7 +21,6 @@ class ContextTrainer:
         checkpoint_freq: int = -1,
         step_offset: int = 0,
         skip_steps: int = 0,
-        **kwargs
     ):
         self.function_class = function_class
         self.model = model
@@ -126,34 +125,8 @@ class TrainerSteps(ContextTrainer):
         self.baseline_models = baseline_models
         self.log_freq = log_freq
         self.checkpoint_freq = checkpoint_freq
-        # self.skip_steps = skip_steps
         self.skip_steps_left = skip_steps
         self.step_offset = 0
-
-        # if self.skip_steps > 0:
-
-        #     steps_left_to_take = torch.cumsum(torch.tensor(self.steps)) - self.skip_steps
-        #     incomplete_stages = steps_left_to_take > 0
-        #     resume_idx = list(incomplete_stages).index(True)
-        #     self.steps = self.steps[resume_idx:]
-        #     self.steps[resume_idx] = steps_left_to_take[resume_idx]
-
-        #     self.function_classes = self.function_classes[resume_idx:]
-
-            # cumulative_steps, cumulative_step = [], 0
-
-            # total_steps_past = 0
-            # for step_count in self.steps:
-            #     cumulative_step += step_count
-            #     cumulative_steps.append(cumulative_step)
-            # steps_past = list(filter(lambda s: s <= self.step_offset, cumulative_steps))
-            # if not steps_past:
-            #     resume_idx, resume_offset = 0, ...
-            # else:
-            #     resume_idx, resume_offset = cumulative_steps.index(steps_past[-1]), ...
-
-            # self.steps = self.steps[resume_idx:]
-            # self.steps[resume_idx] += resume_offset
 
     def train(self, pbar: Optional[Any] = None) -> ContextModel:
 

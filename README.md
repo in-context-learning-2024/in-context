@@ -14,7 +14,7 @@ Run a training run specified by `<config_file>` with:
 python src/ --config conf/train/<config_file>.yml
 ```
 
-Resume a training run specified by `<run_id>` with:
+Resume a training run specified by `<config_file>` starting from `<run_id>/<checkpoint_file>` with:
 ```
-python src/ --resume <run_id>
+python src/ --config conf/train/<config_file>.yml --resume models/<run_id>/<checkpoint_file>
 ```
