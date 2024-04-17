@@ -2,7 +2,7 @@ import yaml
 import torch
 import torch.distributions as D
 
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 from train import TrainerSteps
 from models import MODELS
@@ -112,7 +112,7 @@ def get_loss_fn(data: dict) -> torch.nn.Module:
 
 
 def _produce_trainer_stages(data: dict) -> TrainerSteps:
-    """Convert a list of YAML primitive stage dicts to a list of dictionaries with instantiated objects"""
+    """Convert a YAML primitive stage dicts to a instantiated Trainer object"""
 
     for key in ['b_size','seq_len', 'steps', 'model', 'loss_fn', 'baseline_models', 'optim']:
         if key not in data:
@@ -139,6 +139,9 @@ def _produce_trainer_stages(data: dict) -> TrainerSteps:
 
     model = get_model(stages[0]['model'] | { "x_dim" : x_dim })
     optimizer = get_optimizer(model, stages[0]['optim'])
+    if 'model_weights' in data and 'optim_state' in data:
+        model.load_state_dict(data['model_weights'])
+        optimizer.load_state_dict(data['optim_state'])
     loss_fn = get_loss_fn(stages[0]['loss_fn'])
     baseline_models = list(map(
         lambda d: get_model(
@@ -149,6 +152,8 @@ def _produce_trainer_stages(data: dict) -> TrainerSteps:
 
     log_freq = stages[0].get('log_freq', -1)
     checkpoint_freq = stages[0].get('checkpoint_freq', -1)
+    
+    skip_steps = data.get('skip_steps', 0)
 
 
     big_trainer = TrainerSteps(
@@ -160,12 +165,18 @@ def _produce_trainer_stages(data: dict) -> TrainerSteps:
         baseline_models=baseline_models,
         log_freq=log_freq,
         checkpoint_freq=checkpoint_freq,
+        skip_steps=skip_steps,
     )
 
     return big_trainer
 
-def parse_training(content: str) -> TrainerSteps:
+def parse_training(content: str, skip_steps: int = 0, model_weights: Optional[Any] = None, optim_state: Optional[Any] = None) -> TrainerSteps:
     d = yaml.load(content, Loader=yaml.Loader)
+
+    if skip_steps > 0:
+        d['train'] |= {'skip_steps': skip_steps}
+    if model_weights is not None and optim_state is not None:
+        d['train'] |= {'model_weights': model_weights, 'optim_state': optim_state}
 
     big_trainer = _produce_trainer_stages(d['train'])
 
