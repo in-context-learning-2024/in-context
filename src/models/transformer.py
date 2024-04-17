@@ -65,12 +65,3 @@ class Llama(TransformerModel):
 
         self.name = self.name = f"llama_embd={n_embd}_layer={n_layer}_head={n_head}"
 
-    def forward(self, xs, ys):
-        self._backbone.to(xs.device) # type: ignore
-        inds = torch.arange(ys.shape[1])
-
-        zs = ContextModel.interleave(xs, ys)
-        embeds = self._read_in(zs)
-        output = self._backbone(inputs_embeds=embeds).last_hidden_state # type: ignore
-        prediction = self._read_out(output)
-        return prediction[:, ::2, 0][:, inds]  # predict only on xs
