@@ -21,6 +21,7 @@ class ContextTrainer:
         checkpoint_freq: int = -1,
         step_offset: int = 0,
         skip_steps: int = 0,
+        **kwargs, 
     ):
         self.function_class = function_class
         self.model = model

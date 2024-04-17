@@ -68,7 +68,6 @@ def main(args: arg.Namespace):
     trainer.train()
 
 
-
 if __name__ == "__main__":
     parser = arg.ArgumentParser()
 
