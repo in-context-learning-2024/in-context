@@ -8,9 +8,9 @@ from utils import CombinedDistribution
 
 class DecisionTreeRegression(FunctionClass):
 
-    def __init__(self, depth: int = 4, *args, **kwargs):
+    def __init__(self, depth: int = 4, *args):
         self._depth = depth
-        super(DecisionTreeRegression, self).__init__(*args, **kwargs)
+        super(DecisionTreeRegression, self).__init__(*args)
 
     def _init_param_dist(self) -> D.Distribution:
         # Represent the tree using an array. Root node is at index 0, its 2 children at index 1 and 2...
