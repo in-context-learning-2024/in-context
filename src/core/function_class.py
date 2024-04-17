@@ -43,7 +43,7 @@ class FunctionClass:
         x_batch = torch.zeros_like(x_batch_tmp)
         x_batch[..., :self.x_curriculum_dim] = x_batch_tmp[..., :self.x_curriculum_dim]
 
-        params: List[torch.Tensor] | torch.Tensor  = self.p_dist.sample()
+        params: List[torch.Tensor] | torch.Tensor  = self.p_dist.sample(sample_shape=torch.Size([]))
         y_batch: torch.Tensor = self.evaluate(x_batch, params)
         if torch.cuda.is_available():
             return x_batch.cuda(), y_batch.cuda() 

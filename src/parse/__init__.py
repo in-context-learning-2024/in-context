@@ -6,7 +6,7 @@ from .trainer import (
     get_model, 
     get_optimizer, 
     get_value, 
-    get_x_distribution
+    get_x_distribution,
 )
 
 __all__ = [
