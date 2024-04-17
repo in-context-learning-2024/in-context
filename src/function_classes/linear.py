@@ -17,9 +17,10 @@ class LinearRegression(FunctionClass):
 
         return param_dist
 
-    def evaluate(self, x_batch: torch.Tensor, params: torch.Tensor) -> torch.Tensor:
+    def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
+        weights, _ = params
         # TODO: changed this line so it would run, but it's probably wrong!
-        partial_sums = torch.bmm(params.squeeze(-2), x_batch.permute(0, 2, 1))
+        partial_sums = torch.bmm(weights.squeeze(-2), x_batch.permute(0, 2, 1))
         full_sums = torch.sum(partial_sums, dim=-2, keepdim=True)
         y_batch = full_sums.squeeze()
 
@@ -31,21 +32,22 @@ class SparseLinearRegression(LinearRegression):
         super(SparseLinearRegression, self).__init__(*args, **kwargs)
         self._sparsity = sparsity
 
-    def evaluate(self, x_batch: torch.Tensor, params: torch.Tensor) -> torch.Tensor:
+    def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
+        weights, _ = params
         param_shape = self.p_dist.batch_shape + self.p_dist.event_shape
         mask = torch.ones(param_shape).bool()
         mask[torch.randperm(self.x_dim)[:self._sparsity]] = False
-        params[:, mask] = 0
+        weights[:, mask] = 0
 
-        return super().evaluate(x_batch, params)
+        return super().evaluate(x_batch, weights)
 
 class LinearClassification(LinearRegression):
 
-    def evaluate(self, x_batch: torch.Tensor, params: torch.Tensor):
-        y_batch = super().evaluate(x_batch, params)
+    def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor):
+        y_batch = super().evaluate(x_batch, *params)
         return y_batch.sign()
 
 class QuadraticRegression(LinearRegression):
 
-    def evaluate(self, x_batch: torch.Tensor, params: torch.Tensor) -> torch.Tensor:
-        return super().evaluate(x_batch**2, params)
+    def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
+        return super().evaluate(x_batch**2, *params)

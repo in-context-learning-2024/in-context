@@ -7,6 +7,4 @@
     ],
 
     "typeCheckingMode" : "standard",
-
-    "reportIncompatibleMethodOverride": "warning",
 }
