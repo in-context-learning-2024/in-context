@@ -119,8 +119,8 @@ def _produce_trainer_stages(data: dict) -> TrainerSteps:
             raise ValueError(f"{key} not provided in training config!")
 
     x_dim: int = max(
-        get_value(data['x_dim'], data['steps']), # type: ignore
-        get_value(data['x_dim'], 0), # type: ignore
+        get_value(data['x_dim'], data['steps']), # pyright: ignore[reportArgumentType]
+        get_value(data['x_dim'], 0), # pyright: ignore[reportArgumentType]
     )
     stages, step_counts = expand_curriculum(data)
 

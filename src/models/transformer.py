@@ -16,12 +16,12 @@ class TransformerModel(ContextModel):
         self._read_out = nn.Linear(n_embd, 1)
 
     def forward(self, xs, ys):
-        self._backbone.to(xs.device) # type: ignore
+        self._backbone.to(xs.device) # pyright: ignore[reportArgumentType,reportAttributeAccessIssue]
         inds = torch.arange(ys.shape[1])
 
         zs = ContextModel.interleave(xs, ys)
         embeds = self._read_in(zs)
-        output = self._backbone(inputs_embeds=embeds).last_hidden_state # type: ignore
+        output = self._backbone(inputs_embeds=embeds).last_hidden_state # pyright: ignore[reportCallIssue]
         prediction = self._read_out(output)
         return prediction[:, ::2, 0][:, inds]  # predict only on xs
 
