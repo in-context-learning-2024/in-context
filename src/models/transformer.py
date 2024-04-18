@@ -14,6 +14,7 @@ class TransformerModel(ContextModel):
         self._read_in = nn.Linear(x_dim, n_embd)
         self._backbone = backbone
         self._read_out = nn.Linear(n_embd, 1)
+        self.n_embd = n_embd
 
     def forward(self, xs, ys):
         self._backbone.to(xs.device) # pyright: ignore[reportArgumentType,reportAttributeAccessIssue]

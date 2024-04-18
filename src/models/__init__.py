@@ -3,6 +3,7 @@ from .transformer import (
     GPT2,
     Llama
 )
+from .lora import Lora
 from .linear import (
     LeastSquaresModel,
     AveragingModel,
@@ -16,6 +17,8 @@ from .decision_tree import DecisionTreeModel
 MODELS: dict[str, type[ContextModel]] = {
     "gpt2" : GPT2,
     "llama" : Llama,
+
+    "lora" : Lora,
 
     "least squares" : LeastSquaresModel,
     "knn"           : KNNModel,

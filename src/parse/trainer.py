@@ -66,6 +66,10 @@ def get_model(data: dict) -> ContextModel:
 
     _check_kwargs(MODELS, data, "model")
 
+    if 'base_model' in data:
+        base_model = get_model(data['base_model'] | {'x_dim': data['x_dim']})
+        data['base_model'] = base_model
+
     model_class: type[ContextModel] = MODELS[data['type']]
 
     return _clean_instantiate(model_class, **data)
