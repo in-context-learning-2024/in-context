@@ -7,7 +7,6 @@ function_class:
     type: chebychev shared roots
     degree: 5
     perturbation: 0.2
-    scaling_perc: 0.2
 b_size: 32
 seq_len: !curriculum
     start: 11

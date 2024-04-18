@@ -12,13 +12,7 @@ from .wrappers import (
 )
 
 from .chebychev_specials import (
-    ChebychevSharedRoots,
-    ChebychevSliced,
-    ChebychevMixedSliced
-)
-
-from .polynomials import (
-    PolynomialMixedSliced,
+    ChebychevSharedRoots
 )
 
 FUNCTION_CLASSES = {
@@ -28,10 +22,7 @@ FUNCTION_CLASSES = {
     "quadradtic regression" : QuadraticRegression,
     "2 layer mlp regression" : MLPRegression,
     "decision tree" : DecisionTreeRegression,
-    "chebychev shared roots" : ChebychevSharedRoots,
-    "chebychev sliced" : ChebychevSliced,
-    "chebychev mixed sliced" : ChebychevMixedSliced,
-    "polynomial mixed sliced" : PolynomialMixedSliced,
+    "chebychev shared roots" : ChebychevSharedRoots
 }
 
 __all__ = [
