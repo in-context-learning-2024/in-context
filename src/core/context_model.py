@@ -12,7 +12,7 @@ class ContextModel(nn.Module):
     def __repr__(self):
         return self.name
 
-    def forward(self, xs: torch.Tensor, ys: torch.Tensor, **kwargs) -> torch.Tensor:
+    def forward(self, xs: torch.Tensor, ys: torch.Tensor) -> torch.Tensor:
         """Translate from a sequence of x,y pairs to predicted y 
            values for each presented x value. `xs` must be the 
            same length as or exactly one longer than `ys`
@@ -35,8 +35,8 @@ class ContextModel(nn.Module):
         zs = zs.view(bsize, 2 * points, dim)
         return zs
 
-    # Helper for .forward
-    def stack(self, xs: torch.Tensor, ys: torch.Tensor, ctx_len: int = 1) -> torch.Tensor:
+    @staticmethod    # Helper for .forward
+    def stack(xs: torch.Tensor, ys: torch.Tensor, ctx_len: int = 1) -> torch.Tensor:
         """Stacks the x's and the y's into a single sequence with shape (batch_size, num_points, x_dim + ctx_len * (y_dim + x_dim). Relies on `self.context_len`"""
         bsize, points, dim = xs.shape
         try:
@@ -52,7 +52,7 @@ class ContextModel(nn.Module):
 
         contexted = [
             torch.cat((torch.zeros(bsize, i, dim+y_dim), xy_seq[:, :-i,:]), dim=1)
-            for i in range(1, self.context_len + 1)
+            for i in range(1, ctx_len + 1)
         ]
 
         return torch.cat(contexted + [xs], dim=-1) # returns (b_size, seq_len, x_dim + ctx_len * (x_dim + y_dim))

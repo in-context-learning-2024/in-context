@@ -1,6 +1,6 @@
 import torch
 from torch.distributions.distribution import Distribution
-from typing import Tuple, List, Optional
+from typing import Optional
 
 class FunctionClass:
 
@@ -38,13 +38,13 @@ class FunctionClass:
     def __iter__(self):
         return self
 
-    def __next__(self) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __next__(self) -> tuple[torch.Tensor, torch.Tensor]:
         x_batch_tmp: torch.Tensor = self.x_dist.sample()
         x_batch = torch.zeros_like(x_batch_tmp)
         x_batch[..., :self.x_curriculum_dim] = x_batch_tmp[..., :self.x_curriculum_dim]
 
-        params: List[torch.Tensor] | torch.Tensor  = self.p_dist.sample()
-        y_batch: torch.Tensor = self.evaluate(x_batch, params)
+        params: list[torch.Tensor] | torch.Tensor  = self.p_dist.sample()
+        y_batch: torch.Tensor = self.evaluate(x_batch, *params if isinstance(params, list) else params)
         if torch.cuda.is_available():
             return x_batch.cuda(), y_batch.cuda() 
         else:
@@ -54,7 +54,7 @@ class FunctionClass:
         """Produce the distribution with which to sample parameters"""
         raise NotImplementedError(f"Abstract class FunctionClass does not have a parameter distribution!")
 
-    def evaluate(self, x_batch: torch.Tensor, params: List[torch.Tensor] | torch.Tensor) -> torch.Tensor:
+    def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
         """Produce a Tensor of shape (batch_size, sequence_length, y_dim) given a Tensor of shape (batch_size, sequence_length, x_dim)"""
         raise NotImplementedError(f"Abstract class FunctionClass does not implement `.evaluate(xs)`!")
 
