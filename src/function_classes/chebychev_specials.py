@@ -1,17 +1,13 @@
 import torch
 import torch.distributions as D
-import numpy as np
-import random
 
 from core import FunctionClass
 
 class ChebychevSharedRoots(FunctionClass):
 
     """
-    This class generates polynomials with shared roots
-    Roots can be perturbed
-    And the polynomials are mainly scaled so that the maximum value is 1
-    Although scaling_perc is the percentage of scaling that is uniform random
+    This class generates chebychev polynomials with shared roots
+    Roots can be uniformly randomly perturbed
     """
 
     def __init__(self, degree, perturbation=0.1, *args, **kwargs):
@@ -30,10 +26,12 @@ class ChebychevSharedRoots(FunctionClass):
         perturbationd_dist = D.Uniform(-self.perturbation*torch.ones_like(self.chebychev_roots), self.perturbation*torch.ones_like(self.chebychev_roots))
         return perturbationd_dist
     
-    def evaluate(self, x_batch: torch.Tensor, params: torch.Tensor) -> torch.Tensor:
+    def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
+
+        perturbations, *_ = params
 
         # Inside each batch, every x_point should be subtracted from each root
-        roots = self.chebychev_roots + params
+        roots = self.chebychev_roots + perturbations
         # (batch_size, x_points, different roots)
         roots = roots.unsqueeze(1).expand(-1, x_batch.shape[1], -1)
         # (batch_size, different_points, repeated x_points)
