@@ -3,12 +3,12 @@ from .linear import (
     LinearRegression, 
     LinearClassification, 
     SparseLinearRegression, 
-    QuadraticRegression
+    QuadraticRegression,
 )
 from .mlp import MLPRegression
 from .wrappers import (
     NoisyRegression,
-    ScaledRegression
+    ScaledRegression,
 )
 
 FUNCTION_CLASSES = {
@@ -17,7 +17,7 @@ FUNCTION_CLASSES = {
     "sparse linear" : SparseLinearRegression,
     "quadradtic regression" : QuadraticRegression,
     "2 layer mlp regression" : MLPRegression,
-    "decision tree" : DecisionTreeRegression
+    "decision tree" : DecisionTreeRegression,
 }
 
 __all__ = [
