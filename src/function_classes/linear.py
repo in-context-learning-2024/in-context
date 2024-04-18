@@ -33,7 +33,7 @@ class SparseLinearRegression(LinearRegression):
         self._sparsity = sparsity
 
     def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
-        weights, _ = params
+        weights, *_ = params
         param_shape = self.p_dist.batch_shape + self.p_dist.event_shape
         mask = torch.ones(param_shape).bool()
         mask[torch.randperm(self.x_dim)[:self._sparsity]] = False
