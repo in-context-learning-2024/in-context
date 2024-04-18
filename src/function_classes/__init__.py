@@ -14,8 +14,8 @@ from .wrappers import (
 FUNCTION_CLASSES = {
     "linear regression" : LinearRegression,
     "linear classification" : LinearClassification,
-    "sparse linear" : SparseLinearRegression,
-    "quadradtic regression" : QuadraticRegression,
+    "sparse linear regression" : SparseLinearRegression,
+    "quadratic regression" : QuadraticRegression,
     "2 layer mlp regression" : MLPRegression,
     "decision tree" : DecisionTreeRegression,
 }
