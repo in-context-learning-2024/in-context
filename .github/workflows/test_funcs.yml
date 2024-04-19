@@ -34,5 +34,5 @@ jobs:
                   #    See https://anaconda.org/anaconda/python for available "python" versions.
                   python-version: ${{ matrix.python-version }}
 
-            - name: Run function class
+            - name: Test function classes
               run: source .github/test_funcs.sh && run_all_tests

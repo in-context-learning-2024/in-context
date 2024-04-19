@@ -42,7 +42,7 @@ run_all_tests() {
     END_LINE=$(($(grep -n "}" src/function_classes/__init__.py  | cut -f1 -d:)-1))
     FUNC_CLASSES=$(sed -n "$START_LINE,$END_LINE p" src/function_classes/__init__.py | cut -d\" -f2)
 
-    echo -e "Running the following tests:\n$FUNC_CLASSES"
+    echo -e "Detected the following function classes:\n$FUNC_CLASSES"
     while read line; do 
         WANDB_SILENT=true run_test "$line"
     done <<< "$FUNC_CLASSES"
