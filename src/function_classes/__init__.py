@@ -3,16 +3,16 @@ from .linear import (
     LinearRegression, 
     LinearClassification, 
     SparseLinearRegression, 
-    QuadraticRegression
+    QuadraticRegression,
 )
 from .mlp import MLPRegression
 from .wrappers import (
     NoisyRegression,
-    ScaledRegression
+    ScaledRegression,
 )
 
 from .chebychev_specials import (
-    ChebychevSharedRoots
+    ChebychevSharedRoots,
 )
 
 FUNCTION_CLASSES = {
