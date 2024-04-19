@@ -33,12 +33,13 @@ class SparseLinearRegression(LinearRegression):
 
     def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
         weights, *_ = params
+
         param_shape = self.p_dist.batch_shape + self.p_dist.event_shape
         mask = torch.ones(param_shape).bool()
         mask[torch.randperm(self.x_dim)[:self._sparsity]] = False
         weights[mask] = 0
 
-        return super().evaluate(x_batch, *weights)
+        return super().evaluate(x_batch, weights)
 
 class LinearClassification(LinearRegression):
 
