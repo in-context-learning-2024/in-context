@@ -11,11 +11,14 @@ errs =torch.normal(mean=1, std=1, size=size)
 b =10
 
 
-
 sample_indices = torch.randint(0, samples, (b, samples)) # Generate all bootstrap samples at once
 bootstrap_samples = errs[:,sample_indices,:]
 means = bootstrap_samples.mean(dim=2)
 variance_estimate = means.var(dim=1)
+
+
+
+
 
 
 print("errs:",errs.size())
