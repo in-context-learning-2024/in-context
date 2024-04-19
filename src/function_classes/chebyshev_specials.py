@@ -3,7 +3,7 @@ import torch.distributions as D
 
 from core import FunctionClass
 
-class ChebychevSharedRoots(FunctionClass):
+class ChebyshevSharedRoots(FunctionClass):
 
     """
     This class generates chebychev polynomials with shared roots
@@ -19,7 +19,7 @@ class ChebychevSharedRoots(FunctionClass):
         self.chebychev_roots = torch.cos((2 * k - 1) * torch.pi / (2 * degree)).view(1, -1)
         self.chebychev_roots = self.chebychev_roots.expand(kwargs['x_distribution'].batch_shape[0], -1)
 
-        super(ChebychevSharedRoots, self).__init__(*args, **kwargs)
+        super(ChebyshevSharedRoots, self).__init__(*args, **kwargs)
 
     def _init_param_dist(self) -> D.Distribution:
         """Produce the distribution with which to sample parameters"""

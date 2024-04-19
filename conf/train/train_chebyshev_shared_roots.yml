@@ -4,7 +4,7 @@ optim:
 loss_fn:
     type: squared
 function_class: 
-    type: chebychev shared roots
+    type: chebyshev shared roots
     degree: 5
     perturbation: 0.2
 b_size: 32
