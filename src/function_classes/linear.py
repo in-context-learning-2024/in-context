@@ -18,8 +18,7 @@ class LinearRegression(FunctionClass):
         return param_dist
 
     def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
-        weights, _ = params
-        # TODO: changed this line so it would run, but it's probably wrong!
+        weights = torch.stack(params)
         partial_sums = torch.bmm(weights.squeeze(-2), x_batch.permute(0, 2, 1))
         full_sums = torch.sum(partial_sums, dim=-2, keepdim=True)
         y_batch = full_sums.squeeze()
@@ -33,7 +32,7 @@ class SparseLinearRegression(LinearRegression):
         self._sparsity = sparsity
 
     def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
-        weights, _ = params
+        weights = torch.stack(params)
         param_shape = self.p_dist.batch_shape + self.p_dist.event_shape
         mask = torch.ones(param_shape).bool()
         mask[torch.randperm(self.x_dim)[:self._sparsity]] = False
