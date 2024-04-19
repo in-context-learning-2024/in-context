@@ -118,7 +118,7 @@ def get_loss_fn(data: dict) -> torch.nn.Module:
 def _produce_trainer_stages(data: dict) -> TrainerSteps:
     """Convert a YAML primitive stage dicts to a instantiated Trainer object"""
 
-    for key in ['b_size','seq_len', 'steps', 'model', 'loss_fn', 'baseline_models', 'optim']:
+    for key in ['b_size','seq_len', 'steps', 'model', 'loss_fn', 'optim']:
         if key not in data:
             raise ValueError(f"{key} not provided in training config!")
 
@@ -151,7 +151,7 @@ def _produce_trainer_stages(data: dict) -> TrainerSteps:
         lambda d: get_model(
             d | {"x_dim" : x_dim}
         ), 
-        stages[0]['baseline_models']
+        stages[0].get('baseline_models', [])
     ))
 
     log_freq = stages[0].get('log_freq', -1)

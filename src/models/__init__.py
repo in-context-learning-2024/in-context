@@ -26,7 +26,7 @@ MODELS: dict[str, type[ContextModel]] = {
     "lasso"         : LassoModel,
     "grad mlp"      : GDModel,
     "decision tree" : DecisionTreeModel,
-    "xgboost"       : XGBoostModel
+    "xgboost"       : XGBoostModel,
 }
 
 __all__ = [

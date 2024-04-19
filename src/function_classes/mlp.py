@@ -21,7 +21,7 @@ class MLPRegression(FunctionClass):
         return param_dist
 
     def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
-        raw_tensor = torch.stack(params)
+        raw_tensor, *_ = params
         input_weight_mat  = raw_tensor[:, :, :self.x_dim]
         output_weight_mat = raw_tensor[:, :, self.x_dim:].transpose(-1, -2)
 
