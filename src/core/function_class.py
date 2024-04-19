@@ -44,7 +44,11 @@ class FunctionClass:
         x_batch[..., :self.x_curriculum_dim] = x_batch_tmp[..., :self.x_curriculum_dim]
 
         params: list[torch.Tensor] | torch.Tensor  = self.p_dist.sample()
-        y_batch: torch.Tensor = self.evaluate(x_batch, *params if isinstance(params, list) else params)
+        if isinstance(params, list):
+            y_batch: torch.Tensor = self.evaluate(x_batch, *params)
+        else:
+            y_batch: torch.Tensor = self.evaluate(x_batch, params)
+
         if torch.cuda.is_available():
             return x_batch.cuda(), y_batch.cuda() 
         else:
