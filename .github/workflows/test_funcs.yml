@@ -37,9 +37,9 @@ jobs:
             - name: Run function class
               run: |
                 # Extract all function classes
-                START_FROM_LINE=$(grep -n "FUNCTION_CLASSES = {" src/function_classes/__init__.py  | cut -f1 -d:)
-                END_AT_LINE=$(grep -n "}" src/function_classes/__init__.py  | cut -f1 -d:)
-                FUNC_CLASSES=$(tail -n+$(($START+1)) src/function_classes/__init__.py  | head -n$(($END-$START-1)) | cut -d\" -f2)
+                export START_FROM_LINE=$(grep -n "FUNCTION_CLASSES = {" src/function_classes/__init__.py  | cut -f1 -d:)
+                export END_AT_LINE=$(grep -n "}" src/function_classes/__init__.py  | cut -f1 -d:)
+                export FUNC_CLASSES=$(tail -n+$(($START+1)) src/function_classes/__init__.py  | head -n$(($END-$START-1)) | cut -d\" -f2)
 
                 # Disable online wandb
                 conda run -n in-context-learning wandb offline
