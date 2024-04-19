@@ -40,7 +40,7 @@ run_test() {
 run_all_tests() {
     START_LINE=$(($(grep -n "FUNCTION_CLASSES = {" src/function_classes/__init__.py  | cut -f1 -d:)+1))
     END_LINE=$(($(grep -n "}" src/function_classes/__init__.py  | cut -f1 -d:)-1))
-    LINES=$(sed -n "$START_LINE,$END_LINE p" src/function_classes/__init__.py)
+    LINES=$(sed -n "$(echo $START_LINE),$(echo $END_LINE) p" src/function_classes/__init__.py)
     FUNC_CLASSES=$(echo "$LINES" | cut -d\" -f2)
 
     echo -e "Detected the following function classes:\n$FUNC_CLASSES"
