@@ -4,7 +4,7 @@ optim:
 loss_fn:
     type: squared
 function_class: 
-    type: linear regression
+    type: sparse linear
 b_size: 32
 seq_len: !curriculum
     start: 11
