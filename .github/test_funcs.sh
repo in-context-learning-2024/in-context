@@ -29,18 +29,21 @@ model:
 }
 
 run_test() {
-    TEST_NAME=$1
-    conda run -n in-context-learning wandb offline
-    prep_yaml \""$TEST_NAME"\"
+    FUNC_NAME=$1
+    conda run -n in-context-learning wandb offline > /dev/null
+    prep_yaml "$FUNC_NAME"
     conda run -n in-context-learning python src/ -c conf/test.yml
+    if [[ $? != 0 ]]; then return 1; fi
+    echo Passed test: $FUNC_NAME
 }
 
 run_all_tests() {
-    START_LINE=$(grep -n "FUNCTION_CLASSES = {" src/function_classes/__init__.py  | cut -f1 -d:)
-    END_LINE=$(grep -n "}" src/function_classes/__init__.py  | cut -f1 -d:)
-    FUNC_CLASSES=$(sed -n '$START_LINE,$END_LINE p' src/function_classes/__init__.py)
+    START_LINE=$(($(grep -n "FUNCTION_CLASSES = {" src/function_classes/__init__.py  | cut -f1 -d:)+1))
+    END_LINE=$(($(grep -n "}" src/function_classes/__init__.py  | cut -f1 -d:)-1))
+    FUNC_CLASSES=$(sed -n "$START_LINE,$END_LINE p" src/function_classes/__init__.py | cut -d\" -f2)
 
+    echo -e "Running the following tests:\n$FUNC_CLASSES"
     while read line; do 
-        run_test \""$line"\"
+        WANDB_SILENT=true run_test "$line"
     done <<< "$FUNC_CLASSES"
 }
