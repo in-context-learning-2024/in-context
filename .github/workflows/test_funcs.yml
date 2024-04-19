@@ -35,18 +35,4 @@ jobs:
                   python-version: ${{ matrix.python-version }}
 
             - name: Run function class
-              run: |
-                # Disable online wandb
-                conda run -n in-context-learning wandb offline
-                
-                # Extract all function classes + display
-                export FUNC_CLASSES=$(sed -n '$(grep -n "FUNCTION_CLASSES = {" src/function_classes/__init__.py  | cut -f1 -d:),$(grep -n "}" src/function_classes/__init__.py  | cut -f1 -d:) p' src/function_classes/__init__.py)
-                echo -e "Running the following tests:\n$FUNC_CLASSES"
-                
-                # Extract all function classes + Run the tests!
-                export FUNC_CLASSES=$(sed -n '$(grep -n "FUNCTION_CLASSES = {" src/function_classes/__init__.py  | cut -f1 -d:),$(grep -n "}" src/function_classes/__init__.py  | cut -f1 -d:) p' src/function_classes/__init__.py)
-                while read line
-                do 
-                    bash .github/prep_func_test_yaml.sh \""$line"\"
-                    conda run -n in-context-learning python src/ -c conf/test.yml
-                done <<< "$FUNC_CLASSES"
+              run: source .github/test_funcs.sh && run_all_tests
