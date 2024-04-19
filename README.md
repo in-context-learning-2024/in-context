@@ -8,6 +8,8 @@ conda env create -f environment.yaml
 conda activate in-context-learning
 ```
 
+Alternatively, you can instantiate a codespace [(docs)](https://docs.github.com/en/codespaces/getting-started/quickstart) that automagically does the above!
+
 
 Run a training run specified by `<config_file>` with:
 ```
