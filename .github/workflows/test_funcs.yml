@@ -45,6 +45,7 @@ jobs:
                 conda run -n in-context-learning wandb offline
 
                 # Run the tests!
+                echo -e "Running the following tests:\n$FUNC_CLASSES"
                 while read line; do 
                     bash .github/prep_func_test_yaml.sh \""$line"\"
                     conda run -n in-context-learning python src/ -c conf/test.yml
