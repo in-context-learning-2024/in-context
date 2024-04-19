@@ -40,8 +40,8 @@ jobs:
                 START_FROM_LINE=$(grep -n "FUNCTION_CLASSES = {" src/function_classes/__init__.py  | cut -f1 -d:)
                 END_AT_LINE=$(grep -n "}" src/function_classes/__init__.py  | cut -f1 -d:)
                 FUNC_CLASSES=$(tail -n+$(($START+1)) src/function_classes/__init__.py  | head -n$(($END-$START-1)) | cut -d\" -f2)
-                
+
                 while read line; do 
                     bash .github/prep_func_test_yaml.sh \""$line"\"
-                    python -c conf/test.yml
+                    python src/ -c conf/test.yml
                 done <<< "$FUNC_CLASSES"
