@@ -40,7 +40,7 @@ class ChebyshevSharedRoots(FunctionClass):
         # Multiply factors together to get polynomial values
         poly_values = torch.prod(x_batch - roots, dim=2)
 
-        # Add some randomness to sign, and partially random scaling
+        # Add random sign and scale such that the maximum absolute value is 1
         max_per_sample = torch.max(torch.abs(poly_values), dim=1).values
         poly_values = poly_values * self._one_minus_one[torch.randint(0, 2, (self.batch_size, 1))] / max_per_sample.unsqueeze(1)
 
