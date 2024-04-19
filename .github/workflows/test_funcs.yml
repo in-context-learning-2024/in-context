@@ -43,5 +43,5 @@ jobs:
 
                 while read line; do 
                     bash .github/prep_func_test_yaml.sh \""$line"\"
-                    python src/ -c conf/test.yml
+                    conda run -n in-context-learning python src/ -c conf/test.yml
                 done <<< "$FUNC_CLASSES"
