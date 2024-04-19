@@ -21,7 +21,7 @@ model: &lora_std_gpt2
         bias: none
         fan_in_fan_out: True
         lora_dropout: 0.0
-        target_modules: ["attn.c_attn" , "mlp.c_fc", "mlp.c_proj"]
+        target_modules: ["attn.c_attn"] # , "mlp.c_fc", "mlp.c_proj"]
 
 model: &knn_3
     type: knn

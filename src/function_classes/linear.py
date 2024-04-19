@@ -45,7 +45,7 @@ class SparseLinearRegression(LinearRegression):
 
         weights[mask] = 0
 
-        return super().evaluate(x_batch, *weights)
+        return super().evaluate(x_batch, weights)
 
 class LinearClassification(LinearRegression):
 

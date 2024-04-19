@@ -4,7 +4,7 @@ optim:
 loss_fn:
     type: squared
 function_class: 
-    type: sparse linear
+    type: sparse linear regression
 b_size: 32
 seq_len: !curriculum
     start: 11
@@ -18,8 +18,8 @@ x_dim: !curriculum
     step_len: 2000
 x_dist:
     type: normal
-steps: 500000
+steps: 1000000
 log_freq: 100
 checkpoint_freq: 5000
 model: *lora_std_gpt2
-baseline_models: []
+baseline_models: [*least_squares]
