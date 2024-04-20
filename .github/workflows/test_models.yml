@@ -1,4 +1,4 @@
-name: test-function-classes
+name: test-context-models
 
 on:
     pull_request:
