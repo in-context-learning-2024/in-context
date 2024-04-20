@@ -251,6 +251,55 @@ class FunctionClassError(Benchmark):
         
         return robustness_nums
 
+    def evaluateOrthogonal(self, models: Iterable[ContextModel]):
+        
+        sequence_length=self.fn_cls.sequence_length
+        batch_size=self.fn_cls.batch_size
+        errs=torch.zeros((len(models), self.num_batches, batch_size, sequence_length))
+
+
+        for i in range(self.num_batches):
+            params=self.fn_cls.p_dist.sample()
+            x_batch=self.fn_cls.x_dist.sample()
+            n=x_batch.shape[2]
+            
+            A = torch.randn(batch_size, n, n)
+            Q, _ = torch.linalg.qr(A, mode="complete")
+            context_space=Q.clone() #discuss with sahai 
+            context_space[:, :, -1]=0
+            test_space=Q.clone()
+            test_space[:, :, :-1]=0
+            x_context, x_test=torch.zeros_like(x_batch), torch.zeros_like(x_batch)
+            for j in range(batch_size):
+
+                x_context[j]=x_batch[j] @context_space[j]
+                x_test[j]=x_batch[j] @test_space[j]
+
+            for j in range(1, sequence_length):
+                
+                cur_x=x_context.clone()
+                cur_x[:,j]=x_test[:, j]
+
+                if isinstance(params, list):
+                    y_test=self.fn_cls.evaluate(cur_x, *params)
+                else:
+                    y_test=self.fn_cls.evaluate(cur_x, params)
+                
+                with torch.no_grad():
+                    errs[:, i, :, j] = torch.stack([
+                  
+                        self._metric(
+                            y_test,
+                            model.forward(cur_x, y_test)
+                        )
+                        for model in models
+                    ])[:, :, j]
+        
+        errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))[:, :, 1:]
+
+        return self.PostProcessingStats(errs, [model.name for model in models]), errs
+
+        
     def evaluateAtSeenPoints(self, models: Iterable[ContextModel]):#each evaluation happens at a random already seen point. 
         
         sequence_length=self.fn_cls.sequence_length
