@@ -69,3 +69,13 @@ We take the approach of framing each function class as an iterator, where the bo
 In addition, you need to export your function class in [`src/function_classes/__init__.py`](https://github.com/in-context-learning-2024/in-context/blob/main/src/function_classes/__init__.py)
 
 To use your function class, you can specify the key you specified in [`src/function_classes/__init__.py`](https://github.com/in-context-learning-2024/in-context/blob/main/src/function_classes/__init__.py) as `type: <that key>` in a training yaml configuration. Examples are in [`conf/train/`](https://github.com/in-context-learning-2024/in-context/tree/main/conf/train)
+
+
+---
+### Adding New Models
+
+## Course-Grain Model Changes
+We provide support for creating and training custom models through the ContextModel interface. In order to create a custom model, copy the "mod_transformers.py" file. Rename the "ModTransformersModel" class to your liking, and change the block_var_declare() function to create new sub-blocks per layer of your architecture, and alter the forward_block() function to specify the ordering of these blocks. Based on the extent of the architectural changes, slight changes to model instantiation might be required. Add your model to the __init__.py file under src/models.
+
+## Fine-Grain Model Changes
+The parameters passed into your couse-grain model architecture can be used to turn attention and positional embeddings on/off, change number of successive MAMBA layers, etc. These fine-grain changes should be made under conf/models.yml
