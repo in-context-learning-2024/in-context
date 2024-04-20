@@ -9,7 +9,7 @@ from core import FunctionClass
 from core import ContextModel
 from core import distributions
 import numpy as np
-import scipy.stats as stats
+from scipy.stats import norm
 
 class FunctionClassError(Benchmark):
     def __init__(self, function_class: FunctionClass, num_batches=1, save_path=None):
@@ -32,7 +32,7 @@ class FunctionClassError(Benchmark):
         sample_indices = torch.randint(0, samples, (B, samples)) 
         bootstrap_samples = errs[:,sample_indices,:]
         means = bootstrap_samples.mean(dim=2)
-        variance_estimate = means.var(dim=1)
+        std_estimate = means.std(dim=1)
 
 
         std=torch.std(errs, dim=1)
@@ -47,8 +47,8 @@ class FunctionClassError(Benchmark):
             for j in range(1, len(quantiles)-1):
                 stats[prefix+"quantile_"+name+str([0, 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 1][j])]=quantiles[j, i]
             for j in range(0, len(confidence_level)):
-                #stats[prefix+"confidence_level"+name+str(confidence_level[j])] = [mean[i]-stats.norm.ppf(confidence_level[j]/2)*variance_estimate[i], mean[i]+stats.norm.ppf(1-confidence_level[j]/2)*variance_estimate[i]] 
-                continue #something wrong with bootstrap
+                stats[prefix+"normal_confidence_level"+name+str(confidence_level[j])] = [mean[i]+norm.ppf(confidence_level[j]/2)*std[i]/np.sqrt(samples),mean[i]+norm.ppf(1-confidence_level[j]/2)*std[i]/np.sqrt(samples)]
+                stats[prefix+"bootstrap_confidence_level"+name+str(confidence_level[j])] = [mean[i]+norm.ppf(confidence_level[j]/2)*std_estimate[i], mean[i]+norm.ppf(1-confidence_level[j]/2)*std_estimate[i]] 
             
         if self.save_path!=None:
             os.makedirs(self.save_path, exist_ok=True)
