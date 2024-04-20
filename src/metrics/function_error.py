@@ -216,7 +216,7 @@ class FunctionClassError(Benchmark):
         sequence_length=self.fn_cls.sequence_length
         batch_size=self.fn_cls.batch_size
 
-        #errs=torch.zeros((samples, self.num_batches, batch_size, sequence_length))
+        errs=torch.zeros((len(models), self.num_batches, batch_size, sequence_length))
 
         quad_fn = distributions.randQuadrant(self.fn_cls)
     
@@ -236,20 +236,20 @@ class FunctionClassError(Benchmark):
                 x_comb = torch.cat((x_modded[:, :j, :], x[:, j:, :]), dim=1)
                 y_comb = torch.cat((y_modded[:, :j, :], y[:, j:, :]), dim=1)
 
-                with torch.no_grad():
-                    errors[j] = torch.stack([
-                        self._metric(
-                            y_comb,
-                            model.forward(x_comb, y_comb)
-                        )
-                        for model in models
-                    ])
+                for model in models:
+                    with torch.no_grad():
+                        errs[:, i, j] = self._metric(y_comb, model.forward(x_comb, y_comb))
+                        # should this still be stacked?
+                        #errs[:,i,j] = torch.stack([
+                        #    self._metric(
+                        #        y_comb,
+                        #        model.forward(x_comb, y_comb)
+                        #    )
+                        #])
 
             errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))
-
-            robustness_nums.update(self.PostProcessingStats(errs, [model.name for model in models], save_path, task[0]+str(task[1])))
         
-        return robustness_nums
+        return self.PostProcessingStats(errs, [model.name for model in models]), errs
 
     def evaluateOrthogonal(self, models: Iterable[ContextModel]):
         
