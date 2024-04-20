@@ -4,7 +4,7 @@ import torch.distributions as D
 from core import FunctionClass
 
 class MLPRegression(FunctionClass):
-    def __init__(self, hidden_dimension: int, *args, **kwargs):
+    def __init__(self, hidden_dimension: int = 16, *args, **kwargs):
         self._hidden_dim = hidden_dimension
         super(MLPRegression, self).__init__(*args, **kwargs)
 
