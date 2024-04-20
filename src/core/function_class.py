@@ -1,4 +1,5 @@
 import torch
+from torch import Tensor
 from torch.distributions.distribution import Distribution
 from typing import Optional
 
@@ -38,16 +39,16 @@ class FunctionClass:
     def __iter__(self):
         return self
 
-    def __next__(self) -> tuple[torch.Tensor, torch.Tensor]:
-        x_batch_tmp: torch.Tensor = self.x_dist.sample()
+    def __next__(self) -> tuple[Tensor, Tensor]:
+        x_batch_tmp: Tensor = self.x_dist.sample()
         x_batch = torch.zeros_like(x_batch_tmp)
         x_batch[..., :self.x_curriculum_dim] = x_batch_tmp[..., :self.x_curriculum_dim]
 
-        params: list[torch.Tensor] | torch.Tensor  = self.p_dist.sample()
+        params: list[Tensor] | Tensor  = self.p_dist.sample()
         if isinstance(params, list):
-            y_batch: torch.Tensor = self.evaluate(x_batch, *params)
+            y_batch: Tensor = self.evaluate(x_batch, *params)
         else:
-            y_batch: torch.Tensor = self.evaluate(x_batch, params)
+            y_batch: Tensor = self.evaluate(x_batch, params)
 
         if torch.cuda.is_available():
             return x_batch.cuda(), y_batch.cuda() 
@@ -58,7 +59,7 @@ class FunctionClass:
         """Produce the distribution with which to sample parameters"""
         raise NotImplementedError(f"Abstract class FunctionClass does not have a parameter distribution!")
 
-    def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
+    def evaluate(self, x_batch: Tensor, *params: Tensor) -> Tensor:
         """Produce a Tensor of shape (batch_size, sequence_length, y_dim) given a Tensor of shape (batch_size, sequence_length, x_dim)"""
         raise NotImplementedError(f"Abstract class FunctionClass does not implement `.evaluate(xs)`!")
 
@@ -76,5 +77,34 @@ class ModifiedFunctionClass(FunctionClass):
         self.x_curriculum_dim = self._in_fc.x_curriculum_dim
         self.y_dim = self._in_fc.y_dim
 
-    def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
+    def modify_x_pre_eval(self, x_batch: Tensor) -> Tensor:
+        return x_batch
+
+    def modify_x_post_eval(self, x_batch: Tensor) -> Tensor:
+        return x_batch
+
+    def modify_y(self, y_batch: Tensor) -> Tensor:
+        return y_batch
+
+    def __next__(self) -> tuple[Tensor, Tensor]:
+        x_batch_tmp: Tensor = self.x_dist.sample()
+        x_batch = torch.zeros_like(x_batch_tmp)
+        x_batch[..., :self.x_curriculum_dim] = x_batch_tmp[..., :self.x_curriculum_dim]
+        x_batch = self.modify_x_pre_eval(x_batch)
+
+        params: list[Tensor] | Tensor  = self.p_dist.sample()
+        if isinstance(params, list):
+            y_batch: Tensor = self.evaluate(x_batch, *params)
+        else:
+            y_batch: Tensor = self.evaluate(x_batch, params)
+
+        if torch.cuda.is_available():
+            x_batch, y_batch = x_batch.cuda(), y_batch.cuda()
+
+        return (
+            self.modify_x_post_eval(x_batch),
+            self.modify_y(y_batch)
+        )
+
+    def evaluate(self, x_batch: Tensor, *params: Tensor) -> Tensor:
         return self._in_fc.evaluate(x_batch, *params)
