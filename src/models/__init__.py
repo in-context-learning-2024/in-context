@@ -24,6 +24,10 @@ MODELS: dict[str, type[ContextModel]] = {
     "grad mlp"      : GDModel,
     "decision tree" : DecisionTreeModel,
     "xgboost"       : XGBoostModel,
+    "mambafirstgpt2"       : MambaFirstGPT2TransformerModel,
+    "mambaonly"     : MambaNoAttentionModel,
+    "mambaformer_classic"   : MambaformerModel,
+    "mod_transformer"     : ModTransformerModel
 }
 
 __all__ = [
