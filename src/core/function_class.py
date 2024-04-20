@@ -75,3 +75,6 @@ class ModifiedFunctionClass(FunctionClass):
         self.x_dim = self._in_fc.x_dim
         self.x_curriculum_dim = self._in_fc.x_curriculum_dim
         self.y_dim = self._in_fc.y_dim
+
+    def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
+        return self._in_fc.evaluate(x_batch, *params)

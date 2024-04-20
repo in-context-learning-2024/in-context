@@ -1,4 +1,3 @@
-from typing import List
 from torch import Tensor
 from torch.distributions.distribution import Distribution
 from core import FunctionClass, ModifiedFunctionClass
@@ -6,16 +5,21 @@ from core import FunctionClass, ModifiedFunctionClass
 class NoisyRegression(ModifiedFunctionClass):
     def __init__(
             self, 
-            output_noise_distribution: Distribution,
+            noise_distribution: Distribution,
             inner_function_class: FunctionClass,
         ):
         super(NoisyRegression, self).__init__(inner_function_class)
-        self._out_noise_dist = output_noise_distribution
+        self._noise_dist = noise_distribution
+
+class NoisyXRegression(NoisyRegression):
 
     def evaluate(self, x_batch: Tensor, *params: Tensor) -> Tensor:
-        y_batch = self._in_fc.evaluate(x_batch, *params)
-        y_batch_noisy = y_batch + self._out_noise_dist.sample()
-        return y_batch_noisy
+        return super().evaluate(x_batch + self._noise_dist.sample(), *params)
+
+class NoisyYRegression(NoisyRegression):
+
+    def evaluate(self, x_batch: Tensor, *params: Tensor) -> Tensor:
+        return super().evaluate(x_batch, *params) + self._noise_dist.sample()
 
 class ScaledRegression(ModifiedFunctionClass):
     def __init__(
@@ -25,6 +29,13 @@ class ScaledRegression(ModifiedFunctionClass):
         ):
         super(ScaledRegression, self).__init__(inner_function_class)
         self._scale = scale
-    
+
+class ScaledXRegression(ScaledRegression):
+
     def evaluate(self, x_batch: Tensor, *params: Tensor) -> Tensor:
-        return self._scale * self._in_fc.evaluate(x_batch, *params)
+        return super().evaluate(self._scale * x_batch, *params)
+
+class ScaledYRegression(ScaledRegression):
+
+    def evaluate(self, x_batch: Tensor, *params: Tensor) -> Tensor:
+        return self._scale * super().evaluate(x_batch, *params)
