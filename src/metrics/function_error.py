@@ -7,6 +7,7 @@ from typing import Iterable
 from metrics.benchmark import Benchmark
 from core import FunctionClass
 from core import ContextModel
+from core import distributions
 import numpy as np
 import scipy.stats as stats
 
@@ -201,6 +202,45 @@ class FunctionClassError(Benchmark):
                         self._metric(
                             curys,
                             model.forward(curxs, curys)
+                        )
+                        for model in models
+                    ])
+
+            errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))
+
+            robustness_nums.update(self.PostProcessingStats(errs, [model.name for model in models], save_path, task[0]+str(task[1])))
+        
+        return robustness_nums
+    
+    def evaluateRobustness_quadrant(self, models: Iterable[ContextModel]):
+        sequence_length=self.fn_cls.sequence_length
+        batch_size=self.fn_cls.batch_size
+
+        #errs=torch.zeros((samples, self.num_batches, batch_size, sequence_length))
+
+        quad_fn = distributions.randQuadrant(self.fn_cls)
+    
+        for i, (x_batch, y_batch) in zip(range(self.num_batches), quad_fn):
+            # x_modded has x-values that have been restricted to a quadrant
+            x_modded = x_batch[:batch_size]
+            x = x_batch[batch_size:]
+
+            y_modded = y_batch[:batch_size]
+            y = y_batch[batch_size:]
+            
+            # will hold error for varying amount of quadrant-ed values
+            errors = torch.zeros((batch_size, sequence_length))
+
+            # want to gradually increase number of quadrant-ed values
+            for j in range(batch_size):
+                x_comb = torch.cat((x_modded[:, :j, :], x[:, j:, :]), dim=1)
+                y_comb = torch.cat((y_modded[:, :j, :], y[:, j:, :]), dim=1)
+
+                with torch.no_grad():
+                    errors[j] = torch.stack([
+                        self._metric(
+                            y_comb,
+                            model.forward(x_comb, y_comb)
                         )
                         for model in models
                     ])

@@ -13,7 +13,7 @@ class randQuadrant(Distribution):
     
     def sample(self):
         xs = self.dist.sample()
-        pattern = torch.randn(xs.shape).sign()
+        pattern = torch.randn([xs.shape[0], 1, xs.shape[2]]).sign()
 
         xs_modded = xs.abs() * pattern
         
