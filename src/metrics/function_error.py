@@ -38,16 +38,17 @@ class FunctionClassError(Benchmark):
         mean =torch.mean(errs, dim=1)
         quantiles=torch.quantile(errs, torch.Tensor([0, 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 1]), dim=1)
         for i, name in enumerate(model_names):
-            stats[prefix+"accuracy_"+name]=mean[i],
-            stats[prefix+"std_"+name]= std[i],
+            stats[prefix+"accuracy_"+name]=mean[i]
+            stats[prefix+"std_"+name]= std[i]
             stats[prefix+"std_mean_"+name]= std[i]/np.sqrt(samples)
             stats[prefix+"max_"+name]=quantiles[len(quantiles)-1, i]
             stats[prefix+"min_"+name]=quantiles[0, i]
             for j in range(1, len(quantiles)-1):
                 stats[prefix+"quantile_"+name+str([0, 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 1][j])]=quantiles[j, i]
-            for j in range(1, len(confidence_level)-1):
-                stats[prefix+"confidence_level"+name+str(confidence_level[j])] = [mean[i]-stats.norm.ppf(confidence_level[j]/2)*variance_estimate[i], mean[i]+stats.norm.ppf(1-confidence_level[j]/2)*variance_estimate[i]] 
-
+            for j in range(0, len(confidence_level)):
+                #stats[prefix+"confidence_level"+name+str(confidence_level[j])] = [mean[i]-stats.norm.ppf(confidence_level[j]/2)*variance_estimate[i], mean[i]+stats.norm.ppf(1-confidence_level[j]/2)*variance_estimate[i]] 
+                continue #something wrong with bootstrap
+            
         if self.save_path!=None:
             os.makedirs(self.save_path, exist_ok=True)
             torch.save(stats, os.path.join(self.save_path,self.fn_cls.name))
@@ -76,7 +77,90 @@ class FunctionClassError(Benchmark):
 
         return self.PostProcessingStats(errs, [model.name for model in models]), errs
 
-    def evaluateRobustness(self, models: Iterable[ContextModel], noise_x_func, noise_y_func):
+    def NoisyXDistribution(self, models: Iterable[ContextModel], noise_x_func):
+
+        sequence_length=self.fn_cls.sequence_length
+        batch_size=self.fn_cls.batch_size
+        errs=torch.zeros((len(models), self.num_batches, batch_size, sequence_length))
+
+        for i, (x_batch, y_batch) in zip(range(self.num_batches), self.fn_cls):
+            with torch.no_grad():
+                errs[:, i] = torch.stack([
+                  
+                    self._metric(
+                        y_batch,
+                        model.forward(noise_x_func(x_batch), y_batch)
+                    )
+                    for model in models
+                ])
+        
+        errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))
+
+        return self.PostProcessingStats(errs, [model.name for model in models]), errs
+
+    def NoisyYDistribution(self, models: Iterable[ContextModel], noise_y_func):
+
+        sequence_length=self.fn_cls.sequence_length
+        batch_size=self.fn_cls.batch_size
+        errs=torch.zeros((len(models), self.num_batches, batch_size, sequence_length))
+
+        for i, (x_batch, y_batch) in zip(range(self.num_batches), self.fn_cls):
+            with torch.no_grad():
+                y_batch=noise_y_func(y_batch)
+                errs[:, i] = torch.stack([
+                    self._metric(
+                        y_batch,
+                        model.forward(x_batch, y_batch)
+                    )
+                    for model in models
+                ])
+        
+        errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))
+
+        return self.PostProcessingStats(errs, [model.name for model in models]), errs
+
+    def ScaledX(self, models: Iterable[ContextModel], scale):
+
+        sequence_length=self.fn_cls.sequence_length
+        batch_size=self.fn_cls.batch_size
+        errs=torch.zeros((len(models), self.num_batches, batch_size, sequence_length))
+
+        for i, (x_batch, y_batch) in zip(range(self.num_batches), self.fn_cls):
+            with torch.no_grad():
+                errs[:, i] = torch.stack([
+                    self._metric(
+                        y_batch,
+                        model.forward(x_batch*scale, y_batch)
+                    )
+                    for model in models
+                ])
+        
+        errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))
+
+        return self.PostProcessingStats(errs, [model.name for model in models]), errs
+
+    def ScaledY(self, models: Iterable[ContextModel], scale):
+
+        sequence_length=self.fn_cls.sequence_length
+        batch_size=self.fn_cls.batch_size
+        errs=torch.zeros((len(models), self.num_batches, batch_size, sequence_length))
+
+        for i, (x_batch, y_batch) in zip(range(self.num_batches), self.fn_cls):
+            with torch.no_grad():
+                y_batch*=scale
+                errs[:, i] = torch.stack([
+                    self._metric(
+                        y_batch,
+                        model.forward(x_batch, y_batch)
+                    )
+                    for model in models
+                ])
+        
+        errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))
+
+        return self.PostProcessingStats(errs, [model.name for model in models]), errs
+
+    def evaluateRobustness(self, models: Iterable[ContextModel], noise_x_func, noise_y_func): #probably should be fased out
         
         robustness_tasks=[]
 
