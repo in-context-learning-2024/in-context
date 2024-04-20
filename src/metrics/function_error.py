@@ -251,6 +251,40 @@ class FunctionClassError(Benchmark):
         
         return robustness_nums
 
+    def evaluateAtSeenPoints(self, models: Iterable[ContextModel]):#each evaluation happens at a random already seen point. 
+        
+        sequence_length=self.fn_cls.sequence_length
+        batch_size=self.fn_cls.batch_size
+        errs=torch.zeros((len(models), self.num_batches, batch_size, sequence_length))
+
+        for i in range(self.num_batches):
+            params=self.fn_cls.p_dist.sample()
+            x_batch=self.fn_cls.x_dist.sample()
+            
+            for j in range(1, sequence_length):
+                x_test=x_batch.clone()
+                perm = torch.stack([torch.randperm(j) for _ in range(batch_size)]).unsqueeze(dim=1)
+                ind_mat = (perm == 0) + 0.0
+                x_test[:, j:j+1] = ind_mat @ x_batch[:, :j]
+
+                if isinstance(params, list):
+                    y_test=self.fn_cls.evaluate(x_test, *params)
+                else:
+                    y_test=self.fn_cls.evaluate(x_test, params)
+                
+                with torch.no_grad():
+                    errs[:, i, :, j] = torch.stack([
+                  
+                        self._metric(
+                            y_test,
+                            model.forward(x_test, y_test)
+                        )
+                        for model in models
+                    ])[:, :, j]
+        
+        errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))[:, :, 1:]
+
+        return self.PostProcessingStats(errs, [model.name for model in models]), errs
 
 class SquaredError(FunctionClassError):
 
