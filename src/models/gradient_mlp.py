@@ -48,12 +48,14 @@ class ParallelNetworks(nn.Module):
     def forward(self, xs):
         assert xs.shape[0] == len(self.nets)
 
+        out = self.nets[0](xs[0])
+        outs = torch.zeros(
+            [len(self.nets)] + list(out.shape), device=out.device
+        )
+
         for i in range(len(self.nets)):
+            if i == 0: continue
             out = self.nets[i](xs[i])
-            if i == 0:
-                outs = torch.zeros(
-                    [len(self.nets)] + list(out.shape), device=out.device
-                )
             outs[i] = out
         return outs
 
