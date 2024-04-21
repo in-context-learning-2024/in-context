@@ -61,25 +61,24 @@ class FunctionClassError(Benchmark):
 
         return stats
 
-    def evaluate(self, models: Iterable[ContextModel]):# -> Iterable[Tensor]:
+    def evaluate(self, models: Iterable[ContextModel]) -> Iterable[Tensor]:
 
-        sequence_length=self.fn_cls.sequence_length
-        batch_size=self.fn_cls.batch_size
-        num_models = len(list(models))
-        errs=torch.zeros((num_models, self.num_batches, batch_size, sequence_length))
-
-        for i, (x_batch, y_batch) in zip(range(self.num_batches), self.fn_cls):
-            with torch.no_grad():
-                errs[:, i] = torch.stack([
-                  
+        with torch.no_grad():
+            errs = torch.stack([
+                torch.stack([
                     self._metric(
                         y_batch,
                         model.forward(x_batch, y_batch)
                     )
                     for model in models
                 ])
-        
-        errs=torch.reshape(errs, (num_models, self.num_batches*batch_size, sequence_length))
+                for _, (x_batch, y_batch) in zip(range(self.num_batches), self.fn_cls)
+            ])
+
+            # errs is of shape: (#batches, #models, batch_size, sequence_length, *metric_dims)
+
+        errs = torch.transpose(errs, 0, 1)
+        errs = torch.flatten(errs, 1, 2)
 
         return errs
 
@@ -230,7 +229,6 @@ class FunctionClassError(Benchmark):
 
         return errs
 
-        
     def evaluateAtSeenPoints(self, models: Iterable[ContextModel]):#each evaluation happens at a random already seen point. 
         
         sequence_length=self.fn_cls.sequence_length
