@@ -4,7 +4,7 @@ optim:
 loss_fn:
     type: squared
 function_class: 
-    type: chebyshev kernel linear regression
+    type: chebychev kernel linear regression
     lowest_degree: 3
     highest_degree: 11
 b_size: 32

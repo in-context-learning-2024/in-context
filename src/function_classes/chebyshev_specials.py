@@ -20,7 +20,7 @@ def generate_chebyshev_coefficients(lowest_degree, highest_degree):
     
     return coeffs[lowest_degree:highest_degree+1]
 
-class ChebyshevKernelLinearRegression(FunctionClass):
+class ChebychevKernelLinearRegression(FunctionClass):
 
     """
     Class for generating linear combinations of Chebyshev polynomials in given interval of degrees
@@ -33,13 +33,13 @@ class ChebyshevKernelLinearRegression(FunctionClass):
         self.lowest_degree = lowest_degree
         self.highest_degree = highest_degree
 
-        super(ChebyshevKernelLinearRegression, self).__init__(*args, **kwargs)
+        super(ChebychevKernelLinearRegression, self).__init__(*args, **kwargs)
 
     def _init_param_dist(self) -> D.Distribution:
         """Produce the distribution with which to sample parameters"""
         # Combine each polynomial randomly per sample
         # combinations: (batch_size, 1 coefficient for each poly in chebychev_coeffs, seq_length)
-        combinations_dist = D.Normal(torch.zeros((self.x_dist.batch_shape[0], 1, self.chebyshev_coeffs.shape[0])), 1)
+        combinations_dist = D.Normal(torch.zeros((self.batch_size, 1, self.chebyshev_coeffs.shape[0])), 1)
         return combinations_dist
 
 
@@ -56,8 +56,8 @@ class ChebyshevKernelLinearRegression(FunctionClass):
         basis_polys = self.chebyshev_coeffs @ x_pows.permute(0, 2, 1)
 
         # Only include coefficients up to random degree
-        indices = torch.arange(0, self.chebyshev_coeffs.shape[0]).unsqueeze(0).expand(x_batch.shape[0], -1)
-        rand_tresh = torch.randint(0, self.chebyshev_coeffs.shape[0], (x_batch.shape[0], 1))
+        indices = torch.arange(0, self.chebyshev_coeffs.shape[0]).unsqueeze(0).expand(self.batch_size, -1)
+        rand_tresh = torch.randint(0, self.chebyshev_coeffs.shape[0], (self.batch_size, 1))
         mask_indices = (rand_tresh < indices).unsqueeze(1)
         combinations[mask_indices] = 0
 
@@ -71,7 +71,7 @@ class ChebychevSharedRoots(FunctionClass):
     Roots can be uniformly randomly perturbed
     """
 
-    def __init__(self, degree, perturbation=0.1, *args, **kwargs):
+    def __init__(self, degree=5, perturbation=0.1, *args, **kwargs):
 
         self.perturbation = perturbation
         self._one_minus_one = torch.tensor([-1, 1])
@@ -106,3 +106,4 @@ class ChebychevSharedRoots(FunctionClass):
         poly_values = poly_values * self._one_minus_one[torch.randint(0, 2, (self.batch_size, 1))] / max_per_sample.unsqueeze(1)
 
         return poly_values
+    
