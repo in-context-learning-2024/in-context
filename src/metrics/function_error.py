@@ -67,6 +67,7 @@ class FunctionClassError(Benchmark):
             }
 
     def evaluate(self, models: Iterable[ContextModel], num_batches: int = 1) -> Iterable[Tensor]:
+        """Produce a tensor of shape (batch_size * num_batches, metric_shape) for each model provided"""
 
         with torch.no_grad():
             errs = torch.stack([
