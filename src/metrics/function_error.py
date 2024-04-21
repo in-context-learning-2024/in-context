@@ -5,9 +5,11 @@ from torch import Tensor
 from typing import Iterable
 
 from metrics.benchmark import Benchmark
-from core import FunctionClass
-from core import ContextModel
-from core import distributions
+from core import (
+    FunctionClass,
+    ContextModel,
+    distributions,
+)
 import numpy as np
 from scipy.stats import norm
 
@@ -21,11 +23,11 @@ class FunctionClassError(Benchmark):
         """Compute a metric between a prediction and a "ground truth" """
         raise NotImplementedError("Abstract class FunctionClassError does not implement a metric!")
 
-    def save_stats(stats):
+    def save_stats(self, stats):
         os.makedirs(self.save_path, exist_ok=True)
         torch.save(stats, os.path.join(self.save_path,self.fn_cls.name))
 
-    def load_stats():
+    def load_stats(self):
         return torch.load(self.save_path)
 
     def PostProcessingStats(self, errs, model_names, prefix="", B=1000, confidence_level =[0.01,0.05]):
@@ -61,10 +63,10 @@ class FunctionClassError(Benchmark):
 
     def evaluate(self, models: Iterable[ContextModel]):# -> Iterable[Tensor]:
 
-        
         sequence_length=self.fn_cls.sequence_length
         batch_size=self.fn_cls.batch_size
-        errs=torch.zeros((len(models), self.num_batches, batch_size, sequence_length))
+        num_models = len(list(models))
+        errs=torch.zeros((num_models, self.num_batches, batch_size, sequence_length))
 
         for i, (x_batch, y_batch) in zip(range(self.num_batches), self.fn_cls):
             with torch.no_grad():
@@ -77,9 +79,10 @@ class FunctionClassError(Benchmark):
                     for model in models
                 ])
         
-        errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))
+        errs=torch.reshape(errs, (num_models, self.num_batches*batch_size, sequence_length))
 
         return errs
+
     def evaluateRobustness(self, models: Iterable[ContextModel], noise_x_func, noise_y_func): #probably should be fased out
         
         robustness_tasks=[]
@@ -125,17 +128,18 @@ class FunctionClassError(Benchmark):
                         for model in models
                     ])
 
-            errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))
+            errs=torch.reshape(errs, (len(list(models)), self.num_batches*batch_size, sequence_length))
 
             robustness_nums.update(self.PostProcessingStats(errs, [model.name for model in models], save_path, task[0]+str(task[1])))
         
         return robustness_nums
     
     def evaluateRobustness_quadrant(self, models: Iterable[ContextModel]):
+
         sequence_length=self.fn_cls.sequence_length
         batch_size=self.fn_cls.batch_size
-
-        errs=torch.zeros((len(models), self.num_batches, batch_size, sequence_length))
+        num_models = len(list(models))
+        errs=torch.zeros((num_models, self.num_batches, batch_size, sequence_length))
 
         quad_fn = distributions.randQuadrant(self.fn_cls)
     
@@ -166,7 +170,7 @@ class FunctionClassError(Benchmark):
                         #    )
                         #])
 
-            errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))
+            errs=torch.reshape(errs, (num_models, self.num_batches*batch_size, sequence_length))
         
         return self.PostProcessingStats(errs, [model.name for model in models]), errs
 
@@ -174,7 +178,8 @@ class FunctionClassError(Benchmark):
         
         sequence_length=self.fn_cls.sequence_length
         batch_size=self.fn_cls.batch_size
-        errs=torch.zeros((len(models), self.num_batches, batch_size, sequence_length))
+        num_models = len(list(models))
+        errs=torch.zeros((num_models, self.num_batches, batch_size, sequence_length))
 
 
         for i in range(self.num_batches):
@@ -214,7 +219,7 @@ class FunctionClassError(Benchmark):
                         for model in models
                     ])[:, :, j]
         
-        errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))[:, :, 1:]
+        errs=torch.reshape(errs, (num_models, self.num_batches*batch_size, sequence_length))[:, :, 1:]
 
         return errs
 
@@ -223,7 +228,8 @@ class FunctionClassError(Benchmark):
         
         sequence_length=self.fn_cls.sequence_length
         batch_size=self.fn_cls.batch_size
-        errs=torch.zeros((len(models), self.num_batches, batch_size, sequence_length))
+        num_models = len(list(models))
+        errs=torch.zeros((num_models, self.num_batches, batch_size, sequence_length))
 
         for i in range(self.num_batches):
             params=self.fn_cls.p_dist.sample()
@@ -250,7 +256,7 @@ class FunctionClassError(Benchmark):
                         for model in models
                     ])[:, :, j]
         
-        errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))[:, :, 1:]
+        errs=torch.reshape(errs, (num_models, self.num_batches*batch_size, sequence_length))[:, :, 1:]
 
         return errs
 
