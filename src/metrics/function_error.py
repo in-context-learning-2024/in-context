@@ -259,6 +259,14 @@ class FunctionClassError(Benchmark):
 
         return errs
 
+    def evaluateFLOPS(self, models: Iterable[ContextModel])-> Iterable[Tensor]:
+        raise NotImplementedError #interface for other architechture group
+        return None
+    
+    def evaluateAccumulationPerSec(self, models: Iterable[ContextModel])-> Iterable[Tensor]
+        raise NotImplementedError #interface for architechture group
+        return None
+
 class SquaredError(FunctionClassError):
 
     def _metric(self, ground_truth: Tensor, predictions: Tensor) -> Tensor:
