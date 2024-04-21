@@ -4,9 +4,9 @@ optim:
 loss_fn:
     type: squared
 function_class: 
-    type: chebyshev shared roots
-    degree: 5
-    perturbation: 0.2
+    type: chebychev kernel linear regression
+    lowest_degree: 3
+    highest_degree: 11
 b_size: 32
 seq_len: !curriculum
     start: 11

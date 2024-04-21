@@ -1,0 +1,23 @@
+optim:
+    type: adam
+    lr: 0.0001
+loss_fn:
+    type: squared
+function_class: 
+    type: chebychev shared roots
+    degree: 5
+    perturbation: 0.2
+b_size: 32
+seq_len: !curriculum
+    start: 11
+    stop: 42
+    step_size: 2
+    step_len: 1000
+x_dim: 1
+x_dist:
+    type: uniform
+steps: 500000
+log_freq: 100
+checkpoint_freq: 5000
+model: *std_gpt2
+baseline_models: [*least_squares]

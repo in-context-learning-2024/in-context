@@ -12,7 +12,8 @@ from .wrappers import (
 )
 
 from .chebyshev_specials import (
-    ChebyshevSharedRoots,
+    ChebychevKernelLinearRegression,
+    ChebychevSharedRoots,
 )
 
 FUNCTION_CLASSES = {
@@ -22,7 +23,8 @@ FUNCTION_CLASSES = {
     "quadradtic regression" : QuadraticRegression,
     "2 layer mlp regression" : MLPRegression,
     "decision tree" : DecisionTreeRegression,
-    "chebyshev shared roots" : ChebyshevSharedRoots,
+    "chebychev kernel linear regression" : ChebychevKernelLinearRegression,
+    "chebychev shared roots" : ChebychevSharedRoots,
 }
 
 __all__ = [
