@@ -133,7 +133,7 @@ class FunctionClassError(Benchmark):
         
         return robustness_nums
     
-    def evaluateRobustness_quadrant(self, models: Iterable[ContextModel]):
+    def evaluateRobustness_quadrant(self, models: Iterable[ContextModel])-> Iterable[Tensor]:
         sequence_length=self.fn_cls.sequence_length
         batch_size=self.fn_cls.batch_size
         num_models = len(list(models))
@@ -174,7 +174,7 @@ class FunctionClassError(Benchmark):
 
         return errs
 
-    def evaluateOrthogonal(self, models: Iterable[ContextModel]):
+    def evaluateOrthogonal(self, models: Iterable[ContextModel])-> Iterable[Tensor]:
         
         sequence_length=self.fn_cls.sequence_length
         batch_size=self.fn_cls.batch_size
@@ -223,7 +223,7 @@ class FunctionClassError(Benchmark):
 
         return errs
 
-    def evaluateAtSeenPoints(self, models: Iterable[ContextModel]):#each evaluation happens at a random already seen point. 
+    def evaluateAtSeenPoints(self, models: Iterable[ContextModel])-> Iterable[Tensor]:#each evaluation happens at a random already seen point. 
         
         sequence_length=self.fn_cls.sequence_length
         batch_size=self.fn_cls.batch_size
