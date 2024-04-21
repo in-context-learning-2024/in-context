@@ -4,9 +4,9 @@ from torch.distributions.distribution import Distribution
 
 class randQuadrant(Distribution):
     def __init__(self, base: Distribution, opp = False):
-        bs = base.batch_shape()
+        bs = base.batch_shape
         # double the first dim of shape, because the first half will be modified
-        self.super(randQuadrant, (bs[0]*2, bs[1], bs[2]), base.event_shape())
+        super().__init__(randQuadrant, (bs[0]*2, bs[1], bs[2]), base.event_shape)
         self.dist = base
         # opposite is for if we want ex and test to be opposite quadrants
         self.opposite = opp
@@ -18,6 +18,7 @@ class randQuadrant(Distribution):
         xs_modded = xs.abs() * pattern
         
         # first half is modified to be one quadrant
+        # dim=0 is dimension that the two types of inputs will be stored along
         if (self.opposite):
-            return torch.cat((xs_modded, -xs_modded), dim=1)
-        return torch.cat((xs_modded, xs), dim=1)
+            return torch.cat((xs_modded, -xs_modded), dim=0)
+        return torch.cat((xs_modded, xs), dim=0)

@@ -218,7 +218,9 @@ class FunctionClassError(Benchmark):
 
         errs=torch.zeros((len(models), self.num_batches, batch_size, sequence_length))
 
-        quad_fn = distributions.randQuadrant(self.fn_cls)
+        # convert distribution to single quandrant
+        quad_fn = self.fn_cls
+        quad_fn.x_dist = distributions.randQuadrant(self.fn_cls.x_dist)
     
         for i, (x_batch, y_batch) in zip(range(self.num_batches), quad_fn):
             # x_modded has x-values that have been restricted to a quadrant
@@ -227,28 +229,33 @@ class FunctionClassError(Benchmark):
 
             y_modded = y_batch[:batch_size]
             y = y_batch[batch_size:]
-            
-            # will hold error for varying amount of quadrant-ed values
-            errors = torch.zeros((batch_size, sequence_length))
+            #print(errs.shape)
+            #print(x_batch.shape)
+            #print(y_batch.shape)
 
             # want to gradually increase number of quadrant-ed values
-            for j in range(batch_size):
-                x_comb = torch.cat((x_modded[:, :j, :], x[:, j:, :]), dim=1)
-                y_comb = torch.cat((y_modded[:, :j, :], y[:, j:, :]), dim=1)
+            x_comb = torch.cat((x_modded[:, :i], x[:, i:]), dim=1)
+            y_comb = torch.cat((y_modded[:, :i], y[:, i:]), dim=1)
 
-                for model in models:
-                    with torch.no_grad():
-                        errs[:, i, j] = self._metric(y_comb, model.forward(x_comb, y_comb))
-                        # should this still be stacked?
-                        #errs[:,i,j] = torch.stack([
-                        #    self._metric(
-                        #        y_comb,
-                        #        model.forward(x_comb, y_comb)
-                        #    )
-                        #])
+            count = 0
+            for model in models:
+                with torch.no_grad():
+                    #print(self._metric(y_comb, model.forward(x_comb, y_comb)).shape)
+                    errs[count, i] = self._metric(y_comb, model.forward(x_comb, y_comb))
+                    # should this still be stacked?
+                    #errs[:,i,j] = torch.stack([
+                    #    self._metric(
+                    #        y_comb,
+                    #        model.forward(x_comb, y_comb)
+                    #    )
+                    #])
 
             errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))
         
+        # revert modifications for quad
+        self.fn_cls.x_dist = self.fn_cls.x_dist.dist
+        self.fn_cls.batch_size = batch_size
+
         return self.PostProcessingStats(errs, [model.name for model in models]), errs
 
     def evaluateOrthogonal(self, models: Iterable[ContextModel]):
