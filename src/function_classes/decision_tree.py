@@ -8,9 +8,9 @@ from utils import CombinedDistribution
 
 class DecisionTreeRegression(FunctionClass):
 
-    def __init__(self, depth: int = 4, *args):
+    def __init__(self, depth: int = 4, *args, **kwargs):
         self._depth = depth
-        super(DecisionTreeRegression, self).__init__(*args)
+        super(DecisionTreeRegression, self).__init__(*args, **kwargs)
 
     def _init_param_dist(self) -> D.Distribution:
         # Represent the tree using an array. Root node is at index 0, its 2 children at index 1 and 2...
@@ -31,8 +31,8 @@ class DecisionTreeRegression(FunctionClass):
             target_values_dist
         )
 
-    def evaluate(self, x_batch: torch.Tensor, params: list[torch.Tensor]) -> torch.Tensor:
-        dt_tensor, target_tensor = params
+    def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
+        dt_tensor, target_tensor, *_ = params
         y_batch = torch.zeros(*x_batch.shape[:2], device=x_batch.device)
         for i in range(self.batch_size):
             xs_bool = x_batch[i] > 0

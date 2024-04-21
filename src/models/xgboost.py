@@ -1,6 +1,5 @@
 import torch
 from core import ContextModel
-from tqdm import trange
 import xgboost as xgb
 
 class XGBoostModel(ContextModel):
@@ -14,7 +13,7 @@ class XGBoostModel(ContextModel):
         preds = []
         # i: loop over num_points
         # j: loop over bsize
-        for i in trange(ys.shape[1]):
+        for i in range(ys.shape[1]):
             pred = torch.zeros_like(ys[:, 0])
             if i > 0:
                 pred = torch.zeros_like(ys[:, 0])

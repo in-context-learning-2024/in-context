@@ -1,0 +1,19 @@
+{
+    "image": "mcr.microsoft.com/vscode/devcontainers/anaconda:3",
+
+    "features": { // We add this to enable pruning with "onCreateCommand"
+        "ghcr.io/devcontainers/features/docker-outside-of-docker": {}
+    },
+
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-toolsai.jupyter",
+                "GitHub.codespaces"
+            ]
+        }
+    },
+
+    "onCreateCommand" : "docker system prune -fa && conda env create -f environment.yaml && conda init && conda init zsh"
+}

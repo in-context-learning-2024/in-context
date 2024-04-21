@@ -1,3 +1,4 @@
+from core.function_class import FunctionClass
 from .decision_tree import DecisionTreeRegression
 from .linear import (
     LinearRegression, 
@@ -15,11 +16,11 @@ from .chebyshev_specials import (
     ChebyshevSharedRoots,
 )
 
-FUNCTION_CLASSES = {
+FUNCTION_CLASSES: dict[str, type[FunctionClass]] = {
     "linear regression" : LinearRegression,
     "linear classification" : LinearClassification,
-    "sparse linear" : SparseLinearRegression,
-    "quadradtic regression" : QuadraticRegression,
+    "sparse linear regression" : SparseLinearRegression,
+    "quadratic regression" : QuadraticRegression,
     "2 layer mlp regression" : MLPRegression,
     "decision tree" : DecisionTreeRegression,
     "chebyshev shared roots" : ChebyshevSharedRoots,

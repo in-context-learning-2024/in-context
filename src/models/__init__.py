@@ -1,5 +1,8 @@
 from core import ContextModel
-from .transformer import TransformerModel
+from .transformer import (
+    GPT2,
+    Llama
+)
 from .linear import (
     LeastSquaresModel,
     AveragingModel,
@@ -11,7 +14,8 @@ from .xgboost import XGBoostModel
 from .decision_tree import DecisionTreeModel
 
 MODELS: dict[str, type[ContextModel]] = {
-    "gpt2" : TransformerModel,
+    "gpt2" : GPT2,
+    "llama" : Llama,
 
     "least squares" : LeastSquaresModel,
     "knn"           : KNNModel,
@@ -19,7 +23,7 @@ MODELS: dict[str, type[ContextModel]] = {
     "lasso"         : LassoModel,
     "grad mlp"      : GDModel,
     "decision tree" : DecisionTreeModel,
-    "xgboost"       : XGBoostModel
+    "xgboost"       : XGBoostModel,
 }
 
 __all__ = [
