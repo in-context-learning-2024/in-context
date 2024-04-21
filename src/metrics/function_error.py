@@ -10,61 +10,14 @@ from core import (
     ContextModel,
     distributions,
 )
-import numpy as np
-from scipy.stats import norm
 
 class FunctionClassError(Benchmark):
-    def __init__(self, function_class: FunctionClass, num_batches=1):
+    def __init__(self, function_class: FunctionClass):
         self.fn_cls = function_class
 
     def _metric(self, ground_truth: Tensor, predictions: Tensor) -> Tensor:
         """Compute a metric between a prediction and a "ground truth" """
         raise NotImplementedError("Abstract class FunctionClassError does not implement a metric!")
-
-    def post_process_errs(self, errs: Iterable[Tensor], prefix="", bootstrap_subsample_count: int = 1000, 
-                            confidence_level: list[float] = [0.01, 0.05]) -> Iterable[dict[str, Tensor]]:
-
-        if (len(prefix) > 0):
-            prefix += "_"
-
-        for err_tensor in errs:
-            
-            true_sample_count, *_ = err_tensor.size()
-
-            # Bootstrapping 
-            sample_indices = torch.randint(0, true_sample_count, (bootstrap_subsample_count, true_sample_count)) 
-            bootstrap_samples = err_tensor[sample_indices, ...]
-            means = bootstrap_samples.mean(dim=1)
-            std_estimate = means.std(dim=0)
-
-
-            QUANTILES = [0, 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 1]
-            std = torch.std(err_tensor, dim=0)
-            normalized_std = std / (true_sample_count ** 0.5)
-            mean = torch.mean(err_tensor, dim=0)
-            quantiles = torch.quantile(
-                err_tensor, torch.tensor(QUANTILES), dim=0
-            )
-
-            confidence_data = { }
-            for level in confidence_level:
-                normalized_std_err = norm.ppf(1 - level/2) * normalized_std
-                estimate_std_err = norm.ppf(1 - level/2) * std_estimate
-                confidence_data[f"{prefix}normal_confidence_level{level}"   ] = [mean + normalized_std_err, mean - normalized_std_err]
-                confidence_data[f"{prefix}bootstrap_confidence_level{level}"] = [mean + estimate_std_err, mean - estimate_std_err] 
-
-            yield {
-                f"{prefix}accuracy" : mean,
-                f"{prefix}std" : std,
-                f"{prefix}std_mean" : normalized_std,
-                f"{prefix}max" : quantiles[len(quantiles)-1],
-                f"{prefix}min" : quantiles[0],
-                **confidence_data,
-                **{
-                    f"{prefix}quantile_{q_interval}" : q_value
-                    for q_interval, q_value in zip(QUANTILES[1:-1], quantiles[1:-1])
-                },
-            }
 
     def evaluate(self, models: Iterable[ContextModel], num_batches: int = 1) -> Iterable[Tensor]:
         """Produce a tensor of shape (batch_size * num_batches, metric_shape) for each model provided"""
