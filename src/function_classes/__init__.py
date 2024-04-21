@@ -1,3 +1,4 @@
+from core.function_class import FunctionClass
 from .decision_tree import DecisionTreeRegression
 from .linear import (
     LinearRegression, 
@@ -11,7 +12,7 @@ from .wrappers import (
     ScaledRegression,
 )
 
-FUNCTION_CLASSES = {
+FUNCTION_CLASSES: dict[str, type[FunctionClass]] = {
     "linear regression" : LinearRegression,
     "linear classification" : LinearClassification,
     "sparse linear regression" : SparseLinearRegression,
