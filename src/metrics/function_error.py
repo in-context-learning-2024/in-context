@@ -21,6 +21,13 @@ class FunctionClassError(Benchmark):
         """Compute a metric between a prediction and a "ground truth" """
         raise NotImplementedError("Abstract class FunctionClassError does not implement a metric!")
 
+    def save_stats(stats):
+        os.makedirs(self.save_path, exist_ok=True)
+        torch.save(stats, os.path.join(self.save_path,self.fn_cls.name))
+
+    def load_stats():
+        return torch.load(self.save_path)
+
     def PostProcessingStats(self, errs, model_names, prefix="", B=1000, confidence_level =[0.01,0.05]):
         stats={} 
         if (len(prefix)>0):
@@ -49,10 +56,6 @@ class FunctionClassError(Benchmark):
             for j in range(0, len(confidence_level)):
                 stats[prefix+"normal_confidence_level"+name+str(confidence_level[j])] = [mean[i]+norm.ppf(confidence_level[j]/2)*std[i]/np.sqrt(samples),mean[i]+norm.ppf(1-confidence_level[j]/2)*std[i]/np.sqrt(samples)]
                 stats[prefix+"bootstrap_confidence_level"+name+str(confidence_level[j])] = [mean[i]+norm.ppf(confidence_level[j]/2)*std_estimate[i], mean[i]+norm.ppf(1-confidence_level[j]/2)*std_estimate[i]] 
-            
-        if self.save_path!=None:
-            os.makedirs(self.save_path, exist_ok=True)
-            torch.save(stats, os.path.join(self.save_path,self.fn_cls.name))
 
         return stats
 
@@ -76,91 +79,7 @@ class FunctionClassError(Benchmark):
         
         errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))
 
-        return self.PostProcessingStats(errs, [model.name for model in models]), errs
-
-    def NoisyXDistribution(self, models: Iterable[ContextModel], noise_x_func):
-
-        sequence_length=self.fn_cls.sequence_length
-        batch_size=self.fn_cls.batch_size
-        errs=torch.zeros((len(models), self.num_batches, batch_size, sequence_length))
-
-        for i, (x_batch, y_batch) in zip(range(self.num_batches), self.fn_cls):
-            with torch.no_grad():
-                errs[:, i] = torch.stack([
-                  
-                    self._metric(
-                        y_batch,
-                        model.forward(noise_x_func(x_batch), y_batch)
-                    )
-                    for model in models
-                ])
-        
-        errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))
-
-        return self.PostProcessingStats(errs, [model.name for model in models]), errs
-
-    def NoisyYDistribution(self, models: Iterable[ContextModel], noise_y_func):
-
-        sequence_length=self.fn_cls.sequence_length
-        batch_size=self.fn_cls.batch_size
-        errs=torch.zeros((len(models), self.num_batches, batch_size, sequence_length))
-
-        for i, (x_batch, y_batch) in zip(range(self.num_batches), self.fn_cls):
-            with torch.no_grad():
-                y_batch=noise_y_func(y_batch)
-                errs[:, i] = torch.stack([
-                    self._metric(
-                        y_batch,
-                        model.forward(x_batch, y_batch)
-                    )
-                    for model in models
-                ])
-        
-        errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))
-
-        return self.PostProcessingStats(errs, [model.name for model in models]), errs
-
-    def ScaledX(self, models: Iterable[ContextModel], scale):
-
-        sequence_length=self.fn_cls.sequence_length
-        batch_size=self.fn_cls.batch_size
-        errs=torch.zeros((len(models), self.num_batches, batch_size, sequence_length))
-
-        for i, (x_batch, y_batch) in zip(range(self.num_batches), self.fn_cls):
-            with torch.no_grad():
-                errs[:, i] = torch.stack([
-                    self._metric(
-                        y_batch,
-                        model.forward(x_batch*scale, y_batch)
-                    )
-                    for model in models
-                ])
-        
-        errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))
-
-        return self.PostProcessingStats(errs, [model.name for model in models]), errs
-
-    def ScaledY(self, models: Iterable[ContextModel], scale):
-
-        sequence_length=self.fn_cls.sequence_length
-        batch_size=self.fn_cls.batch_size
-        errs=torch.zeros((len(models), self.num_batches, batch_size, sequence_length))
-
-        for i, (x_batch, y_batch) in zip(range(self.num_batches), self.fn_cls):
-            with torch.no_grad():
-                y_batch*=scale
-                errs[:, i] = torch.stack([
-                    self._metric(
-                        y_batch,
-                        model.forward(x_batch, y_batch)
-                    )
-                    for model in models
-                ])
-        
-        errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))
-
-        return self.PostProcessingStats(errs, [model.name for model in models]), errs
-
+        return errs
     def evaluateRobustness(self, models: Iterable[ContextModel], noise_x_func, noise_y_func): #probably should be fased out
         
         robustness_tasks=[]
@@ -297,7 +216,7 @@ class FunctionClassError(Benchmark):
         
         errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))[:, :, 1:]
 
-        return self.PostProcessingStats(errs, [model.name for model in models]), errs
+        return errs
 
         
     def evaluateAtSeenPoints(self, models: Iterable[ContextModel]):#each evaluation happens at a random already seen point. 
@@ -333,7 +252,7 @@ class FunctionClassError(Benchmark):
         
         errs=torch.reshape(errs, (len(models), self.num_batches*batch_size, sequence_length))[:, :, 1:]
 
-        return self.PostProcessingStats(errs, [model.name for model in models]), errs
+        return errs
 
 class SquaredError(FunctionClassError):
 
