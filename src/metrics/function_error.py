@@ -22,7 +22,7 @@ class FunctionClassError(Benchmark):
         """Compute a metric between a prediction and a "ground truth" """
         raise NotImplementedError("Abstract class FunctionClassError does not implement a metric!")
 
-    def post_process_errs(self, errs: Iterable[Tensor], prefix="", bootstrap_subsamples: int = 1000, 
+    def post_process_errs(self, errs: Iterable[Tensor], prefix="", bootstrap_subsample_count: int = 1000, 
                             confidence_level: list[float] = [0.01, 0.05]) -> Iterable[dict[str, Tensor]]:
 
         if (len(prefix) > 0):
@@ -30,17 +30,18 @@ class FunctionClassError(Benchmark):
 
         for err_tensor in errs:
             
-            samples, *_ = err_tensor.size()
+            true_sample_count, *_ = err_tensor.size()
 
             # Bootstrapping 
-            sample_indices = torch.randint(0, samples, (bootstrap_subsamples, samples)) 
-            bootstrap_samples = err_tensor[:,sample_indices,:]
-            means = bootstrap_samples.mean(dim=2)
-            std_estimate = means.std(dim=1)
+            sample_indices = torch.randint(0, true_sample_count, (bootstrap_subsample_count, true_sample_count)) 
+            bootstrap_samples = err_tensor[sample_indices, ...]
+            means = bootstrap_samples.mean(dim=1)
+            std_estimate = means.std(dim=0)
 
 
             QUANTILES = [0, 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 1]
             std = torch.std(err_tensor, dim=0)
+            normalized_std = std / (true_sample_count ** 0.5)
             mean = torch.mean(err_tensor, dim=0)
             quantiles = torch.quantile(
                 err_tensor, torch.tensor(QUANTILES), dim=0
@@ -48,16 +49,15 @@ class FunctionClassError(Benchmark):
 
             confidence_data = { }
             for level in confidence_level:
-                upper = mean + norm.ppf(level/2)
-                lower = mean + norm.ppf(1 - level/2)
-                normalized_std = std/torch.sqrt(torch.tensor(samples))
-                confidence_data[f"{prefix}normal_confidence_level{level}"   ] = [upper *  normalized_std, lower *  normalized_std]
-                confidence_data[f"{prefix}bootstrap_confidence_level{level}"] = [upper * std_estimate, lower * std_estimate] 
+                normalized_std_err = norm.ppf(1 - level/2) * normalized_std
+                estimate_std_err = norm.ppf(1 - level/2) * std_estimate
+                confidence_data[f"{prefix}normal_confidence_level{level}"   ] = [mean + normalized_std_err, mean - normalized_std_err]
+                confidence_data[f"{prefix}bootstrap_confidence_level{level}"] = [mean + estimate_std_err, mean - estimate_std_err] 
 
             yield {
                 f"{prefix}accuracy" : mean,
                 f"{prefix}std" : std,
-                f"{prefix}std_mean" : std / np.sqrt(samples),
+                f"{prefix}std_mean" : normalized_std,
                 f"{prefix}max" : quantiles[len(quantiles)-1],
                 f"{prefix}min" : quantiles[0],
                 **confidence_data,
@@ -269,7 +269,7 @@ class FunctionClassError(Benchmark):
         raise NotImplementedError #interface for other architechture group
         return None
     
-    def evaluateAccumulationPerSec(self, models: Iterable[ContextModel])-> Iterable[Tensor]
+    def evaluateAccumulationPerSec(self, models: Iterable[ContextModel])-> Iterable[Tensor]:
         raise NotImplementedError #interface for architechture group
         return None
 
