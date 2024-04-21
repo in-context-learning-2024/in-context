@@ -14,21 +14,13 @@ import numpy as np
 from scipy.stats import norm
 
 class FunctionClassError(Benchmark):
-    def __init__(self, function_class: FunctionClass, num_batches=1, save_path=None):
+    def __init__(self, function_class: FunctionClass, num_batches=1):
         self.fn_cls = function_class
         self.num_batches=num_batches
-        self.save_path=save_path
 
     def _metric(self, ground_truth: Tensor, predictions: Tensor) -> Tensor:
         """Compute a metric between a prediction and a "ground truth" """
         raise NotImplementedError("Abstract class FunctionClassError does not implement a metric!")
-
-    def save_stats(self, stats):
-        os.makedirs(self.save_path, exist_ok=True)
-        torch.save(stats, os.path.join(self.save_path,self.fn_cls.name))
-
-    def load_stats(self):
-        return torch.load(self.save_path)
 
     def PostProcessingStats(self, errs, model_names, prefix="", B=1000, confidence_level =[0.01,0.05]):
         stats={} 
@@ -129,7 +121,7 @@ class FunctionClassError(Benchmark):
 
             errs=torch.reshape(errs, (len(list(models)), self.num_batches*batch_size, sequence_length))
 
-            robustness_nums.update(self.PostProcessingStats(errs, [model.name for model in models], save_path, task[0]+str(task[1])))
+            robustness_nums.update(self.PostProcessingStats(errs, [model.name for model in models], task[0]+str(task[1])))
         
         return robustness_nums
     
