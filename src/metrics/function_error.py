@@ -23,33 +23,40 @@ class FunctionClassError(Benchmark):
         raise NotImplementedError("Abstract class FunctionClassError does not implement a metric!")
 
     def PostProcessingStats(self, errs, model_names, prefix="", B=1000, confidence_level =[0.01,0.05]):
-        stats={} 
-        if (len(prefix)>0):
+        stats = {} 
+        if (len(prefix) > 0):
             prefix += "_"
 
         num_models, samples, sequence_length=errs.size()
         
-        #Bootstrapping 
+        # Bootstrapping 
         sample_indices = torch.randint(0, samples, (B, samples)) 
         bootstrap_samples = errs[:,sample_indices,:]
         means = bootstrap_samples.mean(dim=2)
         std_estimate = means.std(dim=1)
 
 
-        std=torch.std(errs, dim=1)
-        mean =torch.mean(errs, dim=1)
-        quantiles=torch.quantile(errs, torch.Tensor([0, 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 1]), dim=1)
+        QUANTILES = [0, 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 1]
+        std = torch.std(errs, dim=1)
+        mean = torch.mean(errs, dim=1)
+        quantiles = torch.quantile(
+            errs, torch.tensor(QUANTILES), dim=1
+        )
+
         for i, name in enumerate(model_names):
-            stats[prefix+"accuracy_"+name]=mean[i]
-            stats[prefix+"std_"+name]= std[i]
-            stats[prefix+"std_mean_"+name]= std[i]/np.sqrt(samples)
-            stats[prefix+"max_"+name]=quantiles[len(quantiles)-1, i]
-            stats[prefix+"min_"+name]=quantiles[0, i]
+            stats[f"{prefix}accuracy_{name}"] = mean[i]
+            stats[f"{prefix}std_{name}"] = std[i]
+            stats[f"{prefix}std_mean_{name}"] = std[i] / np.sqrt(samples)
+            stats[f"{prefix}max_{name}"] = quantiles[len(quantiles)-1, i]
+            stats[f"{prefix}min_{name}"] = quantiles[0, i]
             for j in range(1, len(quantiles)-1):
-                stats[prefix+"quantile_"+name+str([0, 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 1][j])]=quantiles[j, i]
+                stats[f"{prefix}quantile_{name}{QUANTILES[j]}"] = quantiles[j, i]
             for j in range(0, len(confidence_level)):
-                stats[prefix+"normal_confidence_level"+name+str(confidence_level[j])] = [mean[i]+norm.ppf(confidence_level[j]/2)*std[i]/np.sqrt(samples),mean[i]+norm.ppf(1-confidence_level[j]/2)*std[i]/np.sqrt(samples)]
-                stats[prefix+"bootstrap_confidence_level"+name+str(confidence_level[j])] = [mean[i]+norm.ppf(confidence_level[j]/2)*std_estimate[i], mean[i]+norm.ppf(1-confidence_level[j]/2)*std_estimate[i]] 
+                upper = mean[i] + norm.ppf(confidence_level[j]/2)
+                lower = mean[i] + norm.ppf(1 - confidence_level[j]/2)
+                normalized_std = std[i]/np.sqrt(samples)
+                stats[f"{prefix}normal_confidence_level{name}{confidence_level[j]}"   ] = [upper *  normalized_std, lower *  normalized_std]
+                stats[f"{prefix}bootstrap_confidence_level{name}{confidence_level[j]}"] = [upper * std_estimate[i], lower * std_estimate[i]] 
 
         return stats
 
