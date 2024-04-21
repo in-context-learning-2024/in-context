@@ -67,7 +67,7 @@ def get_model(data: dict) -> ContextModel:
     _check_kwargs(MODELS, data, "model")
 
     model_weights = data.get('model_weights', False)
-    if model_weights: del data['model_weights']
+    if 'model_weights' in data.keys(): del data['model_weights']
 
     if 'base_model' in data:
         base_model = get_model(data['base_model'] | { 'x_dim': data['x_dim'] } | { 'model_weights' : model_weights})
@@ -106,7 +106,7 @@ def get_optimizer(model: ContextModel, data: dict) -> torch.optim.Optimizer:
     _check_kwargs(OPTIMIZERS, data, "optimizer")
 
     optim_state = data.get('optim_state', False)
-    if optim_state: del data['optim_state']
+    if 'optim_state' in data.keys(): del data['optim_state']
 
     optim_type: type[torch.optim.Optimizer] = OPTIMIZERS[data['type']]
 
