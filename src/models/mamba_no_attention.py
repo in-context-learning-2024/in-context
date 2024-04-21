@@ -1,5 +1,6 @@
 import torch
-from transformers import GPT2Config, GPT2Model, MambaConfig, MambaPreTrainedModel, MambaModel # type: ignore
+from torch import LongTensor, FloatTensor, Tensor
+from transformers import GPT2Config, GPT2Model, MambaConfig, MambaPreTrainedModel, MambaModel # pyrigh: ignor[]
 from torch import nn
 from .transformer import TransformerModel
 from typing import Optional, Tuple, Union
@@ -9,41 +10,7 @@ from core import ContextModel
 from transformers.modeling_outputs import BaseModelOutputWithPastAndCrossAttentions
 import functools
 
-def relu_attn(self, query, key, value, attention_mask=None, head_mask=None):
-    attn_weights = torch.matmul(query, key.transpose(-1, -2))
-  
-    if self.scale_attn_weights:
-      attn_weights = attn_weights / (value.size(-1) ** 0.5)
-  
-      # Layer-wise attention scaling
-    if self.scale_attn_by_inverse_layer_idx:
-      attn_weights = attn_weights / float(self.layer_idx + 1)
-  
-    if not self.is_cross_attention:
-        # if only "normal" attention layer implements causal mask
-      query_length, key_length = query.size(-2), key.size(-2)
-      causal_mask = self.bias[:, :, key_length - query_length : key_length, :key_length].bool()
-      attn_weights = torch.where(causal_mask, attn_weights, self.masked_bias.to(attn_weights.dtype))
-  
-    if attention_mask is not None:
-        # Apply the attention mask
-        attn_weights = attn_weights + attention_mask
-  
-    attn_weights = nn.functional.relu(attn_weights) / query.size(-2) 
-  
-    # Downcast (if necessary) back to V's dtype (if in mixed-precision) -- No-Op otherwise
-    attn_weights = attn_weights.type(value.dtype)
-    attn_weights = self.attn_dropout(attn_weights)
-  
-    # Mask heads if we want to
-    if head_mask is not None:
-        attn_weights = attn_weights * head_mask
-  
-    attn_output = torch.matmul(attn_weights, value)
-  
-    return attn_output, attn_weights
-
-def relu_attn_causal(self, query, key, value, attention_mask=None, head_mask=None):
+def vit_style_relu_attn(self, query, key, value, attention_mask=None, head_mask=None):
     attn_weights = torch.matmul(query, key.transpose(-1, -2))
   
     if self.scale_attn_weights:
@@ -63,23 +30,51 @@ def relu_attn_causal(self, query, key, value, attention_mask=None, head_mask=Non
         # Apply the attention mask
         attn_weights = attn_weights + attention_mask
   
-      # TODO: make this sequence length causal (divide by tokens seen so far, not total tokens in sequence)
-      # relud = nn.functional.relu(attn_weights)
+    attn_weights = nn.functional.relu(attn_weights) / query.size(-2) 
+  
+    # Downcast (if necessary) back to V's dtype (if in mixed-precision) -- No-Op otherwise
+    attn_weights = attn_weights.type(value.dtype)
+    attn_weights = self.attn_dropout(attn_weights)
+  
+    # Mask heads if we want to
+    if head_mask is not None:
+        attn_weights = attn_weights * head_mask
+  
+    attn_output = torch.matmul(attn_weights, value)
+  
+    return attn_output, attn_weights
+
+def causal_relu_attn(self, query, key, value, attention_mask=None, head_mask=None):
+    attn_weights = torch.matmul(query, key.transpose(-1, -2))
+  
+    if self.scale_attn_weights:
+        attn_weights = attn_weights / (value.size(-1) ** 0.5)
+  
+    # Layer-wise attention scaling
+    if self.scale_attn_by_inverse_layer_idx:
+        attn_weights = attn_weights / float(self.layer_idx + 1)
+  
+    if not self.is_cross_attention:
+        # if only "normal" attention layer implements causal mask
+        query_length, key_length = query.size(-2), key.size(-2)
+        causal_mask = self.bias[:, :, key_length - query_length : key_length, :key_length].bool()
+        attn_weights = torch.where(causal_mask, attn_weights, self.masked_bias.to(attn_weights.dtype))
+  
+    if attention_mask is not None:
+        # Apply the attention mask
+        attn_weights = attn_weights + attention_mask
+  
     seq_len = query.size(-2)
     causal_seq_len = 1 + ( torch.arange(seq_len, device=DEVICE)
                                   .expand(attn_weights.shape)
                                   .transpose(-1, -2) )
-      # import code
-      # assert attn_weights.shape == causal_seq_len.shape, code.interact(local=locals(), banner=f"Failed shape check: attn_weights do not math causal_seq_len in shape! \n{attn_weights.shape} vs {causal_seq_len.shape}")
-      # pre_attn_weights = attn_weights
     attn_weights = nn.functional.relu(attn_weights) / (causal_seq_len + 1)
-      # code.interact(local=locals(), banner="yeesh")
   
-      # Downcast (if necessary) back to V's dtype (if in mixed-precision) -- No-Op otherwise
+    # Downcast (if necessary) back to V's dtype (if in mixed-precision) -- No-Op otherwise
     attn_weights = attn_weights.type(value.dtype)
     attn_weights = self.attn_dropout(attn_weights)
   
-      # Mask heads if we want to
+    # Mask heads if we want to
     if head_mask is not None:
         attn_weights = attn_weights * head_mask
   
@@ -89,19 +84,19 @@ def relu_attn_causal(self, query, key, value, attention_mask=None, head_mask=Non
 
 def forward_GPT2Model(
         self,
-        input_ids: Optional[torch.LongTensor] = None,
-        past_key_values: Optional[Tuple[Tuple[torch.Tensor]]] = None,
-        attention_mask: Optional[torch.FloatTensor] = None,
-        token_type_ids: Optional[torch.LongTensor] = None,
-        position_ids: Optional[torch.LongTensor] = None,
-        head_mask: Optional[torch.FloatTensor] = None,
-        inputs_embeds: Optional[torch.FloatTensor] = None,
-        encoder_hidden_states: Optional[torch.Tensor] = None,
-        encoder_attention_mask: Optional[torch.FloatTensor] = None,
-        use_cache: Optional[bool] = None,
-        output_attentions: Optional[bool] = None,
-        output_hidden_states: Optional[bool] = None,
-        return_dict: Optional[bool] = None,
+        input_ids              : Optional[torch.LongTensor] = None,
+        past_key_values        : Optional[Tuple[Tuple[torch.Tensor]]] = None,
+        attention_mask         : Optional[torch.FloatTensor] = None,
+        token_type_ids         : Optional[torch.LongTensor] = None,
+        position_ids           : Optional[torch.LongTensor] = None, # pyright: ignore[reportRedeclaration]
+        head_mask              : Optional[torch.FloatTensor] = None,
+        inputs_embeds          : Optional[torch.FloatTensor] = None,
+        encoder_hidden_states  : Optional[torch.Tensor] = None,
+        encoder_attention_mask : Optional[torch.FloatTensor] = None,
+        use_cache              : Optional[bool] = None,
+        output_attentions      : Optional[bool] = None,
+        output_hidden_states   : Optional[bool] = None,
+        return_dict            : Optional[bool] = None,
         no_attention = False,
         want_pos_embeddings = True
     ) -> Union[Tuple, BaseModelOutputWithPastAndCrossAttentions]:
@@ -117,52 +112,49 @@ def forward_GPT2Model(
         elif input_ids is not None:
             self.warn_if_padding_and_no_attention_mask(input_ids, attention_mask)
             input_shape = input_ids.size()
-            input_ids = input_ids.view(-1, input_shape[-1])
+            input_ids: LongTensor = input_ids.view(-1, input_shape[-1])  # pyright: ignore[reportAssignmentType]
             batch_size = input_ids.shape[0]
+            device = input_ids.device
         elif inputs_embeds is not None:
             input_shape = inputs_embeds.size()[:-1]
             batch_size = inputs_embeds.shape[0]
+            device = inputs_embeds.device
         else:
             raise ValueError("You have to specify either input_ids or inputs_embeds")
 
-        device = input_ids.device if input_ids is not None else inputs_embeds.device
-
         if token_type_ids is not None:
-            token_type_ids = token_type_ids.view(-1, input_shape[-1])
+            token_type_ids = token_type_ids.view(-1, input_shape[-1]) # pyright: ignore[reportAssignmentType]
 
-        if not no_attention:
-            if past_key_values is None:
-                past_length = 0
-                past_key_values = tuple([None] * len(self.h))
-            else:
-                past_length = past_key_values[0][0].size(-2)
-        else:
+        past_key_values: tuple[tuple[Optional[Tensor], ...]]
+        if no_attention or past_key_values is None:
             past_length = 0
-            past_key_values = tuple([None] * len(self.h))
-                
+            past_key_values = (((None,) * len(self.h)),)
+        else:
+            past_length = past_key_values[0][0].size(-2)
+
         if position_ids is None:
-            position_ids = torch.arange(past_length, input_shape[-1] + past_length, dtype=torch.long, device=device)
-            position_ids = position_ids.unsqueeze(0)
+            position_ids: LongTensor = torch.arange(past_length, input_shape[-1] + past_length, dtype=torch.long, device=device) # pyright: ignore[reportAssignmentType]
+            position_ids = position_ids.unsqueeze(0) # pyright: ignore[reportAssignmentType]
 
         # GPT2Attention mask.
         if not no_attention and attention_mask is not None:
             if batch_size <= 0:
                 raise ValueError("batch_size has to be defined and > 0")
-            attention_mask = attention_mask.view(batch_size, -1)
+            attention_mask: FloatTensor = attention_mask.view(batch_size, -1) # pyright: ignore[reportAssignmentType]
             # We create a 3D attention mask from a 2D tensor mask.
             # Sizes are [batch_size, 1, 1, to_seq_length]
             # So we can broadcast to [batch_size, num_heads, from_seq_length, to_seq_length]
             # this attention mask is more simple than the triangular masking of causal attention
             # used in OpenAI GPT, we just need to prepare the broadcast dimension here.
-            attention_mask = attention_mask[:, None, None, :]
+            attention_mask = attention_mask[:, None, None, :] # pyright: ignore[reportAssignmentType]
 
             # Since attention_mask is 1.0 for positions we want to attend and 0.0 for
             # masked positions, this operation will create a tensor which is 0.0 for
             # positions we want to attend and the dtype's smallest value for masked positions.
             # Since we are adding it to the raw scores before the softmax, this is
             # effectively the same as removing these entirely.
-            attention_mask = attention_mask.to(dtype=self.dtype)  # fp16 compatibility
-            attention_mask = (1.0 - attention_mask) * torch.finfo(self.dtype).min
+            attention_mask = attention_mask.to(dtype=self.dtype)  # fp16 compatibility # pyright: ignore[reportAssignmentType]
+            attention_mask = (1.0 - attention_mask) * torch.finfo(self.dtype).min # pyright: ignore[reportAssignmentType]
 
         # If a 2D or 3D attention mask is provided for the cross-attention
         # we need to make broadcastable to [batch_size, num_heads, seq_length, seq_length]
@@ -170,7 +162,7 @@ def forward_GPT2Model(
             encoder_batch_size, encoder_sequence_length, _ = encoder_hidden_states.size()
             encoder_hidden_shape = (encoder_batch_size, encoder_sequence_length)
             if encoder_attention_mask is None:
-                encoder_attention_mask = torch.ones(encoder_hidden_shape, device=device)
+                encoder_attention_mask = torch.ones(encoder_hidden_shape, device=device) # pyright: ignore[reportAssignmentType]
             encoder_attention_mask = self.invert_attention_mask(encoder_attention_mask)
         else:
             encoder_attention_mask = None
@@ -219,9 +211,9 @@ def forward_GPT2Model(
                     layer_past = tuple(past_state.to(hidden_states.device) for past_state in layer_past)
                 # Ensure that attention_mask is always on the same device as hidden_states
                 if not no_attention and attention_mask is not None:
-                    attention_mask = attention_mask.to(hidden_states.device)
+                    attention_mask = attention_mask.to(hidden_states.device) # pyright: ignore[reportAssignmentType]
                 if not no_attention and isinstance(head_mask, torch.Tensor):
-                    head_mask = head_mask.to(hidden_states.device)
+                    head_mask = head_mask.to(hidden_states.device) # pyright: ignore[reportAssignmentType]
             if output_hidden_states:
                 all_hidden_states = all_hidden_states + (hidden_states,)
 
