@@ -1,4 +1,3 @@
-from abc import ABC
 from torch import Tensor
 from torch.distributions.distribution import Distribution
 from core import FunctionClass, ModifiedFunctionClass
