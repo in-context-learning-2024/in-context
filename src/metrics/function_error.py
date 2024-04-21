@@ -41,57 +41,6 @@ class FunctionClassError(Benchmark):
 
         return errs
 
-    def evaluateRobustness(self, models: Iterable[ContextModel], noise_x_func, noise_y_func, num_batches: int = 1): #probably should be fased out
-        
-        robustness_tasks=[]
-
-        robustness_nums={}
-
-        for scale in [0.125, 0.25, 0.5, 2, 4, 8]:
-            robustness_tasks.append(["scaled_x", scale])
-            robustness_tasks.append(["scaled_y", scale])
-        
-        for noise in [0.0625, 0.125, 0.25, 0.5, 1]:
-            robustness_tasks.append(["noise_x", noise])
-            robustness_tasks.append(["noise_y", noise])    
-
-
-        sequence_length=self.fn_cls.sequence_length
-        batch_size=self.fn_cls.batch_size
-
-        for j, task in enumerate(robustness_tasks):
-            errs=torch.zeros((samples, num_batches, batch_size, sequence_length))
-    
-            for i, (x_batch, y_batch) in zip(range(num_batches), self.fn_cls):
-
-                curxs=x_batch
-                curys=y_batch
-            
-                if task[0]=="scaled_x":
-                    curxs*=task[1]
-                elif task[0]=="scaled_y":
-                    curys*=task[1]
-                elif task[0]=="noise_x":
-                    curxs=noise_x_func(task[1])(curxs)
-                elif task[0]=="noise_y":
-                    curys=noise_y_func(task[1])(curys)
-                
-                with torch.no_grad():
-                    errs[:, i] = torch.stack([
-                  
-                        self._metric(
-                            curys,
-                            model.forward(curxs, curys)
-                        )
-                        for model in models
-                    ])
-
-            errs=torch.reshape(errs, (len(list(models)), num_batches*batch_size, sequence_length))
-
-            robustness_nums.update(self.PostProcessingStats(errs, [model.name for model in models], task[0]+str(task[1])))
-        
-        return robustness_nums
-    
     def evaluateRobustness_quadrant(self, models: Iterable[ContextModel], num_batches: int = 1)-> Iterable[Tensor]:
         sequence_length=self.fn_cls.sequence_length
         batch_size=self.fn_cls.batch_size
