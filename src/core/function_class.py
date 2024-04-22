@@ -46,21 +46,9 @@ class FunctionClass:
 
         params: list[Tensor] | Tensor  = self.p_dist.sample()
         if isinstance(params, list):
-            # casework for handling the quadrant case, which needs to return two things
-            # may be used for returning other non-standard batches
-            if x_batch.shape[0] == self.batch_size * 2:
-                y: torch.Tensor = self.evaluate(x_batch[:self.batch_size], *params)
-                y_modded: torch.Tensor = self.evaluate(x_batch[self.batch_size:], *params)
-                y_batch: torch.Tensor = torch.cat((y_modded, y), dim=0)
-            else:
-                y_batch: torch.Tensor = self.evaluate(x_batch, *params)
+            y_batch: torch.Tensor = self.evaluate(x_batch, *params)
         else:
-            if x_batch.shape[0] == self.batch_size * 2:
-                y: torch.Tensor = self.evaluate(x_batch[:self.batch_size], params)
-                y_modded: torch.Tensor = self.evaluate(x_batch[self.batch_size:], params)
-                y_batch: torch.Tensor = torch.cat((y_modded, y), dim=0)
-            else:
-                y_batch: torch.Tensor = self.evaluate(x_batch, params)
+            y_batch: torch.Tensor = self.evaluate(x_batch, params)
 
         if torch.cuda.is_available():
             return x_batch.cuda(), y_batch.cuda() 

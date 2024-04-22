@@ -1,10 +1,10 @@
 import torch
-import torch.nn.functional as F
 
 from torch import Tensor
 from typing import Iterable
 
-from metrics.benchmark import Benchmark
+from .benchmark import Benchmark
+from .metric import Metric
 from core import (
     FunctionClass,
     ContextModel,
@@ -12,12 +12,9 @@ from core import (
 )
 
 class FunctionClassError(Benchmark):
-    def __init__(self, function_class: FunctionClass):
+    def __init__(self, metric: Metric, function_class: FunctionClass):
         self.fn_cls = function_class
-
-    def _metric(self, ground_truth: Tensor, predictions: Tensor) -> Tensor:
-        """Compute a metric between a prediction and a "ground truth" """
-        raise NotImplementedError("Abstract class FunctionClassError does not implement a metric!")
+        self.metric = metric
 
     def evaluate(self, models: Iterable[ContextModel], num_batches: int = 1) -> Iterable[Tensor]:
         """Produce a tensor of shape (batch_size * num_batches, metric_shape) for each model provided"""
@@ -25,7 +22,7 @@ class FunctionClassError(Benchmark):
         with torch.no_grad():
             errs = torch.stack([
                 torch.stack([
-                    self._metric(
+                    self.metric.evaluate(
                         y_batch,
                         model.forward(x_batch, y_batch)
                     )
@@ -41,10 +38,12 @@ class FunctionClassError(Benchmark):
 
         return errs
 
+#################################################################################################################################
     def evaluateRobustness_quadrant(self, models: Iterable[ContextModel], num_batches: int = 1)-> Iterable[Tensor]:
         sequence_length=self.fn_cls.sequence_length
         batch_size=self.fn_cls.batch_size
-        num_models = len(list(models))
+        models = list(models)
+        num_models = len(models)
 
         # note no sequence length in errors, we only want error of last item
         errs=torch.zeros((num_models, num_batches, batch_size))
@@ -67,10 +66,10 @@ class FunctionClassError(Benchmark):
             x_comb = torch.cat((x_modded[:, :sequence_length - 1], x[:, sequence_length - 1:sequence_length]), dim=1)
             y_comb = torch.cat((y_modded[:, :sequence_length - 1], y[:, sequence_length - 1:sequence_length]), dim=1)
             
-            for j in range(len(models)):
+            for j in range(num_models):
                 model = models[j]
                 with torch.no_grad():
-                    errs[j, i] = self._metric(
+                    errs[j, i] = self.metric.evaluate(
                         y_comb[:,sequence_length - 1], 
                         model.forward(x_comb, y_comb)[:,sequence_length - 1])
 
@@ -81,6 +80,7 @@ class FunctionClassError(Benchmark):
         self.fn_cls.batch_size = batch_size
 
         return errs
+#################################################################################################################################
 
     def evaluateOrthogonal(self, models: Iterable[ContextModel], num_batches: int = 1)-> Iterable[Tensor]:
         
@@ -120,7 +120,7 @@ class FunctionClassError(Benchmark):
                 with torch.no_grad():
                     errs[:, i, :, j] = torch.stack([
                   
-                        self._metric(
+                        self.metric.evaluate(
                             y_test,
                             model.forward(cur_x, y_test)
                         )
@@ -156,7 +156,7 @@ class FunctionClassError(Benchmark):
                 with torch.no_grad():
                     errs[:, i, :, j] = torch.stack([
                   
-                        self._metric(
+                        self.metric.evaluate(
                             y_test,
                             model.forward(x_test, y_test)
                         )
@@ -175,24 +175,52 @@ class FunctionClassError(Benchmark):
         raise NotImplementedError #interface for architechture group
         return None
 
-class SquaredError(FunctionClassError):
+class FCErrorQuadrants(FunctionClassError):
+    """Determine error of models on a function class with the query point in an opposite 
+    """
 
-    def _metric(self, ground_truth: Tensor, predictions: Tensor) -> Tensor:
-        return (ground_truth - predictions).square()
+    def __init__(self, metric: Metric, function_class: FunctionClass, opposite: bool = True):
+        super().__init__(metric, function_class)
+        self.opposite = opposite
 
-class MeanSquaredError(FunctionClassError): #i dont really think we need this, I really mostly want the local ones...
+    def evaluate(self, models: Iterable[ContextModel], num_batches: int = 1) -> Iterable[Tensor]:
 
-    def _metric(self, ground_truth: Tensor, predictions: Tensor) -> Tensor:
-        return (ground_truth - predictions).square().mean()
+        batch_size = self.fn_cls.batch_size
+        models = list(models)
+        num_models = len(models)
 
-class Accuracy(FunctionClassError):
+        # note no sequence length in errors, we only want error of last item
+        errs = torch.zeros((num_batches, num_models, batch_size))
 
-    def _metric(self, ground_truth: Tensor, predictions: Tensor) -> Tensor:
-        return (ground_truth == predictions.sign()).float()
+        for batch_num in range(num_batches):
+            xs = self.fn_cls.x_dist.sample()
+            pattern = torch.randn(xs[:, 0:1, :].shape).sign() # shape (1, sequence_len, x_dim)
 
-class CrossEntropy(FunctionClassError):
+            xs_modded = xs.abs() * pattern
+            assert xs_modded.shape == xs.shape
 
-    def _metric(self, ground_truth: Tensor, predictions: Tensor) -> Tensor:
-        output = F.sigmoid(predictions)
-        target = (ground_truth + 1) / 2
-        return F.binary_cross_entropy(output, target)
+            params: list[Tensor] | Tensor  = self.fn_cls.p_dist.sample()
+            if isinstance(params, list):
+                ys_modded = self.fn_cls.evaluate(xs_modded, *params)
+                ys = self.fn_cls.evaluate(-xs_modded if self.opposite else xs, *params)
+            else:
+                ys_modded = self.fn_cls.evaluate(xs_modded, params)
+                ys = self.fn_cls.evaluate(-xs_modded if self.opposite else xs, params)
+
+            # want to gradually increase number of quadrant-ed values
+            # as i increases, we reduce available clean data
+            x_comb = torch.cat((xs_modded[:, :-1], xs[:, -1:]), dim=1)
+            y_comb = torch.cat((ys_modded[:, :-1], ys[:, -1:]), dim=1)
+
+            with torch.no_grad():
+                errs[batch_num] = torch.stack([
+                    self.metric.evaluate(
+                        y_comb[:, -1], 
+                        model.forward(x_comb, y_comb)[:, -1]
+                    ) for model in models
+                ])
+
+        errs = torch.transpose(errs, 0, 1)
+        errs = torch.reshape(errs, (num_models, num_batches*batch_size))
+
+        return errs
