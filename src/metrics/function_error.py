@@ -8,7 +8,6 @@ from .metric import Metric
 from core import (
     FunctionClass,
     ContextModel,
-    distributions,
 )
 
 class FunctionClassError(Benchmark):
@@ -176,7 +175,9 @@ class FunctionClassError(Benchmark):
         return None
 
 class FCErrorQuadrants(FunctionClassError):
-    """Determine error of models on a function class with the query point in an opposite 
+    """Determine error of models on a function class when the context has a constant
+       sign per sequence and the query point either has 
+       has each component have a sign opposite to that of all context examples
     """
 
     def __init__(self, metric: Metric, function_class: FunctionClass, opposite: bool = True):
@@ -186,41 +187,40 @@ class FCErrorQuadrants(FunctionClassError):
     def evaluate(self, models: Iterable[ContextModel], num_batches: int = 1) -> Iterable[Tensor]:
 
         batch_size = self.fn_cls.batch_size
+        y_dim = self.fn_cls.y_dim
         models = list(models)
         num_models = len(models)
 
         # note no sequence length in errors, we only want error of last item
-        errs = torch.zeros((num_batches, num_models, batch_size))
+        errs = torch.zeros((num_batches, num_models, batch_size, y_dim))
 
         for batch_num in range(num_batches):
             xs = self.fn_cls.x_dist.sample()
             pattern = torch.randn(xs[:, 0:1, :].shape).sign() # shape (1, sequence_len, x_dim)
 
-            xs_modded = xs.abs() * pattern
-            assert xs_modded.shape == xs.shape
+            xs_context = xs.abs() * pattern
+            assert xs_context.shape == xs.shape
 
             params: list[Tensor] | Tensor  = self.fn_cls.p_dist.sample()
+            x_query = (-xs_context if self.opposite else xs)[:, -1:]
             if isinstance(params, list):
-                ys_modded = self.fn_cls.evaluate(xs_modded, *params)
-                ys = self.fn_cls.evaluate(-xs_modded if self.opposite else xs, *params)
+                ys_context = self.fn_cls.evaluate(xs_context, *params)
+                y_query = self.fn_cls.evaluate(x_query, *params)
             else:
-                ys_modded = self.fn_cls.evaluate(xs_modded, params)
-                ys = self.fn_cls.evaluate(-xs_modded if self.opposite else xs, params)
+                ys_context = self.fn_cls.evaluate(xs_context, params)
+                y_query = self.fn_cls.evaluate(x_query, params)
 
-            # want to gradually increase number of quadrant-ed values
-            # as i increases, we reduce available clean data
-            x_comb = torch.cat((xs_modded[:, :-1], xs[:, -1:]), dim=1)
-            y_comb = torch.cat((ys_modded[:, :-1], ys[:, -1:]), dim=1)
+            x_comb = torch.cat((xs_context[:, :-1], x_query), dim=1)
 
             with torch.no_grad():
                 errs[batch_num] = torch.stack([
                     self.metric.evaluate(
-                        y_comb[:, -1], 
-                        model.forward(x_comb, y_comb)[:, -1]
+                        y_query.unsqueeze(dim=-1), # shape (batch_size, y_dim)
+                        model.forward(x_comb, ys_context[:, :-1])[:, -1:] # shape (batch_size, y_dim)
                     ) for model in models
                 ])
 
         errs = torch.transpose(errs, 0, 1)
-        errs = torch.reshape(errs, (num_models, num_batches*batch_size))
+        errs = torch.reshape(errs, (num_models, num_batches*batch_size, y_dim))
 
         return errs
