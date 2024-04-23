@@ -7,10 +7,8 @@ class LinearRegression(FunctionClass):
 
     def _init_param_dist(self) -> D.Distribution:
         """Produce the distribution with which to sample parameters"""
-        batch_shape = self.x_dist.batch_shape[:2]
-        param_event_shape = torch.Size([self.y_dim, self.x_dim])
-
-        param_dist_shape = torch.Size(batch_shape + param_event_shape)
+        
+        param_dist_shape = torch.Size([self.x_dist.batch_shape[0],1, self.y_dim, self.x_dim])
 
         param_dist = D.Normal( torch.zeros(param_dist_shape), 
                                torch.ones(param_dist_shape)   )
