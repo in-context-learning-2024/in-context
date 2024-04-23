@@ -8,4 +8,4 @@ class ZeroModel(ContextModel):
         self.context_length = -1
 
     def forward(self, xs, ys):
-        return 0 * xs[..., 0]
+        return 0 * xs[..., 0:1]

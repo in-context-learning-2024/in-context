@@ -21,7 +21,7 @@ class LinearRegression(FunctionClass):
         weights, *_ = params
         partial_sums = torch.bmm(weights.squeeze(-2), x_batch.permute(0, 2, 1))
         full_sums = torch.sum(partial_sums, dim=-2, keepdim=True)
-        y_batch = full_sums.squeeze()
+        y_batch = full_sums.transpose(-2, -1)
 
         return y_batch
 

@@ -8,6 +8,10 @@ class LeastSquaresModel(ContextModel):
     def __init__(self, driver=None, **kwargs):
         super(LeastSquaresModel, self).__init__()
 
+        y_dim = kwargs.get('y_dim', 1)
+        if y_dim != 1:
+            raise ValueError(f"Least Squares only supports y dimension of 1! Got: {y_dim}")
+
         self._driver = driver
         self.name = f"OLS_driver={driver}"
         self.context_length = -1
@@ -15,12 +19,19 @@ class LeastSquaresModel(ContextModel):
     def forward(self, xs, ys):
         DEVICE = xs.device
         xs, ys = xs.cpu(), ys.cpu()
+        ys = ys[..., 0] # remove the trivial y_dim=1 dimension
         
         preds = []
 
-        for i in range(ys.shape[1]):
+        if xs.shape[-2] not in (ys.shape[-1], ys.shape[-1] + 1):
+            raise ValueError(
+                "Can only inference with x sequences either 1 longer or as long as y sequences!" + \
+                f"Got: X sequences of length {xs.shape[-2]} and Y sequences of lengh {ys.shape[-2]}"
+            )
+
+        for i in range(xs.shape[-2]):
             if i == 0:
-                preds.append(torch.zeros_like(ys[:, 0]))  # predict zero for first point
+                preds.append(torch.zeros_like(xs[:, :1, 0]))  # predict zero for first point
                 continue
             train_xs, train_ys = xs[:, :i], ys[:, :i]
             test_x = xs[:, i : i + 1]
@@ -30,7 +41,7 @@ class LeastSquaresModel(ContextModel):
             )
 
             pred = test_x @ ws
-            preds.append(pred[:, 0, 0])
+            preds.append(pred[:, 0, :1])
 
         return torch.stack(preds, dim=1).to(device=DEVICE)
 

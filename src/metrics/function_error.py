@@ -187,40 +187,52 @@ class FCErrorQuadrants(FunctionClassError):
     def evaluate(self, models: Iterable[ContextModel], num_batches: int = 1) -> Iterable[Tensor]:
 
         batch_size = self.fn_cls.batch_size
+        sequence_length = self.fn_cls.sequence_length
         y_dim = self.fn_cls.y_dim
         models = list(models)
         num_models = len(models)
 
-        # note no sequence length in errors, we only want error of last item
-        errs = torch.zeros((num_batches, num_models, batch_size, y_dim))
+        errs = torch.zeros((num_batches, sequence_length, num_models, batch_size, y_dim))
 
         for batch_num in range(num_batches):
-            xs = self.fn_cls.x_dist.sample()
-            pattern = torch.randn(xs[:, 0:1, :].shape).sign() # shape (1, sequence_len, x_dim)
+            xs = self.fn_cls.x_dist.sample() # shape (batch_size, sequence_length, x_dim)
 
+            # set sign over a full sequence
+            pattern = torch.randn(xs[:, 0:1, :].shape).sign() # shape (batch_size, 1, x_dim)
             xs_context = xs.abs() * pattern
             assert xs_context.shape == xs.shape
 
+            x_queries = (-xs_context if self.opposite else xs)
+
+            ys_context: Tensor  # shape (batch_size, seq_len, y_dim)
+            y_query: Tensor     # shape (batch_size,       1, y_dim)
+
             params: list[Tensor] | Tensor  = self.fn_cls.p_dist.sample()
-            x_query = (-xs_context if self.opposite else xs)[:, -1:]
-            if isinstance(params, list):
-                ys_context = self.fn_cls.evaluate(xs_context, *params)
-                y_query = self.fn_cls.evaluate(x_query, *params)
-            else:
-                ys_context = self.fn_cls.evaluate(xs_context, params)
-                y_query = self.fn_cls.evaluate(x_query, params)
+            for index in range(sequence_length):
+                x_query = x_queries[:, index:index+1]
 
-            x_comb = torch.cat((xs_context[:, :-1], x_query), dim=1)
+                if isinstance(params, list):
+                    ys_context = self.fn_cls.evaluate(xs_context, *params)
+                    y_query = self.fn_cls.evaluate(x_query, *params)
+                else:
+                    ys_context = self.fn_cls.evaluate(xs_context, params)
+                    y_query = self.fn_cls.evaluate(x_query, params)
 
-            with torch.no_grad():
-                errs[batch_num] = torch.stack([
-                    self.metric.evaluate(
-                        y_query.unsqueeze(dim=-1), # shape (batch_size, y_dim)
-                        model.forward(x_comb, ys_context[:, :-1])[:, -1:] # shape (batch_size, y_dim)
-                    ) for model in models
-                ])
+                assert y_query.shape == torch.Size((batch_size,       1, y_dim))
+                y_query = y_query[:, 0, :]
 
-        errs = torch.transpose(errs, 0, 1)
-        errs = torch.reshape(errs, (num_models, num_batches*batch_size, y_dim))
+                x_comb = torch.cat((xs_context[:, :index], x_query), dim=1)
+
+                with torch.no_grad():
+                    errs[batch_num, index] = torch.stack([
+                        self.metric.evaluate(
+                            y_query, # shape (batch_size, y_dim)
+                            model.forward(x_comb, ys_context[:, :index])[:, -1] # shape (batch_size, y_dim)
+                        ) for model in models
+                    ])
+
+        errs = torch.transpose(errs, 1, 3) # shape (#batches, batch_size, num_models, seq_len, metric_dim)
+        errs = torch.transpose(errs, 0, 2) # shape (num_models, batch_size, #batches, seq_len, metric_dim)
+        errs = torch.flatten(errs, 1, 2)
 
         return errs
