@@ -21,3 +21,12 @@ model: &least_squares
 
 model: &xgboost
     type: xgboost
+
+model: &averaging
+    type: averaging
+
+model: &decision_tree
+    type: decision_tree
+
+model: &mlp
+    type: mlp
