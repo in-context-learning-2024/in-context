@@ -48,7 +48,7 @@ run_check() {
 
     conda run -n in-context-learning wandb offline > /dev/null
     prep_yaml "$FUNC_NAME" "$MODEL_NAME"
-    conda run -n in-context-learning python src/ -c conf/test.yml
+    WANDB_SILENT=true conda run -n in-context-learning python src/ -c conf/test.yml
     if [[ $? != 0 ]]; then return 1; fi
 
     echo -e "Passed check with model \"$MODEL_NAME\"" \
@@ -64,7 +64,7 @@ run_func_checks() {
 
     echo -e "Detected the following function classes:\n$FUNC_CLASSES"
     while read func; do 
-        WANDB_SILENT=true run_check "$func" "gpt2"
+        run_check "$func" "gpt2"
     done <<< "$FUNC_CLASSES"
 }
 
@@ -78,6 +78,6 @@ run_model_checks() {
 
     echo -e "Detected the following models:\n$MODELS"
     while read model; do
-        WANDB_SILENT=true run_check "linear regression" "$model"
+        run_check "linear regression" "$model"
     done <<< "$MODELS"
 }

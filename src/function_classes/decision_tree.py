@@ -23,9 +23,9 @@ class DecisionTreeRegression(FunctionClass):
         )
 
         out_param_shape = s[:-1] + torch.Size([self.y_dim])
-        target_values_dist = D.Normal(
+        target_values_dist = D.MultivariateNormal(
             loc=torch.zeros(out_param_shape),
-            scale=torch.ones(out_param_shape)
+            covariance_matrix=torch.eye(self.y_dim)
         )
 
         return CombinedDistribution(
@@ -35,7 +35,7 @@ class DecisionTreeRegression(FunctionClass):
 
     def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
         dt_tensor, target_tensor, *_ = params
-        y_batch = torch.zeros(*x_batch.shape[:2], device=x_batch.device)
+        y_batch = torch.zeros(*x_batch.shape[:-1], 1, device=x_batch.device)
         for i in range(self.batch_size):
             xs_bool = x_batch[i] > 0
             # If a single decision tree present, use it for all the xs in the batch.
