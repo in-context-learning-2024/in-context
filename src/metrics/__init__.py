@@ -8,12 +8,14 @@ from .function_error import (
     FunctionClassError,
     FCErrorQuadrants,
     FCErrorOrthogonal,
+    FCErrorSeenPoints,
 )
 
 __all__ = [
     "FCErrorQuadrants",
     "FunctionClassError",
     "FCErrorOrthogonal",
+    "FCErrorSeenPoints",
 
     "SquaredError",
     "MeanSquaredError",

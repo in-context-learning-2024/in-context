@@ -37,93 +37,6 @@ class FunctionClassError(Benchmark):
 
         return errs
 
-###############################################################################################################
-    def evaluateOrthogonal(self, models: Iterable[ContextModel], num_batches: int = 1)-> Iterable[Tensor]:
-        
-        sequence_length=self.fn_cls.sequence_length
-        batch_size=self.fn_cls.batch_size
-        num_models = len(list(models))
-        errs=torch.zeros((num_models, num_batches, batch_size, sequence_length))
-
-
-        for i in range(num_batches):
-            params=self.fn_cls.p_dist.sample()
-            x_batch=self.fn_cls.x_dist.sample()
-            n=x_batch.shape[2]
-            
-            A = torch.randn(batch_size, n, n)
-            Q, _ = torch.linalg.qr(A, mode="complete")
-            context_space=Q.clone() #discuss with sahai 
-            context_space[:, :, -1]=0
-            test_space=Q.clone()
-            test_space[:, :, :-1]=0
-            x_context, x_test=torch.zeros_like(x_batch), torch.zeros_like(x_batch)
-            for j in range(batch_size):
-
-                x_context[j]=x_batch[j] @context_space[j]
-                x_test[j]=x_batch[j] @test_space[j]
-
-            for j in range(1, sequence_length):
-                
-                cur_x=x_context.clone()
-                cur_x[:,j]=x_test[:, j]
-
-                if isinstance(params, list):
-                    y_test=self.fn_cls.evaluate(cur_x, *params)
-                else:
-                    y_test=self.fn_cls.evaluate(cur_x, params)
-                
-                with torch.no_grad():
-                    errs[:, i, :, j] = torch.stack([
-                  
-                        self.metric.evaluate(
-                            y_test,
-                            model.forward(cur_x, y_test)
-                        )
-                        for model in models
-                    ])[:, :, j]
-        
-        errs=torch.reshape(errs, (num_models, num_batches*batch_size, sequence_length))[:, :, 1:]
-
-        return errs
-###############################################################################################################
-
-    def evaluateAtSeenPoints(self, models: Iterable[ContextModel], num_batches: int = 1)-> Iterable[Tensor]:#each evaluation happens at a random already seen point. 
-        
-        sequence_length=self.fn_cls.sequence_length
-        batch_size=self.fn_cls.batch_size
-        num_models = len(list(models))
-        errs=torch.zeros((num_models, num_batches, batch_size, sequence_length))
-
-        for i in range(num_batches):
-            params=self.fn_cls.p_dist.sample()
-            x_batch=self.fn_cls.x_dist.sample()
-            
-            for j in range(1, sequence_length):
-                x_test=x_batch.clone()
-                perm = torch.stack([torch.randperm(j) for _ in range(batch_size)]).unsqueeze(dim=1)
-                ind_mat = (perm == 0) + 0.0
-                x_test[:, j:j+1] = ind_mat @ x_batch[:, :j]
-
-                if isinstance(params, list):
-                    y_test=self.fn_cls.evaluate(x_test, *params)
-                else:
-                    y_test=self.fn_cls.evaluate(x_test, params)
-                
-                with torch.no_grad():
-                    errs[:, i, :, j] = torch.stack([
-                  
-                        self.metric.evaluate(
-                            y_test,
-                            model.forward(x_test, y_test)
-                        )
-                        for model in models
-                    ])[:, :, j]
-        
-        errs=torch.reshape(errs, (num_models, num_batches*batch_size, sequence_length))[:, :, 1:]
-
-        return errs
-
     def evaluateFLOPS(self, models: Iterable[ContextModel])-> Iterable[Tensor]:
         raise NotImplementedError #interface for other architechture group
         return None
@@ -238,6 +151,45 @@ class FCErrorOrthogonal(FunctionClassError):
                         self.metric.evaluate(
                             y_test,
                             model.forward(cur_x, y_test)
+                        )
+                        for model in models
+                    ])[:, :, j]
+        
+        errs = torch.reshape(errs, (num_models, num_batches*batch_size, sequence_length))[:, :, 1:]
+
+        return errs
+
+
+class FCErrorSeenPoints(FunctionClassError):
+
+    def evaluate(self, models: Iterable[ContextModel], num_batches: int = 1) -> Iterable[Tensor]:
+        sequence_length = self.fn_cls.sequence_length
+        batch_size = self.fn_cls.batch_size
+        y_dim = self.fn_cls.y_dim
+        num_models = len(list(models))
+        errs = torch.zeros((num_models, num_batches, batch_size, sequence_length, y_dim))
+
+        for i in range(num_batches):
+            params = self.fn_cls.p_dist.sample()
+            x_batch = self.fn_cls.x_dist.sample()
+            
+            for j in range(1, sequence_length):
+                x_test = x_batch.clone()
+                perm = torch.stack([torch.randperm(j) for _ in range(batch_size)]).unsqueeze(dim=1)
+                ind_mat = (perm == 0) + 0.0
+                x_test[:, j:j+1] = ind_mat @ x_batch[:, :j]
+
+                if isinstance(params, list):
+                    y_test = self.fn_cls.evaluate(x_test, *params)
+                else:
+                    y_test = self.fn_cls.evaluate(x_test, params)
+                
+                with torch.no_grad():
+                    errs[:, i, :, j] = torch.stack([
+                  
+                        self.metric.evaluate(
+                            y_test,
+                            model.forward(x_test, y_test)
                         )
                         for model in models
                     ])[:, :, j]
