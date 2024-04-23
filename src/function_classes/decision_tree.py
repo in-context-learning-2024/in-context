@@ -22,8 +22,10 @@ class DecisionTreeRegression(FunctionClass):
             torch.full(s, 1 / self.x_dim)
         )
 
+        out_param_shape = s[:-1] + torch.Size([self.y_dim])
         target_values_dist = D.Normal(
-            loc=torch.zeros(s[:-1]), scale=torch.ones(s[:-1])
+            loc=torch.zeros(out_param_shape),
+            scale=torch.ones(out_param_shape)
         )
 
         return CombinedDistribution(

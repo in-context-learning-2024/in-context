@@ -17,13 +17,12 @@ class TransformerModel(ContextModel):
 
     def forward(self, xs, ys):
         self._backbone.to(xs.device) # pyright: ignore[reportArgumentType,reportAttributeAccessIssue]
-        inds = torch.arange(ys.shape[1])
 
         zs = ContextModel.interleave(xs, ys)
         embeds = self._read_in(zs)
         output = self._backbone(inputs_embeds=embeds).last_hidden_state # pyright: ignore[reportCallIssue]
         prediction = self._read_out(output)
-        return prediction[:, ::2, 0][:, inds]  # predict only on xs
+        return prediction[:, ::2, :1] # predict only on xs
 
 class GPT2(TransformerModel):
 
