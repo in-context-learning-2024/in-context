@@ -7,11 +7,13 @@ from .metric import (
 from .function_error import (
     FunctionClassError,
     FCErrorQuadrants,
+    FCErrorOrthogonal,
 )
 
 __all__ = [
     "FCErrorQuadrants",
     "FunctionClassError",
+    "FCErrorOrthogonal",
 
     "SquaredError",
     "MeanSquaredError",
