@@ -60,7 +60,7 @@ class ParallelNetworks(nn.Module):
         return outs
 
 # Gradient Descent and variants.
-# Example usage: gd_model = GDModel("mlp", {'dimensions': [20, 256, 1]}, opt_alg_name = 'adam', batch_size = 100, lr = 5e-3, num_steps = 200)
+# Example usage: gd_model = GDModel("mlp", {'dimensions': [256]}, opt_alg_name = 'adam', batch_size = 100, lr = 5e-3, num_steps = 200)
 class GDModel(ContextModel):
     def __init__(
         self,
@@ -73,7 +73,7 @@ class GDModel(ContextModel):
         loss_name="squared",
         **kwargs
     ):
-        super(GDModel, self).__init__()
+        super(GDModel, self).__init__(**kwargs)
 
         model_class = {
             "mlp" : MLP,
@@ -82,6 +82,11 @@ class GDModel(ContextModel):
             curried_throw(ValueError(f"GDModel does not support \"{model_class_name}\" model!"))
         )
 
+        model_class_args = model_class_args | { 
+            "dimensions" : [
+                self.x_dim, *model_class_args.get("dimensions", []), self.y_dim 
+            ]
+        }
         self._get_new_model = lambda: ParallelNetworks(batch_size, model_class, model_class_args)
 
         self._opt = lambda params: {
