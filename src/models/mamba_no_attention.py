@@ -163,13 +163,15 @@ class MambaNoAttentionModel(ContextModel):
       
         self._backbone = GPT2Model(gpt_configuration)
 
-        #Allow for attention and pos embeddings
+        #Allow for attention and pos embeddings in GPT2Model Forward function
         self._backbone.forward = types.MethodType(functools.partial(forward_GPT2Model, no_attention=no_attention, want_pos_embeddings=want_pos_embeddings), self._backbone)
-        
+
+        # Allow for changes in GPT2Block Forward Function
         for x in list(self._backbone.children())[3]:
             x.forward = types.MethodType(functools.partial(forward_block, no_attention=no_attention), x)
             block_var_declare(x, MambaModel(mamba_configuration))
-        
+
+        # Allow for changes in Attention function for GPT2Attention
         if self.custom_attn_func:
             attn_layers = list(self._backbone.children())[3]
             attn_module_class = list(attn_layers[0].children())[1].__class__
