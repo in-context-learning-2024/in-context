@@ -12,7 +12,7 @@ from core import (
 
 class FunctionClassError(Benchmark):
     def __init__(self, metric: Metric, function_class: FunctionClass):
-        self.fn_cls = function_class
+        self.function_class = function_class
         self.metric = metric
 
     def evaluate(self, models: Iterable[ContextModel], num_batches: int = 1) -> Iterable[Tensor]:
@@ -27,7 +27,7 @@ class FunctionClassError(Benchmark):
                     )
                     for model in models
                 ])
-                for _, (x_batch, y_batch) in zip(range(num_batches), self.fn_cls)
+                for _, (x_batch, y_batch) in zip(range(num_batches), self.function_class)
             ])
 
             # errs is of shape: (#batches, #models, batch_size, sequence_length, *metric_dims)
@@ -37,18 +37,14 @@ class FunctionClassError(Benchmark):
 
         return errs
 
-    def evaluateFLOPS(self, models: Iterable[ContextModel])-> Iterable[Tensor]:
-        raise NotImplementedError #interface for other architechture group
-        return None
-    
-    def evaluateAccumulationPerSec(self, models: Iterable[ContextModel])-> Iterable[Tensor]:
-        raise NotImplementedError #interface for architechture group
-        return None
 
 class FCErrorQuadrants(FunctionClassError):
-    """Determine error of models on a function class when the context has a constant
-       sign per sequence and the query point either has 
-       has each component have a sign opposite to that of all context examples
+    """For prompt (x1, y1,, ..., xn, yn, xq), where xi[k].sign() ==  xj[k].sign() for all i,j = 1, ..., n,
+       measure the error for the model's prediction on xq, where:
+
+       if opposite is True --> xq[k].sign() == -1 * xi[k].sign()
+
+       if opposite is False --> xq[k].sign() is random
     """
 
     def __init__(self, metric: Metric, function_class: FunctionClass, opposite: bool = True):
@@ -57,16 +53,16 @@ class FCErrorQuadrants(FunctionClassError):
 
     def evaluate(self, models: Iterable[ContextModel], num_batches: int = 1) -> Iterable[Tensor]:
 
-        batch_size = self.fn_cls.batch_size
-        sequence_length = self.fn_cls.sequence_length
-        y_dim = self.fn_cls.y_dim
+        batch_size = self.function_class.batch_size
+        sequence_length = self.function_class.sequence_length
+        y_dim = self.function_class.y_dim
         models = list(models)
         num_models = len(models)
 
         errs = torch.zeros((num_batches, sequence_length, num_models, batch_size, y_dim))
 
         for batch_num in range(num_batches):
-            xs = self.fn_cls.x_dist.sample() # shape (batch_size, sequence_length, x_dim)
+            xs = self.function_class.x_dist.sample() # shape (batch_size, sequence_length, x_dim)
 
             # set sign over a full sequence
             pattern = torch.randn(xs[:, 0:1, :].shape).sign() # shape (batch_size, 1, x_dim)
@@ -78,16 +74,16 @@ class FCErrorQuadrants(FunctionClassError):
             ys_context: Tensor  # shape (batch_size, seq_len, y_dim)
             y_query: Tensor     # shape (batch_size,       1, y_dim)
 
-            params: list[Tensor] | Tensor  = self.fn_cls.p_dist.sample()
+            params: list[Tensor] | Tensor  = self.function_class.p_dist.sample()
             for index in range(sequence_length):
                 x_query = x_queries[:, index:index+1]
 
                 if isinstance(params, list):
-                    ys_context = self.fn_cls.evaluate(xs_context, *params)
-                    y_query = self.fn_cls.evaluate(x_query, *params)
+                    ys_context = self.function_class.evaluate(xs_context, *params)
+                    y_query = self.function_class.evaluate(x_query, *params)
                 else:
-                    ys_context = self.fn_cls.evaluate(xs_context, params)
-                    y_query = self.fn_cls.evaluate(x_query, params)
+                    ys_context = self.function_class.evaluate(xs_context, params)
+                    y_query = self.function_class.evaluate(x_query, params)
 
                 assert y_query.shape == torch.Size((batch_size,       1, y_dim))
                 y_query = y_query[:, 0, :]
@@ -112,16 +108,16 @@ class FCErrorQuadrants(FunctionClassError):
 class FCErrorOrthogonal(FunctionClassError):
 
     def evaluate(self, models: Iterable[ContextModel], num_batches: int = 1) -> Iterable[Tensor]:
-        sequence_length = self.fn_cls.sequence_length
-        batch_size = self.fn_cls.batch_size
-        y_dim = self.fn_cls.y_dim
+        sequence_length = self.function_class.sequence_length
+        batch_size = self.function_class.batch_size
+        y_dim = self.function_class.y_dim
         num_models = len(list(models))
 
         errs = torch.zeros((num_models, num_batches, batch_size, sequence_length, y_dim))
 
         for i in range(num_batches):
-            params = self.fn_cls.p_dist.sample()
-            x_batch = self.fn_cls.x_dist.sample()
+            params = self.function_class.p_dist.sample()
+            x_batch = self.function_class.x_dist.sample()
             n = x_batch.shape[2]
             
             A = torch.randn(batch_size, n, n)
@@ -133,8 +129,8 @@ class FCErrorOrthogonal(FunctionClassError):
             x_context, x_test = torch.zeros_like(x_batch), torch.zeros_like(x_batch)
             for j in range(batch_size):
 
-                x_context[j] = x_batch[j] @context_space[j]
-                x_test[j] = x_batch[j] @test_space[j]
+                x_context[j] = x_batch[j] @ context_space[j]
+                x_test[j] = x_batch[j] @ test_space[j]
 
             for j in range(1, sequence_length):
                 
@@ -142,9 +138,9 @@ class FCErrorOrthogonal(FunctionClassError):
                 cur_x[:,j] = x_test[:, j]
 
                 if isinstance(params, list):
-                    y_test = self.fn_cls.evaluate(cur_x, *params)
+                    y_test = self.function_class.evaluate(cur_x, *params)
                 else:
-                    y_test = self.fn_cls.evaluate(cur_x, params)
+                    y_test = self.function_class.evaluate(cur_x, params)
                 
                 with torch.no_grad():
                     errs[:, i, :, j] = torch.stack([
@@ -163,15 +159,15 @@ class FCErrorOrthogonal(FunctionClassError):
 class FCErrorSeenPoints(FunctionClassError):
 
     def evaluate(self, models: Iterable[ContextModel], num_batches: int = 1) -> Iterable[Tensor]:
-        sequence_length = self.fn_cls.sequence_length
-        batch_size = self.fn_cls.batch_size
-        y_dim = self.fn_cls.y_dim
+        sequence_length = self.function_class.sequence_length
+        batch_size = self.function_class.batch_size
+        y_dim = self.function_class.y_dim
         num_models = len(list(models))
         errs = torch.zeros((num_models, num_batches, batch_size, sequence_length, y_dim))
 
         for i in range(num_batches):
-            params = self.fn_cls.p_dist.sample()
-            x_batch = self.fn_cls.x_dist.sample()
+            params = self.function_class.p_dist.sample()
+            x_batch = self.function_class.x_dist.sample()
             
             for j in range(1, sequence_length):
                 x_test = x_batch.clone()
@@ -180,9 +176,9 @@ class FCErrorSeenPoints(FunctionClassError):
                 x_test[:, j:j+1] = ind_mat @ x_batch[:, :j]
 
                 if isinstance(params, list):
-                    y_test = self.fn_cls.evaluate(x_test, *params)
+                    y_test = self.function_class.evaluate(x_test, *params)
                 else:
-                    y_test = self.fn_cls.evaluate(x_test, params)
+                    y_test = self.function_class.evaluate(x_test, params)
                 
                 with torch.no_grad():
                     errs[:, i, :, j] = torch.stack([

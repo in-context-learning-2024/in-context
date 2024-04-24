@@ -20,5 +20,5 @@ __all__ = [
     "SquaredError",
     "MeanSquaredError",
     "Accuracy",
-    "CrossEntropy"
+    "CrossEntropy",
 ]

@@ -122,4 +122,3 @@ class LassoModel(ContextModel):
             preds.append(pred)
 
         return torch.stack(preds, dim=1).to(device=DEVICE)
-

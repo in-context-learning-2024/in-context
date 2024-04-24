@@ -8,8 +8,8 @@ from scipy.stats import norm
 def post_process(results: Iterable[Tensor],
                  confidence_level: list[float] = [0.01, 0.05],
                  quantile_cutoffs: list[float] = [0.05, 0.25, 0.5, 0.75, 0.95],
-                ) -> Iterable[dict[str, Tensor]]:
-
+                ) -> list[dict[str, Tensor]]:
+    summaries: list[dict[str, Tensor]] = [ ]
     for err_tensor in results:
 	
         sample_count, *_ = err_tensor.size()
@@ -28,7 +28,7 @@ def post_process(results: Iterable[Tensor],
             confidence_data[f"confidence_{level}_upper"] = mean + interval_jump
             confidence_data[f"confidence_{level}_lower"] = mean - interval_jump
 
-        yield {
+        summaries.append({
             f"accuracy" : mean,
             f"std" : std,
             f"std_mean" : std_err_of_mean,
@@ -39,4 +39,5 @@ def post_process(results: Iterable[Tensor],
                 f"quantile_{q_interval}" : q_value
                 for q_interval, q_value in zip(QUANTILES[1:-1], quantiles[1:-1])
             },
-        }
+        })
+    return summaries
