@@ -43,9 +43,9 @@ class MambaformerModel(ContextModel):
         self.name = f"mod_gpt2_embd={n_embd}_layer={n_layer}_head={n_head}"
         
         if custom_attn_func == "relu":
-            self.custom_attn_func = relu_attn
+            self.custom_attn_func = vit_style_relu_attn
         elif custom_attn_func == "relu_causal":
-            self.custom_attn_func = relu_attn_causal
+            self.custom_attn_func = causal_relu_attn
         else:
             self.custom_attn_func = None
 
