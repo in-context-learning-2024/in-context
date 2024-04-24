@@ -38,7 +38,7 @@ model: &mlp
     type: grad mlp
     model_class_name: mlp
     model_class_args:
-        dimensions: [20, 100, 1]
+        dimensions: 100
     opt_alg_name: adam
     batch_size: 100
     lr: 5e-3
