@@ -36,7 +36,9 @@ model: &decision_tree
 
 model: &mlp
     type: grad mlp
-    dimensions: [20, 100, 1]
+    model_class_name: mlp
+    model_class_args:
+        dimensions: [20, 100, 1]
     opt_alg_name: adam
     batch_size: 100
     lr: 5e-3
