@@ -69,8 +69,6 @@ def forward_block(
         hidden_states = self.ln_1(hidden_states)
       
         if not no_attention:
-            #for _ in range(1000):
-            #   print ("LKSDJFOSJFOIWJFIOWEJFOIWEJFOIEWJFOIWEJFOIWEFJOIWJ")
             hidden_states = self.ln_1(hidden_states)
     
             attn_outputs = self.attn(
@@ -81,7 +79,7 @@ def forward_block(
                 use_cache=use_cache,
                 output_attentions=output_attentions,
             )
-            #print(attn_outputs)
+            
             attn_output = attn_outputs[0]  # output_attn: a, present, (attentions)
             outputs = attn_outputs[1:]
             # residual connection
@@ -108,8 +106,6 @@ def forward_block(
                 # residual connection
                 hidden_states = residual + attn_output
                 outputs = outputs + cross_attn_outputs[2:] 
-            #print(outputs)
-            #print("NEWJROWFJWIOFJIO") # add cross attentions if we output attention weights
                 
             residual = hidden_states
         
@@ -119,22 +115,11 @@ def forward_block(
         hidden_states = residual + feed_forward_hidden_states
 
         if no_attention: 
-            #Might cause errors if output of attention does not make OUTPUTS a list
             outputs = (hidden_states,)
         elif use_cache:
-            #print(outputs)
             outputs = (hidden_states,) + outputs
-            #print("AFTERHIDDEN")
-            #print(outputs)
         else:
-            #print(outputs)
-            #print(outputs[1:])
             outputs = (hidden_states,) + outputs[1:]
-            #print(outputs)
-            #print("AFTERHIDDEN")
-            #print(outputs.shape)
-        
-        
         
         return outputs  # hidden_states, present, (attentions, cross_attentions)
         
