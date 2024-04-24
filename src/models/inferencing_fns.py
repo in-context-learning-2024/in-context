@@ -29,11 +29,102 @@ from core import ContextModel
 #
 # This is a way to modify layer architecture.
 
-#no cache
-def block_var_declare_mamba_no_attention(self, this_mamba_model):
+#Used for mamba_no_attention and mambafirstformer
+def block_var_declare_mamba_single(self, this_mamba_model):
     self.norm_f = this_mamba_model.norm_f
     self.mamba_blocks = list(this_mamba_model.layers)
 
+def forward_block_mambafirstformer(
+        self,
+        hidden_states: Optional[Tuple[torch.FloatTensor]],
+        layer_past: Optional[Tuple[torch.Tensor]] = None,
+        attention_mask: Optional[torch.FloatTensor] = None,
+        head_mask: Optional[torch.FloatTensor] = None,
+        encoder_hidden_states: Optional[torch.Tensor] = None,
+        encoder_attention_mask: Optional[torch.FloatTensor] = None,
+        use_cache: Optional[bool] = False,
+        output_attentions: Optional[bool] = False,
+        no_attention = False
+    ) -> Union[Tuple[torch.Tensor], Optional[Tuple[torch.Tensor, Tuple[torch.FloatTensor, ...]]]]:
+
+        #Utilizing Mamba...
+        for mb in self.mamba_blocks:
+            hidden_states = mb(hidden_states)
+
+        hidden_states = self.norm_f(hidden_states)
+        
+        #The above was all an addition to the vanilla transformer
+        
+        residual = hidden_states
+        
+        if not no_attention:
+            hidden_states = self.ln_1(hidden_states)
+    
+            attn_outputs = self.attn(
+                hidden_states,
+                layer_past=layer_past,
+                attention_mask=attention_mask,
+                head_mask=head_mask,
+                use_cache=use_cache,
+                output_attentions=output_attentions,
+            )
+            
+            attn_output = attn_outputs[0]  # output_attn: a, present, (attentions)
+            outputs = attn_outputs[1:]
+            # residual connection
+            hidden_states = attn_output + residual
+            
+            if encoder_hidden_states is not None and not no_attention:
+                # add one self-attention block for cross-attention
+                if not hasattr(self, "crossattention"):
+                    raise ValueError(
+                        f"If `encoder_hidden_states` are passed, {self} has to be instantiated with "
+                        "cross-attention layers by setting `config.add_cross_attention=True`"
+                    )
+                residual = hidden_states
+                hidden_states = self.ln_cross_attn(hidden_states)
+                cross_attn_outputs = self.crossattention(
+                    hidden_states,
+                    attention_mask=attention_mask,
+                    head_mask=head_mask,
+                    encoder_hidden_states=encoder_hidden_states,
+                    encoder_attention_mask=encoder_attention_mask,
+                    output_attentions=output_attentions,
+                )
+                attn_output = cross_attn_outputs[0]
+                # residual connection
+                hidden_states = residual + attn_output
+                outputs = outputs + cross_attn_outputs[2:] 
+            #print(outputs)
+                
+            residual = hidden_states
+        
+        hidden_states = self.ln_2(hidden_states)
+
+        feed_forward_hidden_states = self.mlp(hidden_states)
+
+        hidden_states = residual + feed_forward_hidden_states
+
+        if no_attention: 
+            #Might cause errors if output of attention does not make OUTPUTS a list
+            outputs = (hidden_states,)
+        elif use_cache:
+            #print(outputs)
+            outputs = (hidden_states,) + outputs
+            #print("AFTERHIDDEN")
+            #print(outputs)
+        else:
+            #print(outputs)
+            #print(outputs[1:])
+            outputs = (hidden_states,) + outputs[1:]
+            #print(outputs)
+            #print("AFTERHIDDEN")
+            #print(outputs.shape)
+        
+        
+        
+        return outputs  # hidden_states, present, (attentions, cross_attentions)
+        
 def forward_block_mamba_no_attention(
         self,
         hidden_states: Optional[Tuple[torch.FloatTensor]],
