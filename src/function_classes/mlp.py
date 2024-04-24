@@ -35,4 +35,4 @@ class MLPRegression(FunctionClass):
             f"Expected: {(self.batch_size, self.sequence_length, self.y_dim)}" + \
             f"Got: {tuple(y_batch.shape)}"
 
-        return y_batch.squeeze(-1)
+        return y_batch

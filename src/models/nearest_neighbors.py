@@ -4,7 +4,7 @@ from core import ContextModel
 
 class KNNModel(ContextModel):
     def __init__(self, n_neighbors, weights="uniform", **kwargs):
-        super(KNNModel, self).__init__()
+        super(KNNModel, self).__init__(**kwargs)
         self._n_neighbors = n_neighbors
         self._weights = weights
         self.name = f"KNN_n={n_neighbors}_{weights}"
