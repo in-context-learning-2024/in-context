@@ -4,10 +4,12 @@ from typing import Optional
 
 
 class ContextModel(nn.Module):
-    def __init__(self, **config):
+    def __init__(self, x_dim: int, y_dim: int = 1):
         super(ContextModel, self).__init__()
         self.context_length: Optional[int] = None
         self.name: str = "Unknown_ContextModel"
+        self.y_dim = y_dim
+        self.x_dim = x_dim
 
     def __repr__(self):
         return self.name

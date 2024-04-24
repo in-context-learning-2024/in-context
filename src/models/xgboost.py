@@ -4,7 +4,7 @@ import xgboost as xgb
 
 class XGBoostModel(ContextModel):
     def __init__(self, **kwargs):
-        super(XGBoostModel, self).__init__()
+        super(XGBoostModel, self).__init__(**kwargs)
         self.name = "xgboost"
         self.context_length = -1
 
@@ -33,9 +33,8 @@ class XGBoostModel(ContextModel):
 
 class XGBoostModelSGN(XGBoostModel):
     def __init__(self, **kwargs):
-        super(XGBoostModelSGN, self).__init__()
-        self.name = "xgboostSGN"
-        self.context_length = -1
+        super(XGBoostModelSGN, self).__init__(**kwargs)
+        self.name = self.name.replace("xgboost", "xgboostSGN")
 
     def forward(self, xs, ys):
         return super().forward(torch.sign(xs), ys)

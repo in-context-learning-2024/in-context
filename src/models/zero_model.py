@@ -3,7 +3,7 @@ from core import ContextModel
 
 class ZeroModel(ContextModel):
     def __init__(self, **kwargs):
-        super(ZeroModel, self).__init__()
+        super(ZeroModel, self).__init__(**kwargs)
         self.name = "zero_model"
         self.context_length = -1
 

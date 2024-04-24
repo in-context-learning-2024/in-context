@@ -1,10 +1,13 @@
 import torch
+
 from sklearn import tree
+from typing import Optional
+
 from core import ContextModel
 
 class DecisionTreeModel(ContextModel):
-    def __init__(self, max_depth=None, **kwargs):
-        super(DecisionTreeModel, self).__init__()
+    def __init__(self, max_depth: Optional[int] = None, **kwargs):
+        super(DecisionTreeModel, self).__init__(**kwargs)
 
         self._max_depth = max_depth
         self.name = f"decision_tree_max_depth={max_depth}"
@@ -37,10 +40,9 @@ class DecisionTreeModel(ContextModel):
 
 
 class DecisionTreeModelSGN(DecisionTreeModel):
-    def __init__(self, max_depth=None, **kwargs):
-        super(DecisionTreeModelSGN, self).__init__()
-        self._max_depth = max_depth
-        self.name = f"decision_treeSGN_max_depth={max_depth}"
-        self.context_length = -1
+    def __init__(self, **kwargs):
+        super(DecisionTreeModelSGN, self).__init__(**kwargs)
+        self.name = self.name.replace("decision_tree", "decision_treeSGN")
+
     def forward(self, xs, ys):
         return super().forward(torch.sign(xs), ys)

@@ -6,7 +6,7 @@ import warnings
 # xs and ys should be on cpu for this method. Otherwise the output maybe off in case when train_xs is not full rank due to the implementation of torch.linalg.lstsq.
 class LeastSquaresModel(ContextModel):
     def __init__(self, driver=None, **kwargs):
-        super(LeastSquaresModel, self).__init__()
+        super(LeastSquaresModel, self).__init__(**kwargs)
 
         y_dim = kwargs.get('y_dim', 1)
         if y_dim != 1:
@@ -48,7 +48,7 @@ class LeastSquaresModel(ContextModel):
 
 class AveragingModel(ContextModel):
     def __init__(self, **kwargs):
-        super(AveragingModel, self).__init__()
+        super(AveragingModel, self).__init__(**kwargs)
         self.name = "averaging"
         self.context_length = -1
 
@@ -73,8 +73,8 @@ class AveragingModel(ContextModel):
 # Lasso regression (for sparse linear regression).
 # Seems to take more time as we decrease alpha.
 class LassoModel(ContextModel):
-    def __init__(self, alpha, max_iter=100000, **kwargs):
-        super(LassoModel, self).__init__()
+    def __init__(self, alpha: float, max_iter: int = 100000, **kwargs):
+        super(LassoModel, self).__init__(**kwargs)
 
         # the l1 regularizer gets multiplied by alpha.
         self._alpha = alpha
