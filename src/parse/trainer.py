@@ -67,7 +67,7 @@ def get_model(data: dict, x_dim: int, y_dim: int) -> ContextModel:
     _check_kwargs(MODELS, data, "model")
 
     if 'base_model' in data:
-        data['base_model'] = get_model(data['base_model'] | { 'x_dim' : data['x_dim'] })
+        data['base_model'] = get_model(data['base_model'] | { 'x_dim' : data['x_dim'] }, x_dim, y_dim)
 
     model_class: type[ContextModel] = MODELS[data['type']]
 
