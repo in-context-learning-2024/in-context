@@ -47,7 +47,8 @@ class ModSeqModel(ContextModel):
         self._backbone.forward = types.MethodType(functools.partial(forward_GPT2Model, no_attention=no_attention, want_pos_embeddings=want_pos_embeddings), self._backbone)
        
         # Allow for changes in Attention function for GPT2Attention
-        self.change_gpt2_attention()
+        if not no_attention:
+            self.change_gpt2_attention()
       
         self._read_out = nn.Linear(n_embd, 1)
 
