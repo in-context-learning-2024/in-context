@@ -5,6 +5,7 @@ loss_fn:
     type: squared
 function_class: 
     type: sparse linear regression
+    sparsity: 3
 b_size: 64
 seq_len: !curriculum
     start: 11
@@ -22,4 +23,4 @@ steps: 500000
 log_freq: 100
 checkpoint_freq: 5000
 model: *std_gpt2
-baseline_models: [*lasso, *least_squares, *averaging]
+baseline_models: *lasso_set

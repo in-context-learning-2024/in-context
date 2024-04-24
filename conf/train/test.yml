@@ -1,0 +1,20 @@
+optim:
+    type: adam
+    lr: 0.0001
+loss_fn:
+    type: squared
+function_class: 
+    type: linear regression
+b_size: 8
+seq_len: 20
+x_dim: 10
+x_dist:
+    type: normal
+steps: 5
+model:
+    type: llama
+    n_positions: 21
+    n_layer: 1
+    n_embd: 4
+    n_head: 1
+baseline_models: *lasso_set
