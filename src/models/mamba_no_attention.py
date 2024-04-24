@@ -28,8 +28,6 @@ class MambaNoAttentionModel(ContextModel):
             use_cache=False
         )
 
-        #can't set return dict parameter in mambaconfig for some reason...
-
         mamba_configuration = MambaConfig(
             vocab_size=gpt_configuration.vocab_size,
             hidden_size=n_embd,
