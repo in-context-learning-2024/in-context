@@ -13,8 +13,8 @@ from .wrappers import (
 )
 
 from .chebyshev import (
-    ChebychevKernelLinearRegression,
-    ChebychevSharedRoots,
+    ChebyshevKernelLinearRegression,
+    ChebyshevSharedRoots,
 )
 
 FUNCTION_CLASSES: dict[str, type[FunctionClass]] = {
@@ -24,8 +24,8 @@ FUNCTION_CLASSES: dict[str, type[FunctionClass]] = {
     "quadratic regression" : QuadraticRegression,
     "2 layer mlp regression" : MLPRegression,
     "decision tree" : DecisionTreeRegression,
-    "chebychev kernel linear regression" : ChebychevKernelLinearRegression,
-    "chebychev shared roots" : ChebychevSharedRoots,
+    "chebyshev kernel linear regression" : ChebyshevKernelLinearRegression,
+    "chebyshev shared roots" : ChebyshevSharedRoots,
 }
 
 __all__ = [
