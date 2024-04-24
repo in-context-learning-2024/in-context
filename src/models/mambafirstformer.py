@@ -9,6 +9,7 @@ from core import ContextModel
 from .attention_fns import vit_style_relu_attn, causal_relu_attn
 from .inferencing_fns import forward_GPT2Model, block_var_declare_mamba_single, forward_block_mambafirstformer
 
+from .mod_seq_model import ModSeqModel
 from transformers.modeling_outputs import BaseModelOutputWithPastAndCrossAttentions
 import functools
 
