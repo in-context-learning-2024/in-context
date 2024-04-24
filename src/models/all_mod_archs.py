@@ -27,8 +27,7 @@ class MambaNoAttentionModel(ModSeqModel):
         )
         
         self.name = f"mamba_seq_embd={n_embd}_layer={n_layer}"
-    
-        # Allow for changes in GPT2Block Forward Function
+
         self.change_gpt2_block(block_var_declare_mamba_single, MambaModel(mamba_configuration), forward_block_mamba_no_attention)
 
         
@@ -60,7 +59,7 @@ class MambaformerModel(ModSeqModel):
             use_cache=gpt_configuration.use_cache
         )
 
-        self.name = f"mod_gpt2_embd={n_embd}_layer={n_layer}_head={n_head}"
+        self.name = f"mambaformer_embd={n_embd}_layer={n_layer}_head={n_head}"
         
         self.change_gpt2_block(block_var_declare_mambaformer, [MambaModel(mamba_configuration) for _ in range(num_mamba_instances)], forward_block_mambaformer)
       
