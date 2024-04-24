@@ -8,7 +8,7 @@ import types
 from core import ContextModel
 
 from .attention_fns import vit_style_relu_attn, causal_relu_attn
-from .inferencing_fns import forward_GPT2Model, block_var_declare_mamba_no_attention, forward_block_mamba_no_attention
+from .inferencing_fns import forward_GPT2Model, block_var_declare_mamba_single, forward_block_mamba_no_attention
 
 from transformers.modeling_outputs import BaseModelOutputWithPastAndCrossAttentions
 import functools
@@ -59,7 +59,7 @@ class MambaNoAttentionModel(ContextModel):
         # Allow for changes in GPT2Block Forward Function
         for x in list(self._backbone.children())[3]:
             x.forward = types.MethodType(functools.partial(forward_block_mamba_no_attention, no_attention=no_attention), x)
-            block_var_declare_mamba_no_attention(x, MambaModel(mamba_configuration))
+            block_var_declare_mamba_single(x, MambaModel(mamba_configuration))
 
         # Allow for changes in Attention function for GPT2Attention
         if self.custom_attn_func:
