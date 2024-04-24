@@ -38,4 +38,4 @@ class XGBoostModelSGN(XGBoostModel):
         self.context_length = -1
 
     def forward(self, xs, ys):
-        return super().evaluate(torch.sign(xs), ys)
+        return super().forward(torch.sign(xs), ys)

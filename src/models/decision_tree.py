@@ -43,4 +43,4 @@ class DecisionTreeModelSGN(DecisionTreeModel):
         self.name = f"decision_treeSGN_max_depth={max_depth}"
         self.context_length = -1
     def forward(self, xs, ys):
-        return super().evaluate(torch.sign(xs), ys)
+        return super().forward(torch.sign(xs), ys)
