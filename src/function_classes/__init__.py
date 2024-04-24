@@ -12,7 +12,7 @@ from .wrappers import (
     ScaledRegression,
 )
 
-from .chebychev_specials import (
+from .chebyshev import (
     ChebychevKernelLinearRegression,
     ChebychevSharedRoots,
 )
