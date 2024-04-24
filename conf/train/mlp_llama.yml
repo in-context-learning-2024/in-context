@@ -6,7 +6,7 @@ loss_fn:
 function_class: 
     type: 2 layer mlp regression
     hidden_dimension: 100
-b_size: 32
+b_size: 64
 seq_len: !curriculum
     start: 26
     stop: 101

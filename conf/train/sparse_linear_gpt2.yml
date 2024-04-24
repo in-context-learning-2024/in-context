@@ -5,7 +5,7 @@ loss_fn:
     type: squared
 function_class: 
     type: sparse linear regression
-b_size: 32
+b_size: 64
 seq_len: !curriculum
     start: 11
     stop: 41

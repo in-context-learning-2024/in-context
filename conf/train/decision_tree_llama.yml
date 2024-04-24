@@ -5,7 +5,7 @@ loss_fn:
     type: squared
 function_class: 
     type: decision tree
-b_size: 32
+b_size: 64
 seq_len: !curriculum
     start: 26
     stop: 101
