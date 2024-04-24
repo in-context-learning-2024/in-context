@@ -122,16 +122,16 @@ class FCErrorOrthogonal(FunctionClassError):
             
             A = torch.randn(batch_size, n, n)
             Q, _ = torch.linalg.qr(A, mode="complete")
-            context_space = Q.clone() #discuss with sahai 
+            context_space = Q.clone()
             context_space[:, :, -1] = 0
+            context_space= context_space @ torch.transpose(context_space, dim0=1, dim1=2)
             test_space = Q.clone()
             test_space[:, :, :-1] = 0
-            x_context, x_test = torch.zeros_like(x_batch), torch.zeros_like(x_batch)
-            for j in range(batch_size):
-
-                x_context[j] = x_batch[j] @ context_space[j]
-                x_test[j] = x_batch[j] @ test_space[j]
-
+            test_space= test_space @torch.transpose(test_space, dim0=1, dim1=2)
+            
+            x_context= x_batch @context_space
+            x_test =   x_batch @test_space
+            
             for j in range(1, sequence_length):
                 
                 cur_x = x_context.clone()
