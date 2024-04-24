@@ -162,10 +162,7 @@ class MambaNoAttentionModel(ContextModel):
             num_hidden_layers=1,
             use_cache=gpt_configuration.use_cache
         )
-
-        #print("WantPosEmbeddings" + str(want_pos_embeddings))
-        #print("No Attention" + str(no_attention))
-
+        
         self.name = f"mamba_embd={n_embd}_layer={n_layer}"
         
         if custom_attn_func == "relu":
@@ -179,9 +176,6 @@ class MambaNoAttentionModel(ContextModel):
         self._n_dims = x_dim
         self._read_in = nn.Linear(x_dim, n_embd)
       
-        #self._backbone = GPT2Model(configuration, attn_func=relu_attn)
-
-        #Patch that i don't really want to go with in the end
         self._backbone = GPT2Model(gpt_configuration)
 
         #Allow for attention and pos embeddings
@@ -190,12 +184,6 @@ class MambaNoAttentionModel(ContextModel):
         for x in list(self._backbone.children())[3]:
             x.forward = types.MethodType(functools.partial(forward_block, no_attention=no_attention), x)
             block_var_declare(x, MambaModel(mamba_configuration))
-
-        #######DEBUGGING
-        # print([type(x) for x in self._backbone.children()])
-        # print("Additionally")
-        # print(list(self._backbone.children())[3])
-        ###########
         
         if self.custom_attn_func:
             attn_layers = list(self._backbone.children())[3]
