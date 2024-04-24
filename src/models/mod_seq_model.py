@@ -27,8 +27,6 @@ class ModSeqModel(ContextModel):
             attn_pdrop=0.0,
             use_cache=False
         )
-
-        self.name = f"mod_seq_embd={n_embd}_layer={n_layer}"
         
         if custom_attn_func == "relu":
             self.custom_attn_func = vit_style_relu_attn
