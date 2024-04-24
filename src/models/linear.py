@@ -108,7 +108,7 @@ class LassoModel(ContextModel):
                     with warnings.catch_warnings():
                         warnings.filterwarnings("error")
                         try:
-                            clf.fit(train_xs, train_ys)
+                            clf.fit(train_xs.numpy(), train_ys.numpy())
                         except Warning:
                             print(f"lasso convergence warning at i={i}, j={j}.")
                             raise
