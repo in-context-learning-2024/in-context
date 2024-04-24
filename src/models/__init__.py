@@ -3,10 +3,8 @@ from .transformer import (
     GPT2,
     Llama
 )
-from .mamba_no_attention import MambaNoAttentionModel
-from .mambafirstformer import MambaFirstGPT2TransformerModel
-from .mambaformer import MambaformerModel
-from .mod_transformers import ModTransformerModel
+
+from .all_mod_archs import ModTransformerModel, MambaNoAttentionMode, MambaFirstGPT2TransformerModel, MambaformerModel
 from .linear import (
     LeastSquaresModel,
     AveragingModel,
