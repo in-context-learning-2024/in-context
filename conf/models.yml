@@ -26,16 +26,16 @@ model: &averaging
     type: averaging
 
 model: &decision_tree_4
-    type: decision_tree
+    type: decision tree
     max_depth: 4
 
 model: &decision_tree
-    type: decision_tree
+    type: decision tree
     max_depth: None
 
 
 model: &mlp
-    type: mlp
+    type: grad mlp
     dimensions: [20, 100, 1]
     opt_alg_name: adam
     batch_size: 100

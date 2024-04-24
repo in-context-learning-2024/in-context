@@ -17,4 +17,4 @@ model:
     n_layer: 1
     n_embd: 4
     n_head: 1
-baseline_models: *lasso_set
+baseline_models: [*decision_tree]
