@@ -8,9 +8,9 @@ function_class:
 b_size: 32
 seq_len: !curriculum
     start: 11
-    stop: 42
+    stop: 41
     step_size: 2
-    step_len: 1000
+    step_len: 2000
 x_dim: !curriculum
     start: 5
     stop: 20

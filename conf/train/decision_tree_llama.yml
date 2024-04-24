@@ -7,10 +7,10 @@ function_class:
     type: decision tree
 b_size: 32
 seq_len: !curriculum
-    start: 10
-    stop: 200
+    start: 26
+    stop: 101
     step_size: 5
-    step_len: 1000
+    step_len: 2000
 x_dim: !curriculum
     start: 5
     stop: 20

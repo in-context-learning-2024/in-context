@@ -1,16 +1,16 @@
 model: &std_gpt2
     type: gpt2
     n_positions: 101
-    n_layer: 3
-    n_embd: 64
-    n_head: 2
+    n_layer: 12
+    n_embd: 256
+    n_head: 8
 
 model: &std_llama
     type: llama
     n_positions: 101
-    n_layer: 3
-    n_embd: 64
-    n_head: 2
+    n_layer: 12
+    n_embd: 256
+    n_head: 8
 
 model: &knn_3
     type: knn
@@ -30,3 +30,9 @@ model: &decision_tree
 
 model: &mlp
     type: mlp
+
+model: &lasso
+    type: lasso
+
+model: &zero
+    type: zero
