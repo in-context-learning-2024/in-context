@@ -171,9 +171,9 @@ class FCErrorSeenPoints(FunctionClassError):
             
             for j in range(1, sequence_length):
                 x_test = x_batch.clone()
-                perm = torch.stack([torch.randperm(j) for _ in range(batch_size)]).unsqueeze(dim=1)
-                ind_mat = (perm == 0) + 0.0
-                x_test[:, j:j+1] = ind_mat @ x_batch[:, :j]
+                perm = torch.stack([torch.randperm(j) for _ in range(batch_size)]).unsqueeze(dim=1) #samples a permutation from 0 to j-1 for each sequence in the batch
+                ind_mat = (perm == 0) + 0.0 #creates a tensor that is one where the zero is in each permutation, and zero everywhere else
+                x_test[:, j:j+1] = ind_mat @ x_batch[:, :j] #takes the x-values from the index of x_batch corresponding to the 1 of ind_mat
 
                 if isinstance(params, list):
                     y_test = self.function_class.evaluate(x_test, *params)
