@@ -60,8 +60,6 @@ def forward_block_mod_transformer(
         residual = hidden_states
         
         if not no_attention:
-            #for _ in range(1000):
-            #   print ("LKSDJFOSJFOIWJFIOWEJFOIWEJFOIEWJFOIWEJFOIWEFJOIWJ")
             hidden_states = self.ln_1(hidden_states)
     
             attn_outputs = self.attn(
@@ -72,7 +70,6 @@ def forward_block_mod_transformer(
                 use_cache=use_cache,
                 output_attentions=output_attentions,
             )
-            #print(attn_outputs)
             attn_output = attn_outputs[0]  # output_attn: a, present, (attentions)
             outputs = attn_outputs[1:]
             # residual connection
@@ -99,8 +96,6 @@ def forward_block_mod_transformer(
                 # residual connection
                 hidden_states = residual + attn_output
                 outputs = outputs + cross_attn_outputs[2:] 
-            #print(outputs)
-            #print("NEWJROWFJWIOFJIO") # add cross attentions if we output attention weights
                 
             residual = hidden_states
         
@@ -111,22 +106,11 @@ def forward_block_mod_transformer(
         hidden_states = residual + feed_forward_hidden_states
 
         if no_attention: 
-            #Might cause errors if output of attention does not make OUTPUTS a list
             outputs = (hidden_states,)
         elif use_cache:
-            #print(outputs)
             outputs = (hidden_states,) + outputs
-            #print("AFTERHIDDEN")
-            #print(outputs)
         else:
-            #print(outputs)
-            #print(outputs[1:])
             outputs = (hidden_states,) + outputs[1:]
-            #print(outputs)
-            #print("AFTERHIDDEN")
-            #print(outputs.shape)
-        
-        
         
         return outputs  # hidden_states, present, (attentions, cross_attentions)
         
@@ -156,8 +140,6 @@ def forward_block_mambaformer(
         residual = hidden_states
         
         if not no_attention:
-            #for _ in range(1000):
-            #   print ("LKSDJFOSJFOIWJFIOWEJFOIWEJFOIEWJFOIWEJFOIWEFJOIWJ")
             hidden_states = self.ln_1(hidden_states)
     
             attn_outputs = self.attn(
@@ -168,7 +150,6 @@ def forward_block_mambaformer(
                 use_cache=use_cache,
                 output_attentions=output_attentions,
             )
-            #print(attn_outputs)
             attn_output = attn_outputs[0]  # output_attn: a, present, (attentions)
             outputs = attn_outputs[1:]
             # residual connection
@@ -195,8 +176,6 @@ def forward_block_mambaformer(
                 # residual connection
                 hidden_states = residual + attn_output
                 outputs = outputs + cross_attn_outputs[2:] 
-            #print(outputs)
-            #print("NEWJROWFJWIOFJIO") # add cross attentions if we output attention weights
                 
             residual = hidden_states
         
@@ -210,20 +189,11 @@ def forward_block_mambaformer(
         hidden_states = residual + hidden_states
 
         if no_attention: 
-            #Might cause errors if output of attention does not make OUTPUTS a list
             outputs = (hidden_states,)
         elif use_cache:
-            #print(outputs)
             outputs = (hidden_states,) + outputs
-            #print("AFTERHIDDEN")
-            #print(outputs)
         else:
-            #print(outputs)
-            #print(outputs[1:])
             outputs = (hidden_states,) + outputs[1:]
-            #print(outputs)
-            #print("AFTERHIDDEN")
-            #print(outputs.shape)
         
         
         
@@ -290,7 +260,6 @@ def forward_block_mambafirstformer(
                 # residual connection
                 hidden_states = residual + attn_output
                 outputs = outputs + cross_attn_outputs[2:] 
-            #print(outputs)
                 
             residual = hidden_states
         
@@ -301,20 +270,11 @@ def forward_block_mambafirstformer(
         hidden_states = residual + feed_forward_hidden_states
 
         if no_attention: 
-            #Might cause errors if output of attention does not make OUTPUTS a list
             outputs = (hidden_states,)
         elif use_cache:
-            #print(outputs)
             outputs = (hidden_states,) + outputs
-            #print("AFTERHIDDEN")
-            #print(outputs)
         else:
-            #print(outputs)
-            #print(outputs[1:])
             outputs = (hidden_states,) + outputs[1:]
-            #print(outputs)
-            #print("AFTERHIDDEN")
-            #print(outputs.shape)
         
         
         
@@ -536,8 +496,6 @@ def forward_GPT2Model(
             if output_hidden_states:
                 all_hidden_states = all_hidden_states + (hidden_states,)
 
-            #print(self.gradient_checkpointing)
-            #print(self.training)
             if self.gradient_checkpointing and self.training:
                 outputs = self._gradient_checkpointing_func(
                     block.__call__,
@@ -561,7 +519,6 @@ def forward_GPT2Model(
                     use_cache=use_cache,
                     output_attentions=None if no_attention else output_attentions
                 )
-                #print(outputs)
 
             hidden_states = outputs[0]
             if use_cache is True:
