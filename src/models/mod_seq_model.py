@@ -41,6 +41,8 @@ class ModSeqModel(ContextModel):
         self.context_length = n_positions
         self._n_dims = x_dim
         self._read_in = nn.Linear(x_dim, n_embd)
+        
+        self._backbone = GPT2Model(gpt_configuration)
         #Allow for attention and pos embeddings in GPT2Model Forward function
         self._backbone.forward = types.MethodType(functools.partial(forward_GPT2Model, no_attention=no_attention, want_pos_embeddings=want_pos_embeddings), self._backbone)
        
