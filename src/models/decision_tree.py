@@ -36,3 +36,11 @@ class DecisionTreeModel(ContextModel):
         return torch.stack(preds, dim=1)
 
 
+class DecisionTreeModelSGN(DecisionTreeModel):
+    def __init__(self, max_depth=None, **kwargs):
+        super(DecisionTreeModelSGN, self).__init__()
+        self._max_depth = max_depth
+        self.name = f"decision_treeSGN_max_depth={max_depth}"
+        self.context_length = -1
+    def forward(self, xs, ys):
+        return super().evaluate(torch.sign(xs), ys)

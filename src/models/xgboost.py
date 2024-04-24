@@ -31,3 +31,11 @@ class XGBoostModel(ContextModel):
 
         return torch.stack(preds, dim=1)
 
+class XGBoostModelSGN(XGBoostModel):
+    def __init__(self, **kwargs):
+        super(XGBoostModelSGN, self).__init__()
+        self.name = "xgboostSGN"
+        self.context_length = -1
+
+    def forward(self, xs, ys):
+        return super().evaluate(torch.sign(xs), ys)
