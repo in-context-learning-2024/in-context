@@ -5,6 +5,13 @@ model: &std_gpt2
     n_embd: 64
     n_head: 2
 
+model: &garg_et_al_linear_gpt2
+    type: gpt2
+    n_positions: 101
+    n_layer: 12
+    n_embd: 256
+    n_head: 8
+
 model: &std_llama
     type: llama
     n_positions: 101

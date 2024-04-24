@@ -147,6 +147,8 @@ def _produce_trainer_stages(data: dict) -> TrainerSteps:
     model = get_model(stages[0]['model'] | { "x_dim" : x_dim }, x_dim, y_dim)
     optimizer = get_optimizer(model, stages[0]['optim'])
     if 'model_weights' in data and 'optim_state' in data:
+        print("model.state_dict():", model.state_dict().keys(), "\n\n\n\n")
+        print("data['model_weights'].keys()", data['model_weights'].keys())
         model.load_state_dict(data['model_weights'])
         optimizer.load_state_dict(data['optim_state'])
     loss_fn = get_loss_fn(stages[0]['loss_fn'])
