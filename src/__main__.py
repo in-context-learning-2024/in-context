@@ -51,7 +51,7 @@ def main(args: arg.Namespace):
 
     yaml_str = load_config(args.conffile)
 
-    init_args = { "config" : yaml.load(yaml_str, Loader=yaml.Loader) } 
+    init_args = { "config" : yaml.load(yaml_str, Loader=yaml.Loader)['train'] } 
     if args.projectname != "":
         init_args |= { "project" : args.projectname }
     if args.runname != "":
