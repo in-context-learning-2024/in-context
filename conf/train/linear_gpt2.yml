@@ -4,13 +4,12 @@ optim:
 loss_fn:
     type: squared
 function_class: 
-    type: 2 layer mlp regression
-    hidden_dimension: 100
+    type: linear regression
 b_size: 64
 seq_len: !curriculum
-    start: 26
-    stop: 101
-    step_size: 5
+    start: 11
+    stop: 41
+    step_size: 2
     step_len: 2000
 x_dim: !curriculum
     start: 5
@@ -22,5 +21,5 @@ x_dist:
 steps: 500000
 log_freq: 100
 checkpoint_freq: 5000
-model: *std_llama
-baseline_models: [*knn_3, *least_squares, *mlp]
+model: *std_gpt2
+baseline_models: [*least_squares *knn_3, *averaging]
