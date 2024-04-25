@@ -57,7 +57,7 @@ class AveragingModel(ContextModel):
 
         for i in range(ys.shape[1]):
             if i == 0:
-                preds.append(torch.zeros_like(xs[:, :1, 0]))  # predict zero for first point
+                preds.append(torch.zeros_like(xs[:, 0, :self.y_dim]))  # predict zero for first point
                 continue
             train_xs, train_ys = xs[:, :i], ys[:, :i]
             test_x = xs[:, i : i + 1]

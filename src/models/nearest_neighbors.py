@@ -16,7 +16,7 @@ class KNNModel(ContextModel):
 
         for i in range(ys.shape[1]):
             if i == 0:
-                preds.append(torch.zeros(xs.shape[:1] + torch.Size([1, self.y_dim])))  # predict zero for first point
+                preds.append(torch.zeros(xs.shape[:1] + torch.Size([1, self.y_dim]), device=xs.device))  # predict zero for first point
                 continue
             train_xs, train_ys = xs[:, :i], ys[:, :i]
             test_x = xs[:, i : i + 1]
