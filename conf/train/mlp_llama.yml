@@ -19,8 +19,8 @@ x_dim: !curriculum
     step_len: 2000
 x_dist:
     type: normal
-steps: 500000
+steps: 500001
 log_freq: 100
-checkpoint_freq: 5000
+checkpoint_freq: 50000
 model: *std_llama
 baseline_models: [*knn_3, *least_squares, *mlp]
