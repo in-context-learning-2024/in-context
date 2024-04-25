@@ -131,13 +131,11 @@ def _produce_trainer_stages(data: dict) -> TrainerSteps:
     )
     stages, step_counts = expand_curriculum(data)
 
-    _x_dist = get_x_distribution(
-        stages[0]['b_size'], stages[0]['seq_len'], x_dim, stages[0].get('x_dist', {})
-    )
-
     f_classes = [
         get_function_class(
-            _x_dist,
+            get_x_distribution(
+                stage['b_size'], stage['seq_len'], x_dim, stage.get('x_dist', {})
+            ),
             stage['x_dim'],
             stage['function_class']
         ) 
@@ -149,6 +147,7 @@ def _produce_trainer_stages(data: dict) -> TrainerSteps:
     if 'model_weights' in data and 'optim_state' in data:
         model.load_state_dict(data['model_weights'])
         optimizer.load_state_dict(data['optim_state'])
+
     loss_fn = get_loss_fn(stages[0]['loss_fn'])
     baseline_models = list(map(
         lambda d: get_model(
