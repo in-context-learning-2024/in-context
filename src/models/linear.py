@@ -1,6 +1,7 @@
 import torch
 from core import ContextModel
 from sklearn.linear_model import Lasso
+from sklearn.exceptions import ConvergenceWarning
 import warnings
 
 # xs and ys should be on cpu for this method. Otherwise the output maybe off in case when train_xs is not full rank due to the implementation of torch.linalg.lstsq.
@@ -108,7 +109,10 @@ class LassoModel(ContextModel):
                     with warnings.catch_warnings():
                         warnings.filterwarnings("error")
                         try:
-                            clf.fit(train_xs.numpy(), train_ys.numpy())
+                            clf.fit(train_xs, train_ys)
+                        except ConvergenceWarning:
+                            print(f"lasso convergence warning at i={i}, j={j}.")
+                            raise
                         except Warning:
                             print(f"lasso convergence warning at i={i}, j={j}.")
                             raise
