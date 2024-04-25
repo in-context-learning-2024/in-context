@@ -52,9 +52,9 @@ def main(args: arg.Namespace):
     yaml_str = load_config(args.conffile)
 
     init_args = { "config" : yaml.load(yaml_str, Loader=yaml.Loader) } 
-    if args.projectname is not "":
+    if args.projectname != "":
         init_args |= { "project" : args.projectname }
-    if args.runname is not "":
+    if args.runname != "":
         init_args |= { "name" : args.runname }
     wandb.init(**init_args)
 
