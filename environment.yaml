@@ -2,6 +2,7 @@ name: in-context-learning
 channels:
   - pytorch
   - defaults
+  - nvidia
 dependencies:
   - pip=21.2.4
   - python=3.10.13
