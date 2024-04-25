@@ -12,6 +12,7 @@ from .gradient_mlp import GDModel
 from .nearest_neighbors import KNNModel
 from .xgboost import XGBoostModel
 from .decision_tree import DecisionTreeModel
+from .zero_model import ZeroModel
 
 MODELS: dict[str, type[ContextModel]] = {
     "gpt2" : GPT2,
@@ -24,6 +25,7 @@ MODELS: dict[str, type[ContextModel]] = {
     "grad mlp"      : GDModel,
     "decision tree" : DecisionTreeModel,
     "xgboost"       : XGBoostModel,
+    "zero"          : ZeroModel,
 }
 
 __all__ = [

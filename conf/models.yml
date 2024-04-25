@@ -19,6 +19,22 @@ model: &knn_3
 model: &least_squares
     type: least squares
 
+model: &averaging
+    type: averaging
+
+model: &lasso
+    type: lasso
+    alpha: 0.1
+
+model: &grad_mlp
+    type: grad mlp
+    model_class_name: mlp
+    model_class_args:
+        dimensions: [10, 256, 1]
+
+model: &d_tree
+    type: decision tree
+
 model: &xgboost
     type: xgboost
 
