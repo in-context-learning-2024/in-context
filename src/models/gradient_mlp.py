@@ -117,9 +117,6 @@ class GDModel(ContextModel):
         DEVICE = xs.device
         ys = ys.to(DEVICE)
 
-        assert xs.shape[0] == ys.shape[0] == self._batch_size, \
-            f"Input values are not of the right batch size! Expected: `{self._batch_size}' Got: {xs.shape[0]}, {ys.shape[0]}"
-
         inds = range(ys.shape[1])
 
         preds = []  # predict one for first point
