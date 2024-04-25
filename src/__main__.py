@@ -2,6 +2,9 @@ import argparse as arg
 import wandb
 import torch
 import os
+import yaml
+
+from typing import Optional
 
 from parse import parse_training
 
@@ -37,7 +40,6 @@ def load_config(conffile: str) -> str:
 
     full_yaml = model_conf.strip() + '\n\n' \
                 + nest_yaml("train", train_conf.strip())
-    log_yaml(full_yaml)
 
     return full_yaml
 
@@ -45,11 +47,17 @@ def load_checkpoint(checkpointfile: str) -> tuple:
     latest_checkpoint = torch.load(checkpointfile)
     return latest_checkpoint['model_state_dict'], latest_checkpoint['optimizer_state_dict']
 
-
 def main(args: arg.Namespace):
-    wandb.init()
 
     yaml_str = load_config(args.conffile)
+
+    init_args = { "config" : yaml.load(yaml_str, Loader=yaml.Loader) } 
+    if args.projectname is not "":
+        init_args |= { "project" : args.projectname }
+    if args.runname is not "":
+        init_args |= { "name" : args.runname }
+    wandb.init(**init_args)
+
     log_yaml(yaml_str)
 
     if args.checkpointfile == "":
@@ -75,5 +83,7 @@ if __name__ == "__main__":
                         help="path to the config file to use for training")
     parser.add_argument("--resume", '-r', type=str, default="", action='store', dest="checkpointfile",
                         help="path to the checkpoint to resume training with")
+    parser.add_argument("--wandb-project", type=str, default="", dest="projectname")
+    parser.add_argument("--run-name", type=str, default="", dest="runname")
     args = parser.parse_args()
     main(args)
