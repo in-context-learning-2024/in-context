@@ -109,7 +109,7 @@ class GDModel(ContextModel):
         self.name = f"gdmodel_model={model_class_name}_model_kwargs={model_class_args}_opt={opt_alg_name}_lr={lr}_bsize={batch_size}_nsteps={num_steps}_loss={loss_name}"
         self.context_length = -1
 
-    def forward(self, xs, ys, inds=None, verbose=False, print_step=100):
+    def forward(self, xs, ys, verbose=False, print_step=100):
         # inds is a list containing indices where we want the prediction.
         # prediction made at all indices by default.
         # xs: bsize X npoints X ndim.
@@ -131,7 +131,7 @@ class GDModel(ContextModel):
             optim = self._opt(model.parameters())
             model.to(DEVICE)
             if i > 0:
-                pred = torch.zeros_like(ys[:, 0])
+                pred = torch.zeros_like(ys[:, 0], device=DEVICE)
 
                 train_xs, train_ys = xs[:, :i], ys[:, :i]
                 test_xs, test_ys = xs[:, i : i + 1], ys[:, i : i + 1]
