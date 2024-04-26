@@ -2,7 +2,7 @@ import torch
 from torch import LongTensor, FloatTensor, Tensor
 from transformers import GPT2Config, GPT2Model, MambaConfig, MambaPreTrainedModel, MambaModel # pyrigh: ignor[]
 from torch import nn
-from .transformer import TransformerModel
+from .transformer import TransformerModel, GPT2
 from typing import Optional, Tuple, Union
 import types
 from core import ContextModel
@@ -14,20 +14,9 @@ from transformers.modeling_outputs import BaseModelOutputWithPastAndCrossAttenti
 import functools
 
 
-class ModSeqModel(ContextModel):
+class ModSeqModel(GPT2):
     def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, want_pos_embeddings=True, no_attention=False, custom_attn_func=None, **kwargs):
-        super(ModSeqModel, self).__init__()
-        gpt_configuration = GPT2Config(
-            n_positions=2 * n_positions,
-            n_embd=n_embd,
-            n_layer=n_layer,
-            n_head=n_head,
-            resid_pdrop=0.0,
-            embd_pdrop=0.0,
-            attn_pdrop=0.0,
-            use_cache=False
-        )
-        
+        super().__init__(x_dim, n_positions, n_embd=n_embd, n_layer=n_layer, n_head=n_head)
         if custom_attn_func == "relu":
             self.custom_attn_func = vit_style_relu_attn
         elif custom_attn_func == "relu_causal":
@@ -37,20 +26,14 @@ class ModSeqModel(ContextModel):
 
         self.no_attention = no_attention
         self.want_pos_embeddings = want_pos_embeddings
-        
-        self.context_length = n_positions
         self._n_dims = x_dim
-        self._read_in = nn.Linear(x_dim, n_embd)
         
-        self._backbone = GPT2Model(gpt_configuration)
         #Allow for attention and pos embeddings in GPT2Model Forward function
         self._backbone.forward = types.MethodType(functools.partial(forward_GPT2Model, no_attention=no_attention, want_pos_embeddings=want_pos_embeddings), self._backbone)
        
         # Allow for changes in Attention function for GPT2Attention
         if not no_attention:
             self.change_gpt2_attention()
-      
-        self._read_out = nn.Linear(n_embd, 1)
 
     def change_gpt2_block(self, instantiate_var_fn, instantiate_var_arg, instantiate_forward_fn):
        for x in list(self._backbone.children())[3]:
@@ -67,12 +50,3 @@ class ModSeqModel(ContextModel):
                     list(attn_layers[i].children())[1],
                     attn_module_class
                 )
-
-    def forward(self, xs, ys):
-        inds = torch.arange(ys.shape[1])
-        
-        zs = ContextModel.interleave(xs, ys)
-        embeds = self._read_in(zs)
-        output = self._backbone(inputs_embeds=embeds).last_hidden_state
-        prediction = self._read_out(output)
-        return prediction[:, ::2, 0][:, inds]  # predict only on xs
