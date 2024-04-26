@@ -24,8 +24,10 @@ from core import ContextModel
 
 #         self.mlp = GPT2MLP(inner_dim, config)
 # ----------------------------------------------------------------------
-# In the following function BLOCK VAR DECLARE, one can add new variables, remove unnecessary variables, and modify existing ones.
-# Then, modify the forward function as seen fit. 
+# In the following function BLOCK_VAR_DECLARE, one can add new variables, remove unnecessary variables, and modify existing ones.
+# BLOCK_VAR_DECLARE should only be called once: at the initialization of your custom model.
+
+# Modify the forward function as seen fit. 
 #
 # This is a way to modify layer architecture.
 
