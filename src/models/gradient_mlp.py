@@ -130,6 +130,7 @@ class GDModel(ContextModel):
             model = self._get_new_model(xs_bsize)
             optim = self._opt(model.parameters())
             model.to(DEVICE)
+            model.train()
             if i > 0:
                 pred = torch.zeros_like(ys[:, 0], device=DEVICE)
 
@@ -164,8 +165,8 @@ class GDModel(ContextModel):
                     optim.zero_grad()
 
                     model.train()
-                    outputs = model(train_xs_cur)
-                    loss = self._loss_fn(outputs[:, :, 0], train_ys_cur)
+                    outputs = model(train_xs_cur.detach())
+                    loss = self._loss_fn(outputs[:, :, 0], train_ys_cur.detach())
                     loss.backward()
                     optim.step()
 
