@@ -37,7 +37,7 @@ class SparseLinearRegression(LinearRegression):
         mask = torch.ones(param_shape).bool()
 
         for batch_entry in range(param_shape[0]):
-            dimensions_to_keep: torch.Tensor = torch.randperm(self.x_dim)[:self._sparsity]
+            dimensions_to_keep: torch.Tensor = torch.randperm(self.x_curriculum_dim)[:self._sparsity]
             mask[batch_entry, ..., dimensions_to_keep] = False
 
         weights[mask] = 0
