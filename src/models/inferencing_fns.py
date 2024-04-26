@@ -261,8 +261,6 @@ def forward_block_mamba_no_attention(
         hidden_states = residual + hidden_states
 
         residual = hidden_states
-
-        hidden_states = self.ln_1(hidden_states)
       
         if not no_attention:
             hidden_states = self.ln_1(hidden_states)
