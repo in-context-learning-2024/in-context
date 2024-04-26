@@ -45,6 +45,12 @@ def block_var_declare_mamba_single(self, this_mamba_model):
 def block_var_declare_no_change(self, example_var):
   pass
 
+def forward_through_mamba_blocks(hidden_states, these_mamba_blocks, this_norm_f):
+    for mb in these_mamba_blocks:
+        hidden_states = mb(hidden_states)
+
+    hidden_states = this_norm_f(hidden_states)
+    return hidden_states
     
 def forward_block_mod_transformer(
         self,
@@ -63,41 +69,21 @@ def forward_block_mod_transformer(
         
         if not no_attention:
             hidden_states = self.ln_1(hidden_states)
-    
-            attn_outputs = self.attn(
-                hidden_states,
-                layer_past=layer_past,
-                attention_mask=attention_mask,
-                head_mask=head_mask,
-                use_cache=use_cache,
-                output_attentions=output_attentions,
-            )
-            attn_output = attn_outputs[0]  # output_attn: a, present, (attentions)
-            outputs = attn_outputs[1:]
-            # residual connection
-            hidden_states = attn_output + residual
             
-            if encoder_hidden_states is not None and not no_attention:
-                # add one self-attention block for cross-attention
-                if not hasattr(self, "crossattention"):
-                    raise ValueError(
-                        f"If `encoder_hidden_states` are passed, {self} has to be instantiated with "
-                        "cross-attention layers by setting `config.add_cross_attention=True`"
-                    )
-                residual = hidden_states
-                hidden_states = self.ln_cross_attn(hidden_states)
-                cross_attn_outputs = self.crossattention(
-                    hidden_states,
-                    attention_mask=attention_mask,
-                    head_mask=head_mask,
-                    encoder_hidden_states=encoder_hidden_states,
-                    encoder_attention_mask=encoder_attention_mask,
-                    output_attentions=output_attentions,
-                )
-                attn_output = cross_attn_outputs[0]
-                # residual connection
-                hidden_states = residual + attn_output
-                outputs = outputs + cross_attn_outputs[2:] 
+            ln_cross_attn = self.ln_cross_attn if hasattr(self, "ln_cross_attn") and self.ln_cross_attn else None
+            crossattention = self.crossattention if hasattr(self, "crossattention") else None
+            hidden_states, outputs = forward_through_attention(attention_block=self.attn,
+                                                               crossattention=crossattention,
+                                                               ln_cross_attn=ln_cross_attn,
+                                                               residual=residual,
+                                                               hidden_states=hidden_states,
+                                                               layer_past=layer_past,
+                                                               attention_mask=attention_mask,
+                                                               head_mask=head_mask,
+                                                               use_cache=use_cache,
+                                                               output_attentions=output_attentions,
+                                                               encoder_hidden_states=encoder_hidden_states,
+                                                               encoder_attention_mask=encoder_attention_mask)
                 
             residual = hidden_states
         
@@ -107,15 +93,57 @@ def forward_block_mod_transformer(
         # residual connection
         hidden_states = residual + feed_forward_hidden_states
 
-        if no_attention: 
-            outputs = (hidden_states,)
-        elif use_cache:
-            outputs = (hidden_states,) + outputs
-        else:
-            outputs = (hidden_states,) + outputs[1:]
-        
-        return outputs  # hidden_states, present, (attentions, cross_attentions)
-        
+        return output_processing(outputs, hidden_states, no_attention, use_cache)
+
+def forward_through_attention(attention_block=None,
+                              crossattention=None,
+                              ln_cross_attn=None,
+                              residual=None,
+                              hidden_states=None,
+                              layer_past=None,
+                              attention_mask=None,
+                              head_mask=None,
+                              use_cache=False,
+                              output_attentions=False,
+                              encoder_hidden_states=None,
+                              encoder_attention_mask=None):
+        attn_outputs = attention_block(
+            hidden_states,
+            layer_past=layer_past,
+            attention_mask=attention_mask,
+            head_mask=head_mask,
+            use_cache=use_cache,
+            output_attentions=output_attentions,
+        )
+        attn_output = attn_outputs[0]  # output_attn: a, present, (attentions)
+        outputs = attn_outputs[1:]
+        # residual connection
+        hidden_states = attn_output + residual
+            
+        if encoder_hidden_states is not None:
+            # add one self-attention block for cross-attention
+            if not crossattention:
+                raise ValueError(
+                    f"If `encoder_hidden_states` are passed, {self} has to be instantiated with "
+                    "cross-attention layers by setting `config.add_cross_attention=True`"
+                )
+            residual = hidden_states
+            hidden_states = ln_cross_attn(hidden_states)
+            cross_attn_outputs = crossattention(
+                hidden_states,
+                attention_mask=attention_mask,
+                head_mask=head_mask,
+                encoder_hidden_states=encoder_hidden_states,
+                encoder_attention_mask=encoder_attention_mask,
+                output_attentions=output_attentions,
+            )
+            attn_output = cross_attn_outputs[0]
+            # residual connection
+            hidden_states = residual + attn_output
+            outputs = outputs + cross_attn_outputs[2:] 
+
+        return hidden_states, outputs
+                
 def forward_block_mambaformer(
         self,
         hidden_states: Optional[Tuple[torch.FloatTensor]],
@@ -132,74 +160,39 @@ def forward_block_mambaformer(
         #Utilizing Mamba...
         residual = hidden_states
       
-        for mb in self.mamba_blocks_beg:
-            hidden_states = mb(hidden_states)
-
-        hidden_states = self.norm_f_1(hidden_states)
-
+        hidden_states = forward_through_mamba_blocks(hidden_states, self.mamba_blocks_beg, self.norm_f_1)
+        
         hidden_states = hidden_states + residual
         
         residual = hidden_states
         
         if not no_attention:
             hidden_states = self.ln_1(hidden_states)
-    
-            attn_outputs = self.attn(
-                hidden_states,
-                layer_past=layer_past,
-                attention_mask=attention_mask,
-                head_mask=head_mask,
-                use_cache=use_cache,
-                output_attentions=output_attentions,
-            )
-            attn_output = attn_outputs[0]  # output_attn: a, present, (attentions)
-            outputs = attn_outputs[1:]
-            # residual connection
-            hidden_states = attn_output + residual
             
-            if encoder_hidden_states is not None and not no_attention:
-                # add one self-attention block for cross-attention
-                if not hasattr(self, "crossattention"):
-                    raise ValueError(
-                        f"If `encoder_hidden_states` are passed, {self} has to be instantiated with "
-                        "cross-attention layers by setting `config.add_cross_attention=True`"
-                    )
-                residual = hidden_states
-                hidden_states = self.ln_cross_attn(hidden_states)
-                cross_attn_outputs = self.crossattention(
-                    hidden_states,
-                    attention_mask=attention_mask,
-                    head_mask=head_mask,
-                    encoder_hidden_states=encoder_hidden_states,
-                    encoder_attention_mask=encoder_attention_mask,
-                    output_attentions=output_attentions,
-                )
-                attn_output = cross_attn_outputs[0]
-                # residual connection
-                hidden_states = residual + attn_output
-                outputs = outputs + cross_attn_outputs[2:] 
+            ln_cross_attn = self.ln_cross_attn if hasattr(self, "ln_cross_attn") and self.ln_cross_attn else None
+            crossattention = self.crossattention if hasattr(self, "crossattention") else None
+            hidden_states, outputs = forward_through_attention(attention_block=self.attn,
+                                                               crossattention=crossattention,
+                                                               ln_cross_attn=ln_cross_attn,
+                                                               residual=residual,
+                                                               hidden_states=hidden_states,
+                                                               layer_past=layer_past,
+                                                               attention_mask=attention_mask,
+                                                               head_mask=head_mask,
+                                                               use_cache=use_cache,
+                                                               output_attentions=output_attentions,
+                                                               encoder_hidden_states=encoder_hidden_states,
+                                                               encoder_attention_mask=encoder_attention_mask)
                 
             residual = hidden_states
         
         hidden_states = self.ln_2(hidden_states)
 
-        for mb in self.mamba_blocks_end:
-            hidden_states = mb(hidden_states)
-
-        hidden_states = self.norm_f_2(hidden_states)
+        hidden_states = forward_through_mamba_blocks(hidden_states, self.mamba_blocks_end, self.norm_f_2)
       
         hidden_states = residual + hidden_states
 
-        if no_attention: 
-            outputs = (hidden_states,)
-        elif use_cache:
-            outputs = (hidden_states,) + outputs
-        else:
-            outputs = (hidden_states,) + outputs[1:]
-        
-        
-        
-        return outputs  # hidden_states, present, (attentions, cross_attentions)
+        return output_processing(outputs, hidden_states, no_attention, use_cache)
         
 def forward_block_mambafirstformer(
         self,
@@ -215,53 +208,28 @@ def forward_block_mambafirstformer(
     ) -> Union[Tuple[torch.Tensor], Optional[Tuple[torch.Tensor, Tuple[torch.FloatTensor, ...]]]]:
 
         #Utilizing Mamba...
-        for mb in self.mamba_blocks:
-            hidden_states = mb(hidden_states)
-
-        hidden_states = self.norm_f(hidden_states)
-        
+        hidden_states = forward_through_mamba_blocks(hidden_states, self.mamba_blocks, self.norm_f)
         #The above was all an addition to the vanilla transformer
         
         residual = hidden_states
         
         if not no_attention:
             hidden_states = self.ln_1(hidden_states)
-    
-            attn_outputs = self.attn(
-                hidden_states,
-                layer_past=layer_past,
-                attention_mask=attention_mask,
-                head_mask=head_mask,
-                use_cache=use_cache,
-                output_attentions=output_attentions,
-            )
             
-            attn_output = attn_outputs[0]  # output_attn: a, present, (attentions)
-            outputs = attn_outputs[1:]
-            # residual connection
-            hidden_states = attn_output + residual
-            
-            if encoder_hidden_states is not None and not no_attention:
-                # add one self-attention block for cross-attention
-                if not hasattr(self, "crossattention"):
-                    raise ValueError(
-                        f"If `encoder_hidden_states` are passed, {self} has to be instantiated with "
-                        "cross-attention layers by setting `config.add_cross_attention=True`"
-                    )
-                residual = hidden_states
-                hidden_states = self.ln_cross_attn(hidden_states)
-                cross_attn_outputs = self.crossattention(
-                    hidden_states,
-                    attention_mask=attention_mask,
-                    head_mask=head_mask,
-                    encoder_hidden_states=encoder_hidden_states,
-                    encoder_attention_mask=encoder_attention_mask,
-                    output_attentions=output_attentions,
-                )
-                attn_output = cross_attn_outputs[0]
-                # residual connection
-                hidden_states = residual + attn_output
-                outputs = outputs + cross_attn_outputs[2:] 
+            ln_cross_attn = self.ln_cross_attn if hasattr(self, "ln_cross_attn") and self.ln_cross_attn else None
+            crossattention = self.crossattention if hasattr(self, "crossattention") else None
+            hidden_states, outputs = forward_through_attention(attention_block=self.attn,
+                                                               crossattention=crossattention,
+                                                               ln_cross_attn=ln_cross_attn,
+                                                               residual=residual,
+                                                               hidden_states=hidden_states,
+                                                               layer_past=layer_past,
+                                                               attention_mask=attention_mask,
+                                                               head_mask=head_mask,
+                                                               use_cache=use_cache,
+                                                               output_attentions=output_attentions,
+                                                               encoder_hidden_states=encoder_hidden_states,
+                                                               encoder_attention_mask=encoder_attention_mask)
                 
             residual = hidden_states
         
@@ -271,16 +239,7 @@ def forward_block_mambafirstformer(
 
         hidden_states = residual + feed_forward_hidden_states
 
-        if no_attention: 
-            outputs = (hidden_states,)
-        elif use_cache:
-            outputs = (hidden_states,) + outputs
-        else:
-            outputs = (hidden_states,) + outputs[1:]
-        
-        
-        
-        return outputs  # hidden_states, present, (attentions, cross_attentions)
+        return output_processing(outputs, hidden_states, no_attention, use_cache)
         
 def forward_block_mamba_no_attention(
         self,
@@ -296,11 +255,8 @@ def forward_block_mamba_no_attention(
     ) -> Union[Tuple[torch.Tensor], Optional[Tuple[torch.Tensor, Tuple[torch.FloatTensor, ...]]]]:
         
         residual = hidden_states
-      
-        for mb in self.mamba_blocks:
-            hidden_states = mb(hidden_states)
 
-        hidden_states = self.norm_f(hidden_states)
+        hidden_states = forward_through_mamba_blocks(hidden_states, self.mamba_blocks, self.norm_f)
 
         hidden_states = residual + hidden_states
 
@@ -310,42 +266,21 @@ def forward_block_mamba_no_attention(
       
         if not no_attention:
             hidden_states = self.ln_1(hidden_states)
-    
-            attn_outputs = self.attn(
-                hidden_states,
-                layer_past=layer_past,
-                attention_mask=attention_mask,
-                head_mask=head_mask,
-                use_cache=use_cache,
-                output_attentions=output_attentions,
-            )
             
-            attn_output = attn_outputs[0]  # output_attn: a, present, (attentions)
-            outputs = attn_outputs[1:]
-            # residual connection
-            hidden_states = attn_output + residual
-            
-            if encoder_hidden_states is not None and not no_attention:
-                # add one self-attention block for cross-attention
-                if not hasattr(self, "crossattention"):
-                    raise ValueError(
-                        f"If `encoder_hidden_states` are passed, {self} has to be instantiated with "
-                        "cross-attention layers by setting `config.add_cross_attention=True`"
-                    )
-                residual = hidden_states
-                hidden_states = self.ln_cross_attn(hidden_states)
-                cross_attn_outputs = self.crossattention(
-                    hidden_states,
-                    attention_mask=attention_mask,
-                    head_mask=head_mask,
-                    encoder_hidden_states=encoder_hidden_states,
-                    encoder_attention_mask=encoder_attention_mask,
-                    output_attentions=output_attentions,
-                )
-                attn_output = cross_attn_outputs[0]
-                # residual connection
-                hidden_states = residual + attn_output
-                outputs = outputs + cross_attn_outputs[2:] 
+            ln_cross_attn = self.ln_cross_attn if hasattr(self, "ln_cross_attn") and self.ln_cross_attn else None
+            crossattention = self.crossattention if hasattr(self, "crossattention") else None
+            hidden_states, outputs = forward_through_attention(attention_block=self.attn,
+                                                               crossattention=crossattention,
+                                                               ln_cross_attn=ln_cross_attn,
+                                                               residual=residual,
+                                                               hidden_states=hidden_states,
+                                                               layer_past=layer_past,
+                                                               attention_mask=attention_mask,
+                                                               head_mask=head_mask,
+                                                               use_cache=use_cache,
+                                                               output_attentions=output_attentions,
+                                                               encoder_hidden_states=encoder_hidden_states,
+                                                               encoder_attention_mask=encoder_attention_mask)
                 
             residual = hidden_states
         
@@ -354,15 +289,17 @@ def forward_block_mamba_no_attention(
 
         hidden_states = residual + feed_forward_hidden_states
 
-        if no_attention: 
-            outputs = (hidden_states,)
-        elif use_cache:
-            outputs = (hidden_states,) + outputs
-        else:
-            outputs = (hidden_states,) + outputs[1:]
-        
-        return outputs  # hidden_states, present, (attentions, cross_attentions)
+        return output_processing(outputs, hidden_states, no_attention, use_cache)  # hidden_states, present, (attentions, cross_attentions)
 
+def output_processing(outputs, hidden_states, no_attention, use_cache):
+    if no_attention: 
+        outputs = (hidden_states,)
+    elif use_cache:
+        outputs = (hidden_states,) + outputs
+    else:
+        outputs = (hidden_states,) + outputs[1:]
+    return outputs
+    
 def forward_GPT2Model(
         self,
         input_ids              : Optional[torch.LongTensor] = None,
