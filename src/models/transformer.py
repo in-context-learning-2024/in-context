@@ -51,6 +51,7 @@ class Llama(TransformerModel):
         configuration = LlamaConfig(
             max_position_embeddings=2 * n_positions,
             hidden_size=n_embd,
+            intermediate_size=4*n_embd,
             num_hidden_layers=n_layer,
             num_attention_heads=n_head,
             hidden_act=hidden_act,
