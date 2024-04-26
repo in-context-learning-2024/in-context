@@ -89,7 +89,7 @@ class GDModel(ContextModel):
                 self.x_dim, *model_class_args.get("dimensions", []), self.y_dim 
             ]
         }
-        self._get_new_model = lambda: ParallelNetworks(batch_size, model_class, model_class_args)
+        self._get_new_model = lambda batch_size: ParallelNetworks(batch_size, model_class, model_class_args)
 
         self._opt = lambda params: {
             "sgd" : torch.optim.SGD,
@@ -105,7 +105,7 @@ class GDModel(ContextModel):
             curried_throw(ValueError(f"GDModel does not support \"{loss_name}\" loss function!"))
         )()
         
-        self._batch_size = batch_size
+        self._nets_maximum_batch_size = batch_size
         self._num_steps = num_steps
 
         self.name = f"gdmodel_model={model_class_name}_model_kwargs={model_class_args}_opt={opt_alg_name}_lr={lr}_bsize={batch_size}_nsteps={num_steps}_loss={loss_name}"
@@ -117,6 +117,7 @@ class GDModel(ContextModel):
         # xs: bsize X npoints X ndim.
         # ys: bsize X npoints.
         DEVICE = xs.device
+        xs_bsize, seq_len, x_dim = xs.shape
         ys = ys.to(DEVICE)
 
         inds = range(ys.shape[1])
@@ -126,7 +127,7 @@ class GDModel(ContextModel):
         # i: loop over sequence length
         for i in tqdm(inds):
             pred = torch.zeros_like(ys[:, 0])
-            model = self._get_new_model()
+            model = self._get_new_model(xs_bsize)
             optim = self._opt(model.parameters())
             model.to(DEVICE)
             if i > 0:
@@ -141,7 +142,7 @@ class GDModel(ContextModel):
                     # Prepare batch
                     mask = torch.zeros(i).bool()
                     perm = torch.randperm(i)
-                    mask[perm[: self._batch_size]] = True
+                    mask[perm[: self._nets_maximum_batch_size]] = True
                     train_xs_cur, train_ys_cur = train_xs[:, mask, :], train_ys[:, mask]
 
                     if verbose and j % print_step == 0:
