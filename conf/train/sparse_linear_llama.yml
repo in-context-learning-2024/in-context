@@ -23,4 +23,4 @@ steps: 500001
 log_freq: 100
 checkpoint_freq: 50000
 model: *std_llama
-baseline_models: *lasso_set
+# baseline_models: *lasso_set

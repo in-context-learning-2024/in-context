@@ -23,4 +23,4 @@ steps: 500001
 log_freq: 100
 checkpoint_freq: 50000
 model: *std_gpt2
-baseline_models: [*knn_3, *least_squares, *mlp]
+# baseline_models: [*knn_3, *least_squares, *mlp]
