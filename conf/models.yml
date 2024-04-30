@@ -79,3 +79,7 @@ model: &lasso_set
 
 model: &zero
     type: zero
+
+model: &switchingLinLinDec
+    type: switching
+    inner_models: [*least_squares, *least_squares, *xgboost]
