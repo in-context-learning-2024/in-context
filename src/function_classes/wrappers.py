@@ -1,6 +1,7 @@
 from torch import Tensor
 from torch.distributions.distribution import Distribution
-from core import FunctionClass, ModifiedFunctionClass
+from core import FunctionClass, ModifiedFunctionClass, CombinationFunctionClasses
+from typing import Iterable
 
 class NoisyRegression(ModifiedFunctionClass):
     """Do not directly instantiate this. Instead, instantiate 
@@ -42,3 +43,20 @@ class ScaledYRegression(ScaledRegression):
 
     def modify_y(self, y_batch: Tensor) -> Tensor:
         return self._scale * y_batch
+
+class LinearCombination(CombinationFunctionClasses):
+
+    def __init__(
+            self, 
+            weight_dist: Distribution,
+            inner_function_classes: Iterable[FunctionClass]
+    ):
+        super(LinearCombination, self).__init__(inner_function_classes)
+        self.weight_dist=weight_dist
+
+    def _init_param_dist(self) -> Distribution:
+        return ([p_dist.sample() for p_dist in self.p_dists], )
+
+
+    def evaluate(self, x_batch: Tensor, *params: Tensor) -> Tensor:
+        return super().evaluate(x_batch, *params)
