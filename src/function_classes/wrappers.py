@@ -1,4 +1,5 @@
-from torch import Tensor
+from torch import Tensor, stack
+import torch
 from torch.distributions.distribution import Distribution
 from core import FunctionClass, ModifiedFunctionClass, CombinationFunctionClasses
 from typing import Iterable
@@ -59,5 +60,7 @@ class LinearCombination(CombinationFunctionClasses): #Can also be used with mult
         self.p_dist=CombinedDistribution(*(self.p_dists+[self.weight_dist]))
 
     def evaluate(self, x_batch: Tensor, *params: Tensor) -> Tensor:
-        return sum([function_class.evaluate(x_batch, *params[i])*params[-1, i] for i, function_class in enumerate(self._in_fcs)])
+        ans= stack([function_class.evaluate(x_batch, params[i]) for i, function_class in enumerate(self._in_fcs)])
+        ans= sum([ans[i]*params[-1][:, i].unsqueeze(1).unsqueeze(2) for i in range(len(ans))])
+        return ans
     

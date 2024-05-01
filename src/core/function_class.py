@@ -117,7 +117,7 @@ class CombinationFunctionClasses(FunctionClass):
         self.p_dists=[fc.p_dist for fc in self._in_fcs]
 
         for num, function_class in enumerate(self._in_fcs): #Verify that the necessary paramaters are the same for all the inner function classes
-            if num>0:
+            if num==0:
                 self.x_dist=function_class.x_dist
                 self.batch_size=function_class.batch_size
                 self.sequence_length=function_class.sequence_length

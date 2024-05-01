@@ -17,9 +17,10 @@ class CombinedDistribution(dist.Distribution):
     def __init__(self, *distributions: dist.Distribution):
         self._dists = distributions
 
-        batch_shape = self._dists[0].batch_shape
+        batch_shape = self._dists[0].batch_shape[0]
+        #print(batch_shape)
         for dist in self._dists:
-            assert dist.batch_shape == batch_shape, \
+            assert dist.batch_shape[0] == batch_shape, \
                 f"Batch shapes do not match between all distributions! {batch_shape} != {dist.batch_shape} for {dist}"
 
 
