@@ -16,8 +16,8 @@ seq_len: !curriculum
 x_dim: 1
 x_dist:
     type: uniform
-steps: 500000
+steps: 500001
 log_freq: 100
-checkpoint_freq: 5000
+checkpoint_freq: 50000
 model: *std_gpt2
-baseline_models: [*least_squares]
+# baseline_models: [*least_squares]
