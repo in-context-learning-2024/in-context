@@ -25,14 +25,15 @@ class FunctionClassError(Benchmark):
             models = list(models)
             num_models = len(models)
             metric_dim=y_dim*2
-            errs = torch.zeros((num_batches, sequence_length, num_models, batch_size, metric_dim))
-            for batch_num, (x_batch, y_batch) in zip(range(num_batches), self.function_class)
+            errs = torch.zeros((num_batches,num_models, batch_size, sequence_length , metric_dim))
+            for batch_num, (x_batch, y_batch) in zip(range(num_batches), self.function_class):
                 perfect_pred=perfect_model.forward(x_batch, y_batch)
                 for model_num, model in enumerate(models):
                     with torch.no_grad():
+                        print(model.name)
                         y_pred=model.forward(x_batch, y_batch)
-                        errs[batch_num, :, model_num, :, :y_dim]=self.metric.evaluate(y_batch, y_pred)
-                        errs[batch_num:, model_num, :, y_dim:]=self.metric.evaluate(perfect_pred, y_pred)
+                        errs[batch_num, model_num, :, :, :y_dim]=self.metric.evaluate(y_batch, y_pred)
+                        errs[batch_num, model_num, :, :, y_dim:]=self.metric.evaluate(perfect_pred, y_pred)
 
         else:
             with torch.no_grad():
@@ -79,8 +80,7 @@ class FCErrorQuadrants(FunctionClassError):
         if perfect_model!=None:
             metric_dim=2*y_dim
 
-        errs = torch.zeros((num_batches, sequence_length, num_models, batch_size, metric_dim))
-
+        errs = torch.zeros((num_batches, num_models, batch_size, sequence_length, metric_dim))
         for batch_num in range(num_batches):
             xs = self.function_class.x_dist.sample() # shape (batch_size, sequence_length, x_dim)
 
@@ -111,7 +111,7 @@ class FCErrorQuadrants(FunctionClassError):
                 x_comb = torch.cat((xs_context[:, :index], x_query), dim=1)
                 if perfect_model==None:
                     with torch.no_grad():
-                        errs[batch_num, index] = torch.stack([
+                        errs[batch_num, :, :, index, :] = torch.stack([
                             self.metric.evaluate(
                                 y_query, # shape (batch_size, y_dim)
                                 model.forward(x_comb, ys_context[:, :index])[:, -1] # shape (batch_size, y_dim)
@@ -119,17 +119,16 @@ class FCErrorQuadrants(FunctionClassError):
                         ])
                 else:
                     with torch.no_grad():
-                        perfect_pred=perfect_model.forward(x_comb, ys_context[:, :index])
+                        perfect_pred=perfect_model.forward(x_comb, ys_context[:, :index])[:, -1]
                         for model_num, model in enumerate(models):
                             y_pred=model.forward(x_comb, ys_context[:, :index])
-                            errs[batch_num, index, model_num, :, :y_dim]=self.metric.evaluate(y_query, # shape (batch_size, y_dim)
-                                y_pred)[:, -1] # shape (batch_size, y_dim)
-                            errs[batch_num, index, model_num, :, y_dim:]=self.metric.evaluate(perfect_pred, # shape (batch_size, y_dim)
-                                y_pred)[:, -1] # shape (batch_size, y_dim)
+                            errs[batch_num, model_num, :, index, :y_dim]=self.metric.evaluate(y_query, # shape (batch_size, y_dim)
+                                y_pred[:, -1]) # shape (batch_size, y_dim)
+                            errs[batch_num, model_num, :, index, y_dim:]=self.metric.evaluate(perfect_pred, # shape (batch_size, y_dim)
+                                y_pred[:, -1]) # shape (batch_size, y_dim)
                             
 
-        errs = torch.transpose(errs, 1, 3) # shape (#batches, batch_size, num_models, seq_len, metric_dim)
-        errs = torch.transpose(errs, 0, 2) # shape (num_models, batch_size, #batches, seq_len, metric_dim)
+        errs = torch.transpose(errs, 0, 1) # shape (num_models, #batches, batch_size,, seq_len, metric_dim)
         errs = torch.flatten(errs, 1, 2)
 
         return errs
@@ -166,7 +165,7 @@ class FCErrorOrthogonal(FunctionClassError):
             x_context= x_batch @context_space
             x_test =   x_batch @test_space
             
-            for index in range(1, sequence_length):
+            for index in range(sequence_length):
                 
                 cur_x = x_context.clone()
                 cur_x[:,index] = x_test[:, index]
@@ -189,13 +188,13 @@ class FCErrorOrthogonal(FunctionClassError):
                         perfect_pred=perfect_model.forward(cur_x, y_test)
                         for model_num, model in enumerate(models):
                             y_pred=model.forward(cur_x, y_test)
-                            errs[model_num, batch_num, index, :, :y_dim]=self.metric.evaluate(y_test, 
+                            errs[model_num, batch_num, :, index, :y_dim]=self.metric.evaluate(y_test, 
                                 y_pred)[:, index] 
-                            errs[model_num, batch_num, index, :, y_dim:]=self.metric.evaluate(perfect_pred, 
+                            errs[model_num, batch_num, :, index, y_dim:]=self.metric.evaluate(perfect_pred, 
                                 y_pred)[:, index]
                 
         
-        errs = torch.reshape(errs, (num_models, num_batches*batch_size, sequence_length))[:, :, 1:]
+        errs = torch.reshape(errs, (num_models, num_batches*batch_size, sequence_length, metric_dim))
 
         return errs
 
@@ -221,7 +220,7 @@ class FCErrorSeenPoints(FunctionClassError):
             
             for index in range(1, sequence_length):
                 x_test = x_batch.clone()
-                perm = torch.stack([torch.randperm(j) for _ in range(batch_size)]).unsqueeze(dim=1) #samples a permutation from 0 to j-1 for each sequence in the batch
+                perm = torch.stack([torch.randperm(index) for _ in range(batch_size)]).unsqueeze(dim=1) #samples a permutation from 0 to index-1 for each sequence in the batch
                 ind_mat = (perm == 0) + 0.0 #creates a tensor that is one where the zero is in each permutation, and zero everywhere else
                 x_test[:, index:index+1] = ind_mat @ x_batch[:, :index] #takes the x-values from the index of x_batch corresponding to the 1 of ind_mat
 
@@ -250,6 +249,6 @@ class FCErrorSeenPoints(FunctionClassError):
                             errs[model_num, batch_num, :, index, y_dim:] =self.metric.evaluate(perfect_pred,
                                     y_pred)[:, index]
         
-        errs = torch.reshape(errs, (num_models, num_batches*batch_size, sequence_length))[:, :, 1:]
+        errs = torch.reshape(errs, (num_models, num_batches*batch_size, sequence_length, metric_dim))[:, :, 1:]
 
         return errs
