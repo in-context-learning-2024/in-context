@@ -84,8 +84,6 @@ class ContextTrainer:
                 pbar.set_description(f"loss {loss}")
 
             if self.log_freq > 0 and i % self.log_freq == 0:
-
-                # with torch.no_grad():
                 for baseline in self.baseline_models:
                     baseline.eval()
                     baseline_output = baseline(x_batch, y_batch)

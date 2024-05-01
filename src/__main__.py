@@ -83,7 +83,9 @@ if __name__ == "__main__":
                         help="path to the config file to use for training")
     parser.add_argument("--resume", '-r', type=str, default="", action='store', dest="checkpointfile",
                         help="path to the checkpoint to resume training with")
-    parser.add_argument("--wandb-project", type=str, default="", dest="projectname")
-    parser.add_argument("--run-name", type=str, default="", dest="runname")
+    parser.add_argument("--wandb-project", type=str, default="", dest="projectname",
+                        help="the project to log to in weights and biases")
+    parser.add_argument("--run-name", type=str, default="", dest="runname",
+                        help="what to name this run in wandb")
     args = parser.parse_args()
     main(args)
