@@ -2,12 +2,12 @@ import torch
 from torch import LongTensor, FloatTensor, Tensor
 from transformers import GPT2Config, GPT2Model, MambaConfig, MambaPreTrainedModel, MambaModel # pyrigh: ignor[]
 from torch import nn
-from .transformer import TransformerModel, GPT2
+from .transformer import TransformerModel, GPT2, Llama
 from typing import Optional, Tuple, Union
 import types
 from core import ContextModel
 
-from .attention_fns import vit_style_relu_attn, causal_relu_attn
+from .attention_fns import vit_style_relu_attn, causal_relu_attn, forward_llama_attention_standard
 from .inferencing_fns import forward_GPT2Model, block_var_declare_mamba_single, forward_block_mamba_no_attention
 
 from transformers.modeling_outputs import BaseModelOutputWithPastAndCrossAttentions
@@ -50,3 +50,21 @@ class ModSeqModel(GPT2):
                     list(attn_layers[i].children())[1],
                     attn_module_class
                 )
+
+class ModSeqModelLlama(Llama):
+    def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, want_rope=True, hidden_act="silu", rope_theta=1e4, , **kwargs):
+        super().__init__(x_dim, n_positions, n_embd=n_embd, n_layer=n_layer, n_head=n_head, hidden_act=hidden_act, rope_theta=rope_theta)
+        if custom_attn_func == "silu":
+            self.custom_attn_func = functools.partial(forward_llama_attention_standard, want_rope=want_rope)
+
+        self.want_rope = want_rope
+        self._n_dims = x_dim
+        
+        #Allow for attention and pos embeddings in GPT2Model Forward function
+        self._backbone.forward = types.MethodType(functools.partial(forward_GPT2Model, no_attention=no_attention, want_pos_embeddings=want_pos_embeddings), self._backbone)
+
+
+    def change_llama_block(self, instantiate_var_fn, instantiate_var_arg, instantiate_forward_fn):
+       for x in list(self._backbone.children())[3]:
+            x.forward = types.MethodType(functools.partial(instantiate_forward_fn, no_attention=self.no_attention), x)
+            instantiate_var_fn(x, instantiate_var_arg)
