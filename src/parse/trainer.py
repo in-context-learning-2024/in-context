@@ -62,7 +62,7 @@ def get_x_distribution(batch_size: int, seq_len: int, x_dim: int, data: dict) ->
     return _clean_instantiate(dist_class, **kwargs)
 
 
-def get_model(data: dict) -> ContextModel:
+def get_model(data: dict, x_dim: int, y_dim: int) -> ContextModel:
 
     _check_kwargs(MODELS, data, "model")
 
@@ -118,34 +118,41 @@ def _produce_trainer_stages(data: dict) -> TrainerSteps:
         if key not in data:
             raise ValueError(f"{key} not provided in training config!")
 
+    x_dim_data: int | dict = data['x_dim']
     x_dim: int = max(
-        get_value(data['x_dim'], data['steps']), # pyright: ignore[reportArgumentType]
-        get_value(data['x_dim'], 0), # pyright: ignore[reportArgumentType]
+        get_value(x_dim_data, data['steps']), # pyright: ignore[reportArgumentType]
+        get_value(x_dim_data, 0) # pyright: ignore[reportArgumentType]
+    )
+
+    y_dim_data: int | dict = data.get('y_dim', 1)
+    y_dim: int = max(
+        get_value(y_dim_data, data['steps']), # pyright: ignore[reportArgumentType]
+        get_value(y_dim_data, 0) # pyright: ignore[reportArgumentType]
     )
     stages, step_counts = expand_curriculum(data)
 
-    _x_dist = get_x_distribution(
-        stages[0]['b_size'], stages[0]['seq_len'], x_dim, stages[0].get('x_dist', {})
-    )
-
     f_classes = [
         get_function_class(
-            _x_dist,
+            get_x_distribution(
+                stage['b_size'], stage['seq_len'], x_dim, stage.get('x_dist', {})
+            ),
             stage['x_dim'],
             stage['function_class']
         ) 
         for stage in stages
     ]
 
-    model = get_model(stages[0]['model'] | { "x_dim" : x_dim })
+    model = get_model(stages[0]['model'] | { "x_dim" : x_dim }, x_dim, y_dim)
     optimizer = get_optimizer(model, stages[0]['optim'])
     if 'model_weights' in data and 'optim_state' in data:
         model.load_state_dict(data['model_weights'])
         optimizer.load_state_dict(data['optim_state'])
+
     loss_fn = get_loss_fn(stages[0]['loss_fn'])
     baseline_models = list(map(
         lambda d: get_model(
-            d | {"x_dim" : x_dim}
+            d | {"x_dim" : x_dim},
+            x_dim, y_dim
         ), 
         stages[0].get('baseline_models', [])
     ))

@@ -6,3 +6,4 @@ wandb
 .idea
 *.pkl
 *.pth
+oryx-build-commands.txt

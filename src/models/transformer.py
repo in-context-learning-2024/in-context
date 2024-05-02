@@ -6,24 +6,22 @@ from core import ContextModel
 
 class TransformerModel(ContextModel):
 
-    def __init__(self, backbone: nn.Module, x_dim: int, n_positions: int, n_embd: int=128, **kwargs):
-        super(TransformerModel, self).__init__()
+    def __init__(self, backbone: nn.Module, x_dim: int, n_positions: int, n_embd: int=128, y_dim: int = 1):
+        super(TransformerModel, self).__init__(x_dim, y_dim)
 
         self.context_length = n_positions
-        self._n_dims = x_dim
         self._read_in = nn.Linear(x_dim, n_embd)
         self._backbone = backbone
-        self._read_out = nn.Linear(n_embd, 1)
+        self._read_out = nn.Linear(n_embd, y_dim)
 
     def forward(self, xs, ys):
         self._backbone.to(xs.device) # pyright: ignore[reportArgumentType,reportAttributeAccessIssue]
-        inds = torch.arange(ys.shape[1])
 
         zs = ContextModel.interleave(xs, ys)
         embeds = self._read_in(zs)
         output = self._backbone(inputs_embeds=embeds).last_hidden_state # pyright: ignore[reportCallIssue]
         prediction = self._read_out(output)
-        return prediction[:, ::2, 0][:, inds]  # predict only on xs
+        return prediction[:, ::2, :1] # predict only on xs
 
 class GPT2(TransformerModel):
 
@@ -53,6 +51,7 @@ class Llama(TransformerModel):
         configuration = LlamaConfig(
             max_position_embeddings=2 * n_positions,
             hidden_size=n_embd,
+            intermediate_size=4*n_embd,
             num_hidden_layers=n_layer,
             num_attention_heads=n_head,
             hidden_act=hidden_act,

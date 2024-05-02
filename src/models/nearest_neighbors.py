@@ -4,7 +4,7 @@ from core import ContextModel
 
 class KNNModel(ContextModel):
     def __init__(self, n_neighbors, weights="uniform", **kwargs):
-        super(KNNModel, self).__init__()
+        super(KNNModel, self).__init__(**kwargs)
         self._n_neighbors = n_neighbors
         self._weights = weights
         self.name = f"KNN_n={n_neighbors}_{weights}"
@@ -16,7 +16,7 @@ class KNNModel(ContextModel):
 
         for i in range(ys.shape[1]):
             if i == 0:
-                preds.append(torch.zeros_like(ys[:, 0]))  # predict zero for first point
+                preds.append(torch.zeros(xs.shape[:1] + torch.Size([1, self.y_dim]), device=xs.device))  # predict zero for first point
                 continue
             train_xs, train_ys = xs[:, :i], ys[:, :i]
             test_x = xs[:, i : i + 1]
@@ -36,6 +36,6 @@ class KNNModel(ContextModel):
             for y, w, n in zip(train_ys, weights, ranks):
                 y, w = y[n], w[n]
                 pred.append((w * y).sum() / w.sum())
-            preds.append(torch.stack(pred))
+            preds.append(torch.stack(pred)[:, None, None])
 
-        return torch.stack(preds, dim=1)
+        return torch.cat(preds, dim=1)

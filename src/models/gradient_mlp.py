@@ -48,6 +48,8 @@ class ParallelNetworks(nn.Module):
     def forward(self, xs):
         assert xs.shape[0] == len(self.nets)
 
+        self.nets.to(xs.device)
+
         out = self.nets[0](xs[0])
         outs = torch.zeros(
             [len(self.nets)] + list(out.shape), device=out.device
@@ -60,7 +62,7 @@ class ParallelNetworks(nn.Module):
         return outs
 
 # Gradient Descent and variants.
-# Example usage: gd_model = GDModel("mlp", {'dimensions': [20, 256, 1]}, opt_alg_name = 'adam', batch_size = 100, lr = 5e-3, num_steps = 200)
+# Example usage: gd_model = GDModel("mlp", {'dimensions': [256]}, opt_alg_name = 'adam', batch_size = 100, lr = 5e-3, num_steps = 200)
 class GDModel(ContextModel):
     def __init__(
         self,
@@ -73,7 +75,7 @@ class GDModel(ContextModel):
         loss_name="squared",
         **kwargs
     ):
-        super(GDModel, self).__init__()
+        super(GDModel, self).__init__(**kwargs)
 
         model_class = {
             "mlp" : MLP,
@@ -82,7 +84,12 @@ class GDModel(ContextModel):
             curried_throw(ValueError(f"GDModel does not support \"{model_class_name}\" model!"))
         )
 
-        self._get_new_model = lambda: ParallelNetworks(batch_size, model_class, model_class_args)
+        model_class_args = model_class_args | { 
+            "dimensions" : [
+                self.x_dim, *model_class_args.get("dimensions", []), self.y_dim 
+            ]
+        }
+        self._get_new_model = lambda batch_size: ParallelNetworks(batch_size, model_class, model_class_args)
 
         self._opt = lambda params: {
             "sgd" : torch.optim.SGD,
@@ -98,22 +105,20 @@ class GDModel(ContextModel):
             curried_throw(ValueError(f"GDModel does not support \"{loss_name}\" loss function!"))
         )()
         
-        self._batch_size = batch_size
+        self._nets_maximum_batch_size = batch_size
         self._num_steps = num_steps
 
         self.name = f"gdmodel_model={model_class_name}_model_kwargs={model_class_args}_opt={opt_alg_name}_lr={lr}_bsize={batch_size}_nsteps={num_steps}_loss={loss_name}"
         self.context_length = -1
 
-    def forward(self, xs, ys, inds=None, verbose=False, print_step=100):
+    def forward(self, xs, ys, verbose=False, print_step=100):
         # inds is a list containing indices where we want the prediction.
         # prediction made at all indices by default.
         # xs: bsize X npoints X ndim.
         # ys: bsize X npoints.
         DEVICE = xs.device
+        xs_bsize, seq_len, x_dim = xs.shape
         ys = ys.to(DEVICE)
-
-        assert xs.shape[0] == ys.shape[0] == self._batch_size, \
-            f"Input values are not of the right batch size! Expected: `{self._batch_size}' Got: {xs.shape[0]}, {ys.shape[0]}"
 
         inds = range(ys.shape[1])
 
@@ -121,12 +126,13 @@ class GDModel(ContextModel):
 
         # i: loop over sequence length
         for i in tqdm(inds):
-            pred = torch.zeros_like(ys[:, 0])
-            model = self._get_new_model()
+            pred = torch.zeros_like(ys[:, 0, 0])
+            model = self._get_new_model(xs_bsize)
             optim = self._opt(model.parameters())
             model.to(DEVICE)
+            model.train()
             if i > 0:
-                pred = torch.zeros_like(ys[:, 0])
+                pred = torch.zeros_like(ys[:, 0], device=DEVICE)
 
                 train_xs, train_ys = xs[:, :i], ys[:, :i]
                 test_xs, test_ys = xs[:, i : i + 1], ys[:, i : i + 1]
@@ -137,7 +143,7 @@ class GDModel(ContextModel):
                     # Prepare batch
                     mask = torch.zeros(i).bool()
                     perm = torch.randperm(i)
-                    mask[perm[: self._batch_size]] = True
+                    mask[perm[: self._nets_maximum_batch_size]] = True
                     train_xs_cur, train_ys_cur = train_xs[:, mask, :], train_ys[:, mask]
 
                     if verbose and j % print_step == 0:
@@ -159,17 +165,17 @@ class GDModel(ContextModel):
                     optim.zero_grad()
 
                     model.train()
-                    outputs = model(train_xs_cur)
-                    loss = self._loss_fn(outputs[:, :, 0], train_ys_cur)
+                    outputs = model(train_xs_cur.detach())
+                    loss = self._loss_fn(outputs, train_ys_cur.detach())
                     loss.backward()
                     optim.step()
 
                 model.eval()
                 pred = model(test_xs).detach()
-
+ 
                 assert pred.shape[1] == 1 and pred.shape[2] == 1
                 pred = pred[:, 0, 0]
 
             preds.append(pred)
 
-        return torch.stack(preds, dim=1)
+        return torch.stack(preds, dim=1).unsqueeze(-1)

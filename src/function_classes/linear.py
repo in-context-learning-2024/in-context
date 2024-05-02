@@ -7,10 +7,8 @@ class LinearRegression(FunctionClass):
 
     def _init_param_dist(self) -> D.Distribution:
         """Produce the distribution with which to sample parameters"""
-        batch_shape = self.x_dist.batch_shape[:2]
-        param_event_shape = torch.Size([self.y_dim, self.x_dim])
-
-        param_dist_shape = torch.Size(batch_shape + param_event_shape)
+        
+        param_dist_shape = torch.Size([self.x_dist.batch_shape[0],1, self.y_dim, self.x_dim])
 
         param_dist = D.Normal( torch.zeros(param_dist_shape), 
                                torch.ones(param_dist_shape)   )
@@ -19,10 +17,9 @@ class LinearRegression(FunctionClass):
 
     def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
         weights, *_ = params
-        # TODO: changed this line so it would run, but it's probably wrong!
         partial_sums = torch.bmm(weights.squeeze(-2), x_batch.permute(0, 2, 1))
         full_sums = torch.sum(partial_sums, dim=-2, keepdim=True)
-        y_batch = full_sums.squeeze()
+        y_batch = full_sums.transpose(-2, -1)
 
         return y_batch
 
@@ -40,7 +37,7 @@ class SparseLinearRegression(LinearRegression):
         mask = torch.ones(param_shape).bool()
 
         for batch_entry in range(param_shape[0]):
-            dimensions_to_keep: torch.Tensor = torch.randperm(self.x_dim)[:self._sparsity]
+            dimensions_to_keep: torch.Tensor = torch.randperm(self.x_curriculum_dim)[:self._sparsity]
             mask[batch_entry, ..., dimensions_to_keep] = False
 
         weights[mask] = 0

@@ -4,7 +4,7 @@ from .transformer import (
     Llama
 )
 
-from .all_mod_archs import ModTransformerModel, MambaNoAttentionMode, MambaFirstGPT2TransformerModel, MambaformerModel
+from .all_mod_archs import ModTransformerModel, MambaNoAttentionModel, MambaFirstGPT2TransformerModel, MambaformerModel
 from .linear import (
     LeastSquaresModel,
     AveragingModel,
@@ -14,6 +14,7 @@ from .gradient_mlp import GDModel
 from .nearest_neighbors import KNNModel
 from .xgboost import XGBoostModel
 from .decision_tree import DecisionTreeModel
+from .zero_model import ZeroModel
 
 MODELS: dict[str, type[ContextModel]] = {
     "gpt2" : GPT2,
@@ -29,7 +30,8 @@ MODELS: dict[str, type[ContextModel]] = {
     "mambafirstgpt2"       : MambaFirstGPT2TransformerModel,
     "mambaonly"     : MambaNoAttentionModel,
     "mambaformer_classic"   : MambaformerModel,
-    "mod_transformer"     : ModTransformerModel
+    "mod_transformer"     : ModTransformerModel,
+    "zero"          : ZeroModel
 }
 
 __all__ = [

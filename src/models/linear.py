@@ -1,12 +1,17 @@
 import torch
 from core import ContextModel
 from sklearn.linear_model import Lasso
+from sklearn.exceptions import ConvergenceWarning
 import warnings
 
 # xs and ys should be on cpu for this method. Otherwise the output maybe off in case when train_xs is not full rank due to the implementation of torch.linalg.lstsq.
 class LeastSquaresModel(ContextModel):
     def __init__(self, driver=None, **kwargs):
-        super(LeastSquaresModel, self).__init__()
+        super(LeastSquaresModel, self).__init__(**kwargs)
+
+        y_dim = kwargs.get('y_dim', 1)
+        if y_dim != 1:
+            raise ValueError(f"Least Squares only supports y dimension of 1! Got: {y_dim}")
 
         self._driver = driver
         self.name = f"OLS_driver={driver}"
@@ -15,12 +20,19 @@ class LeastSquaresModel(ContextModel):
     def forward(self, xs, ys):
         DEVICE = xs.device
         xs, ys = xs.cpu(), ys.cpu()
+        ys = ys[..., 0] # remove the trivial y_dim=1 dimension
         
         preds = []
 
-        for i in range(ys.shape[1]):
+        if xs.shape[-2] not in (ys.shape[-1], ys.shape[-1] + 1):
+            raise ValueError(
+                "Can only inference with x sequences either 1 longer or as long as y sequences!" + \
+                f"Got: X sequences of length {xs.shape[-2]} and Y sequences of lengh {ys.shape[-2]}"
+            )
+
+        for i in range(xs.shape[-2]):
             if i == 0:
-                preds.append(torch.zeros_like(ys[:, 0]))  # predict zero for first point
+                preds.append(torch.zeros_like(xs[:, :1, 0], device=xs.device))  # predict zero for first point
                 continue
             train_xs, train_ys = xs[:, :i], ys[:, :i]
             test_x = xs[:, i : i + 1]
@@ -30,14 +42,14 @@ class LeastSquaresModel(ContextModel):
             )
 
             pred = test_x @ ws
-            preds.append(pred[:, 0, 0])
+            preds.append(pred[:, 0, :1])
 
         return torch.stack(preds, dim=1).to(device=DEVICE)
 
 
 class AveragingModel(ContextModel):
     def __init__(self, **kwargs):
-        super(AveragingModel, self).__init__()
+        super(AveragingModel, self).__init__(**kwargs)
         self.name = "averaging"
         self.context_length = -1
 
@@ -46,15 +58,15 @@ class AveragingModel(ContextModel):
 
         for i in range(ys.shape[1]):
             if i == 0:
-                preds.append(torch.zeros_like(ys[:, 0]))  # predict zero for first point
+                preds.append(torch.zeros_like(xs[:, 0, :self.y_dim], device=xs.device))  # predict zero for first point
                 continue
             train_xs, train_ys = xs[:, :i], ys[:, :i]
             test_x = xs[:, i : i + 1]
 
-            train_zs = train_xs * train_ys.unsqueeze(dim=-1)
+            train_zs = train_xs * train_ys
             w_p = train_zs.mean(dim=1).unsqueeze(dim=-1)
             pred = test_x @ w_p
-            preds.append(pred[:, 0, 0])
+            preds.append(pred[:, 0, :1])
 
         return torch.stack(preds, dim=1)
 
@@ -62,8 +74,8 @@ class AveragingModel(ContextModel):
 # Lasso regression (for sparse linear regression).
 # Seems to take more time as we decrease alpha.
 class LassoModel(ContextModel):
-    def __init__(self, alpha, max_iter=100000, **kwargs):
-        super(LassoModel, self).__init__()
+    def __init__(self, alpha: float, max_iter: int = 100000, **kwargs):
+        super(LassoModel, self).__init__(**kwargs)
 
         # the l1 regularizer gets multiplied by alpha.
         self._alpha = alpha
@@ -97,7 +109,10 @@ class LassoModel(ContextModel):
                     with warnings.catch_warnings():
                         warnings.filterwarnings("error")
                         try:
-                            clf.fit(train_xs, train_ys)
+                            clf.fit(train_xs.numpy(), train_ys.numpy())
+                        except ConvergenceWarning:
+                            print(f"lasso convergence warning at i={i}, j={j}.")
+                            raise
                         except Warning:
                             print(f"lasso convergence warning at i={i}, j={j}.")
                             raise
@@ -111,4 +126,3 @@ class LassoModel(ContextModel):
             preds.append(pred)
 
         return torch.stack(preds, dim=1).to(device=DEVICE)
-
