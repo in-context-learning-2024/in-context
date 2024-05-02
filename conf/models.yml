@@ -95,6 +95,19 @@ model: &mod_transformer
     want_pos_embeddings: True
     no_attention: False
     custom_attn_func: "relu"
+
+model: &llama_mamba_classic
+    type: llama_mamba
+    n_positions: 101
+    n_layer: 3
+    n_embd: 64
+    n_head: 2
+    want_rope: True
+    hidden_act: "silu"
+    rope_theta: 1000
+    num_mamba_layers: 1
+    num_mamba_instances: 2
+    
 model: &averaging
     type: averaging
 
