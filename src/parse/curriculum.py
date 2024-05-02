@@ -75,7 +75,7 @@ def expand_curriculum(raw_data: dict) -> tuple[list[dict], list[int]]:
     durations = [ ]
     last_boundary: int = 0
     for boundary in partitioning_steps:
-        dat = get_value(raw_data, boundary)
+        dat = get_value(raw_data, last_boundary)
         duration = boundary - last_boundary
         last_boundary = boundary
         stages.append(dat)

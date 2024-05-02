@@ -19,18 +19,9 @@ model: &knn_3
 model: &least_squares
     type: least squares
 
-model: &averaging
-    type: averaging
-
 model: &lasso
     type: lasso
     alpha: 0.1
-
-model: &grad_mlp
-    type: grad mlp
-    model_class_name: mlp
-    model_class_args:
-        dimensions: [10, 256, 1]
 
 model: &d_tree
     type: decision tree
@@ -47,8 +38,10 @@ model: &decision_tree_4
 
 model: &decision_tree
     type: decision tree
-    max_depth: None
+    max_depth: !!null
 
+model: &zero
+    type: zero
 
 model: &mlp
     type: grad mlp
@@ -57,11 +50,8 @@ model: &mlp
         dimensions: [100]
     opt_alg_name: adam
     batch_size: 100
-    lr: 5e-3
+    lr: !!float 5e-3
     num_steps: 100
-
-model: &lasso
-    type: lasso
 
 model: &lasso_set
   - <<: *least_squares
@@ -76,10 +66,3 @@ model: &lasso_set
     alpha: 0.1
   - <<: *lasso
     alpha: 1
-
-model: &zero
-    type: zero
-
-model: &switchingLinLinDec
-    type: switching
-    inner_models: [*least_squares, *least_squares, *xgboost]

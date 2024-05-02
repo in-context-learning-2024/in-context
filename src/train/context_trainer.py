@@ -84,18 +84,17 @@ class ContextTrainer:
                 pbar.set_description(f"loss {loss}")
 
             if self.log_freq > 0 and i % self.log_freq == 0:
+                for baseline in self.baseline_models:
+                    baseline.eval()
+                    baseline_output = baseline(x_batch, y_batch)
 
-                with torch.no_grad():
-                    for baseline in self.baseline_models:
-                        baseline_output = baseline(x_batch, y_batch)
+                    if baseline_output.shape != y_batch.shape:
+                        raise ValueError(
+                            f"Baseline model {baseline.name} produced ill-shaped predictions!" + \
+                                f"Expected: {y_batch.shape}    Got: {baseline_output.shape}"
+                        )
 
-                        if baseline_output.shape != y_batch.shape:
-                            raise ValueError(
-                                f"Baseline model {baseline.name} produced ill-shaped predictions!" + \
-                                    f"Expected: {y_batch.shape}    Got: {baseline_output.shape}"
-                            )
-
-                        baseline_loss[baseline.name] = self.loss_fn(baseline_output.cpu(), y_batch.cpu())
+                    baseline_loss[baseline.name] = self.loss_fn(baseline_output.cpu(), y_batch.cpu()).detach()
 
                 log_dict = {
                     "overall_loss": loss,

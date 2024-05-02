@@ -1,6 +1,7 @@
 import torch
 from core import ContextModel
 from sklearn.linear_model import Lasso
+from sklearn.exceptions import ConvergenceWarning
 import warnings
 
 # xs and ys should be on cpu for this method. Otherwise the output maybe off in case when train_xs is not full rank due to the implementation of torch.linalg.lstsq.
@@ -31,7 +32,7 @@ class LeastSquaresModel(ContextModel):
 
         for i in range(xs.shape[-2]):
             if i == 0:
-                preds.append(torch.zeros_like(xs[:, :1, 0]))  # predict zero for first point
+                preds.append(torch.zeros_like(xs[:, :1, 0], device=xs.device))  # predict zero for first point
                 continue
             train_xs, train_ys = xs[:, :i], ys[:, :i]
             test_x = xs[:, i : i + 1]
@@ -57,15 +58,15 @@ class AveragingModel(ContextModel):
 
         for i in range(ys.shape[1]):
             if i == 0:
-                preds.append(torch.zeros_like(ys[:, 0]))  # predict zero for first point
+                preds.append(torch.zeros_like(xs[:, 0, :self.y_dim], device=xs.device))  # predict zero for first point
                 continue
             train_xs, train_ys = xs[:, :i], ys[:, :i]
             test_x = xs[:, i : i + 1]
 
-            train_zs = train_xs * train_ys.unsqueeze(dim=-1)
+            train_zs = train_xs * train_ys
             w_p = train_zs.mean(dim=1).unsqueeze(dim=-1)
             pred = test_x @ w_p
-            preds.append(pred[:, 0, 0])
+            preds.append(pred[:, 0, :1])
 
         return torch.stack(preds, dim=1)
 
@@ -109,6 +110,9 @@ class LassoModel(ContextModel):
                         warnings.filterwarnings("error")
                         try:
                             clf.fit(train_xs.numpy(), train_ys.numpy())
+                        except ConvergenceWarning:
+                            print(f"lasso convergence warning at i={i}, j={j}.")
+                            raise
                         except Warning:
                             print(f"lasso convergence warning at i={i}, j={j}.")
                             raise
