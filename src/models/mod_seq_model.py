@@ -65,6 +65,9 @@ class ModSeqModelLlama(Llama):
 
 
     def change_llama_block(self, instantiate_var_fn, instantiate_var_arg, instantiate_forward_fn):
+        # Obtain the individual decoder layers, then replcae attention, call instantiate_var, replace block_forward
+        print(self._backbone)
+        print(list(self._backbone.children())
        for x in list(self._backbone.children())[3]:
             x.forward = types.MethodType(functools.partial(instantiate_forward_fn, no_attention=self.no_attention), x)
             instantiate_var_fn(x, instantiate_var_arg)
