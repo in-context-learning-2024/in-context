@@ -64,5 +64,5 @@ class Llama(TransformerModel):
 
         super().__init__(backbone, x_dim, n_positions, n_embd, **kwargs)
 
-        self.name = self.name = f"llama_embd={n_embd}_layer={n_layer}_head={n_head}"
+        self.name = f"llama_embd={n_embd}_layer={n_layer}_head={n_head}"
 
