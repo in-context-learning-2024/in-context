@@ -17,13 +17,13 @@ import functools
 
 class MambaNoAttentionModel(ModSeqModel):
     def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, want_pos_embeddings=True, no_attention=False, custom_attn_func=None, num_mamba_layers=1, **kwargs):
-        super(MambaNoAttentionModel, self).__init__()
+        super(MambaNoAttentionModel, self).__init__(x_dim, n_positions, n_embd=n_embd, n_layer=n_layer, n_head=n_head, want_pos_embeddings=want_pos_embeddings, no_attention=no_attention, custom_attn_func=custom_attn_func)
         mamba_configuration = MambaConfig(
-            vocab_size=gpt_configuration.vocab_size,
+            vocab_size=self.gpt2_configuration.vocab_size,
             hidden_size=n_embd,
-            layer_norm_epsilon=gpt_configuration.layer_norm_epsilon,
-            num_hidden_layers=1,
-            use_cache=gpt_configuration.use_cache
+            layer_norm_epsilon=self.gpt2_configuration.layer_norm_epsilon,
+            num_hidden_layers=num_mamba_layers,
+            use_cache=self.gpt2_configuration.use_cache
         )
         
         self.name = f"mamba_seq_embd={n_embd}_layer={n_layer}"
@@ -33,15 +33,16 @@ class MambaNoAttentionModel(ModSeqModel):
         
 class MambaFirstGPT2TransformerModel(ModSeqModel):
     def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, want_pos_embeddings=True, no_attention=False, custom_attn_func=None, num_mamba_layers=1, **kwargs):
-        super(MambaFirstGPT2TransformerModel, self).__init__()
+        super(MambaFirstGPT2TransformerModel, self).__init__(x_dim, n_positions, n_embd=n_embd, n_layer=n_layer, n_head=n_head, want_pos_embeddings=want_pos_embeddings, no_attention=no_attention, custom_attn_func=custom_attn_func)
           
         mamba_configuration = MambaConfig(
-            vocab_size=gpt_configuration.vocab_size,
+            vocab_size=self.gpt2_configuration.vocab_size,
             hidden_size=n_embd,
-            layer_norm_epsilon=gpt_configuration.layer_norm_epsilon,
+            layer_norm_epsilon=self.gpt2_configuration.layer_norm_epsilon,
             num_hidden_layers=num_mamba_layers,
-            use_cache=gpt_configuration.use_cache
+            use_cache=self.gpt2_configuration.use_cache
         )
+        
 
         self.name = f"mambafirstgpt2_embd={n_embd}_layer={n_layer}_head={n_head}"
 
@@ -49,15 +50,16 @@ class MambaFirstGPT2TransformerModel(ModSeqModel):
 
 class MambaformerModel(ModSeqModel):
     def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, want_pos_embeddings=True, no_attention=False, custom_attn_func=None, num_mamba_layers=1, num_mamba_instances=2, **kwargs):
-        super(MambaformerModel, self).__init__()
-
+        super(MambaformerModel, self).__init__(x_dim, n_positions, n_embd=n_embd, n_layer=n_layer, n_head=n_head, want_pos_embeddings=want_pos_embeddings, no_attention=no_attention, custom_attn_func=custom_attn_func)
+       
         mamba_configuration = MambaConfig(
-            vocab_size=gpt_configuration.vocab_size,
+            vocab_size=self.gpt2_configuration.vocab_size,
             hidden_size=n_embd,
-            layer_norm_epsilon=gpt_configuration.layer_norm_epsilon,
+            layer_norm_epsilon=self.gpt2_configuration.layer_norm_epsilon,
             num_hidden_layers=num_mamba_layers,
-            use_cache=gpt_configuration.use_cache
+            use_cache=self.gpt2_configuration.use_cache
         )
+        
 
         self.name = f"mambaformer_embd={n_embd}_layer={n_layer}_head={n_head}"
         
@@ -65,16 +67,8 @@ class MambaformerModel(ModSeqModel):
       
 class ModTransformerModel(ModSeqModel):
     def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, want_pos_embeddings=True, no_attention=False, custom_attn_func=None, num_mamba_layers=1, num_mamba_instances=2, **kwargs):
-        super(ModTransformerModel, self).__init__()
-
-        mamba_configuration = MambaConfig(
-            vocab_size=gpt_configuration.vocab_size,
-            hidden_size=n_embd,
-            layer_norm_epsilon=gpt_configuration.layer_norm_epsilon,
-            num_hidden_layers=num_mamba_layers,
-            use_cache=gpt_configuration.use_cache
-        )
+        super(ModTransformerModel, self).__init__(x_dim, n_positions, n_embd=n_embd, n_layer=n_layer, n_head=n_head, want_pos_embeddings=want_pos_embeddings, no_attention=no_attention, custom_attn_func=custom_attn_func)
 
         self.name = f"mod_gpt2_embd={n_embd}_layer={n_layer}_head={n_head}"
       
-        self.change_gpt2_block(block_var_declare_no_change, gpt_configuration, forward_block_mod_transformer)
+        self.change_gpt2_block(block_var_declare_no_change, self.gpt2_configuration, forward_block_mod_transformer)

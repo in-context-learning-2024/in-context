@@ -4,8 +4,7 @@ from transformers import GPT2Config, GPT2Model, MambaConfig, MambaPreTrainedMode
 from torch import nn
 from .transformer import TransformerModel
 from typing import Optional, Tuple, Union
-import types
-from core import ContextModel
+from transformers.modeling_outputs import BaseModelOutputWithPastAndCrossAttentions
 
 # FOR REFERENCE: A GPT2 Block is initialized with the following code:
 
@@ -36,6 +35,7 @@ def block_var_declare_mambaformer(self, this_mamba_model):
     self.norm_f_2 = this_mamba_model[1].norm_f
     self.mamba_blocks_beg = list(this_mamba_model[0].layers)
     self.mamba_blocks_end = list(this_mamba_model[1].layers)
+    print("Block_var_declare is being called")
     
 #Used for mamba_no_attention and mambafirstformer
 def block_var_declare_mamba_single(self, this_mamba_model):
@@ -158,6 +158,8 @@ def forward_block_mambaformer(
     ) -> Union[Tuple[torch.Tensor], Optional[Tuple[torch.Tensor, Tuple[torch.FloatTensor, ...]]]]:
 
         #Utilizing Mamba...
+        print("Forward_Block_mambaformer is being called")
+
         residual = hidden_states
       
         hidden_states = forward_through_mamba_blocks(hidden_states, self.mamba_blocks_beg, self.norm_f_1)
@@ -171,6 +173,8 @@ def forward_block_mambaformer(
             
             ln_cross_attn = self.ln_cross_attn if hasattr(self, "ln_cross_attn") and self.ln_cross_attn else None
             crossattention = self.crossattention if hasattr(self, "crossattention") else None
+            print("this_spot_block_mf")
+            print("LAYER PAST: " + str(layer_past))
             hidden_states, outputs = forward_through_attention(attention_block=self.attn,
                                                                crossattention=crossattention,
                                                                ln_cross_attn=ln_cross_attn,
@@ -218,6 +222,7 @@ def forward_block_mambafirstformer(
             
             ln_cross_attn = self.ln_cross_attn if hasattr(self, "ln_cross_attn") and self.ln_cross_attn else None
             crossattention = self.crossattention if hasattr(self, "crossattention") else None
+            
             hidden_states, outputs = forward_through_attention(attention_block=self.attn,
                                                                crossattention=crossattention,
                                                                ln_cross_attn=ln_cross_attn,
@@ -418,8 +423,11 @@ def forward_GPT2Model(
         all_self_attentions = () if output_attentions and not no_attention else None
         all_cross_attentions = () if output_attentions and not no_attention and self.config.add_cross_attention else None
         all_hidden_states = () if output_hidden_states else None
+        print("ENUMERATED BLOCKS")
+        print(list(enumerate(zip(self.h, past_key_values))))
         for i, (block, layer_past) in enumerate(zip(self.h, past_key_values)):
             # Model parallel
+            print("LAYER_PAST: " + str(layer_past))
             if self.model_parallel:
                 torch.cuda.set_device(hidden_states.device)
                 # Ensure layer_past is on same device as hidden_states (might not be correct)

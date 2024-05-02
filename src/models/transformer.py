@@ -37,6 +37,8 @@ class GPT2(TransformerModel):
             attn_pdrop=0.0,
             use_cache=False,
         )
+
+        self.gpt2_configuration = configuration
         backbone: nn.Module = GPT2Model(configuration) # pyright: ignore[reportAssignmentType]
 
         super().__init__(backbone, x_dim, n_positions, n_embd, **kwargs)

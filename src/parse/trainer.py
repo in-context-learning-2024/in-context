@@ -20,6 +20,8 @@ def _clean_instantiate(class_type, *pass_args, **pass_kwargs):
         del pass_kwargs['type']
 
     try:
+        print(pass_args)
+        print(pass_kwargs)
         return class_type(*pass_args, **pass_kwargs)
     except Exception as e:
         raise ParsingError(f"Unexpected error when instantiating {class_type}!: \n\t{e}")
