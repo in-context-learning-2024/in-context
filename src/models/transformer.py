@@ -61,7 +61,7 @@ class Llama(TransformerModel):
             use_cache=True,
         )
 
-        self.llama_configuraiton = configuration
+        self.llama_configuration = configuration
         backbone: nn.Module = LlamaModel(configuration) # pyright: ignore[reportAssignmentType]
 
         super().__init__(backbone, x_dim, n_positions, n_embd, **kwargs)

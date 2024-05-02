@@ -54,20 +54,18 @@ class ModSeqModel(GPT2):
 class ModSeqModelLlama(Llama):
     def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, want_rope=True, hidden_act="silu", rope_theta=1e4, **kwargs):
         super().__init__(x_dim, n_positions, n_embd=n_embd, n_layer=n_layer, n_head=n_head, hidden_act=hidden_act, rope_theta=rope_theta)
-        if custom_attn_func == "silu":
+        if hidden_act == "silu":
             self.custom_attn_func = functools.partial(forward_llama_attention_standard, want_rope=want_rope)
 
         self.want_rope = want_rope
         self._n_dims = x_dim
         
-        #Allow for attention and pos embeddings in GPT2Model Forward function
-        self._backbone.forward = types.MethodType(functools.partial(forward_GPT2Model, no_attention=no_attention, want_pos_embeddings=want_pos_embeddings), self._backbone)
-
 
     def change_llama_block(self, instantiate_var_fn, instantiate_var_arg, instantiate_forward_fn):
-        # Obtain the individual decoder layers, then replcae attention, call instantiate_var, replace block_forward
-        print(self._backbone)
-        print(list(self._backbone.children())
-       for x in list(self._backbone.children())[3]:
-            x.forward = types.MethodType(functools.partial(instantiate_forward_fn, no_attention=self.no_attention), x)
+        # Obtain the individual decoder layers, then replace attention, call instantiate_var, replace block_forward
+        for x in list((list(self._backbone.children())[1])):
+            #EX: forward_block_llamamamba -> instantiate_forward_fn
+            x.forward = types.MethodType(functools.partial(instantiate_forward_fn), x)
+            #EX: Block_var_declare_llamamamba
             instantiate_var_fn(x, instantiate_var_arg)
+            x.self_attn.forward = types.MethodType(self.custom_attn_func, x.self_attn)

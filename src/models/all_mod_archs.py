@@ -7,9 +7,10 @@ from typing import Optional, Tuple, Union
 import types
 from core import ContextModel
 
-from .mod_seq_model import ModSeqModel
+from .mod_seq_model import ModSeqModel, ModSeqModelLlama
 from .inferencing_fns import block_var_declare_mamba_single, forward_block_mamba_no_attention, forward_block_mambafirstformer, block_var_declare_mambaformer, forward_block_mambaformer, block_var_declare_no_change, forward_block_mod_transformer
 from .inferencing_fns_llama import block_var_declare_llamamamba, forward_block_llamamamba
+from .attention_fns import forward_llama_attention_standard
 
 class MambaNoAttentionModel(ModSeqModel):
     def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, want_pos_embeddings=True, no_attention=False, custom_attn_func=None, num_mamba_layers=1, **kwargs):
@@ -76,7 +77,7 @@ class LlamaMambaModel(ModSeqModelLlama):
         mamba_configuration = MambaConfig(
             vocab_size=self.llama_configuration.vocab_size,
             hidden_size=n_embd,
-            layer_norm_epsilon=self.llama_configuration.layer_norm_epsilon,
+            layer_norm_epsilon=1e-5,
             num_hidden_layers=num_mamba_layers,
             use_cache=self.llama_configuration.use_cache
         )

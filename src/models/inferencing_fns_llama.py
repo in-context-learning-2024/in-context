@@ -1,6 +1,6 @@
 import torch
 from torch import LongTensor, FloatTensor, Tensor
-from transformers import LlamaModel, LlamaConfig, MambaConfig, MambaPreTrainedModel, MambaModel # pyrigh: ignor[]
+from transformers import LlamaModel, LlamaConfig, Cache, MambaConfig, MambaPreTrainedModel, MambaModel # pyrigh: ignor[]
 from torch import nn
 from .transformer import TransformerModel
 from typing import Optional, Tuple, Union
