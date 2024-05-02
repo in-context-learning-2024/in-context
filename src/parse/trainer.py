@@ -1,200 +1,118 @@
 import yaml
 import torch
-import torch.distributions as D
+import os.path
 
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
 from train import TrainerSteps
-from models import MODELS
-from function_classes import FUNCTION_CLASSES
-from core import ContextModel, FunctionClass
 
-from .curriculum import expand_curriculum, get_value
+from .curriculum import expand_curriculum, get_max_value
+from .dist import get_x_distribution
+from .model import get_model
+from .function_class import get_function_class
+from .misc import get_optimizer, get_loss_fn
 
-class ParsingError(Exception):
-    pass
+DEFAULT_TRAINING_OPTS = {
+    "y_dim" : 1,
+    "x_dist" : { "type": "normal" },
+    "baseline_models" : [],
+    "log_freq" : -1,
+    "checkpoint_freq" : -1,
+    "skip_steps" : 0,
+}
 
-def _clean_instantiate(class_type, *pass_args, **pass_kwargs):
-    
-    if 'type' in pass_kwargs:
-        del pass_kwargs['type']
+NEEDED_TRAINING_DATA = [
+        'b_size','seq_len', 'steps', 'model', 'loss_fn', 'optim', 'x_dim'
+    ] + list(DEFAULT_TRAINING_OPTS.keys())
 
-    try:
-        return class_type(*pass_args, **pass_kwargs)
-    except Exception as e:
-        raise ParsingError(f"Unexpected error when instantiating {class_type}!: \n\t{e}")
-
-def _check_kwargs(type_mapping: dict, kwarg_dict: dict, display_name: str) -> None:
-    if 'type' not in kwarg_dict:
-        raise KeyError(f"{display_name} type not specified!")
-
-    if kwarg_dict['type'] not in type_mapping:
-        raise NotImplementedError(f"Invalid {display_name}! Got: `{kwarg_dict['type']}`")
-
-def get_x_distribution(batch_size: int, seq_len: int, x_dim: int, data: dict) -> D.Distribution:
-    batch_shape = torch.Size([batch_size, seq_len])
-    event_shape = torch.Size([x_dim, ])
-    full_shape = batch_shape + event_shape
-
-
-    DISTRIBUTION_BANK: dict[str, tuple[type[D.Distribution], dict[str, Any]]] = {
-        "normal" : (
-            D.MultivariateNormal,
-            { "loc" : torch.zeros(full_shape),
-              "covariance_matrix" : torch.eye(x_dim),
-            }
-        ),
-        "uniform" : (
-            D.Uniform,
-            { "low"  : -torch.ones(full_shape),
-              "high" : torch.ones(full_shape),
-            }
-        ),
-    }
-
-    dist_info: tuple[type[D.Distribution], dict[str, Any]] = DISTRIBUTION_BANK[data.get('type',"normal")]
-    dist_class, kwargs = dist_info
-
-    del data['type']
-    kwargs.update(data)
-    kwargs.update({ "validate_args" : True })
-
-    return _clean_instantiate(dist_class, **kwargs)
-
-
-def get_model(data: dict, x_dim: int, y_dim: int) -> ContextModel:
-
-    _check_kwargs(MODELS, data, "model")
-
-    model_class: type[ContextModel] = MODELS[data['type']]
-
-    return _clean_instantiate(model_class, **data)
-
-
-def get_function_class(x_dist: D.Distribution, x_curr_dim: int, data: dict) -> FunctionClass:
-    _check_kwargs(FUNCTION_CLASSES, data, "function class")
-    f_class_type: type[FunctionClass] = FUNCTION_CLASSES[data['type']]
-
-    data.update({
-        "x_distribution" : x_dist,
-        "x_curriculum_dim" : x_curr_dim,
-    })
-
-    return _clean_instantiate(f_class_type, **data)
-
-
-def get_optimizer(model: ContextModel, data: dict) -> torch.optim.Optimizer:
-
-    OPTIMIZERS = {
-        "sgd" : torch.optim.SGD,
-        "adam": torch.optim.Adam
-    }
-
-    _check_kwargs(OPTIMIZERS, data, "optimizer")
-
-    optim_type: type[torch.optim.Optimizer] = OPTIMIZERS[data['type']]
-
-    return _clean_instantiate(optim_type, model.parameters(), **data)
-
-
-def get_loss_fn(data: dict) -> torch.nn.Module:
-    
-    LOSS_FNS = {
-        "squared" : torch.nn.MSELoss,
-        "mse" : torch.nn.MSELoss
-    }
-
-    _check_kwargs(LOSS_FNS, data, "loss function")
-
-    loss_fn_type: type[torch.nn.Module] | Callable[[], None] = LOSS_FNS[data['type']]
-    
-    return _clean_instantiate(loss_fn_type, **data)
+EXCESS_KEYS = ["y_dim", "x_dist", "function_class", "b_size", "seq_len", "x_dim"]
 
 
 def _produce_trainer_stages(data: dict) -> TrainerSteps:
     """Convert a YAML primitive stage dicts to a instantiated Trainer object"""
 
-    for key in ['b_size','seq_len', 'steps', 'model', 'loss_fn', 'optim']:
+    for key in NEEDED_TRAINING_DATA:
         if key not in data:
             raise ValueError(f"{key} not provided in training config!")
 
-    x_dim_data: int | dict = data['x_dim']
-    x_dim: int = max(
-        get_value(x_dim_data, data['steps']), # pyright: ignore[reportArgumentType]
-        get_value(x_dim_data, 0) # pyright: ignore[reportArgumentType]
-    )
+    total_steps: int = data['steps']
+    x_dim: int = int(get_max_value(data['x_dim'], total_steps))
+    y_dim: int = int(get_max_value(data['y_dim'], total_steps))
 
-    y_dim_data: int | dict = data.get('y_dim', 1)
-    y_dim: int = max(
-        get_value(y_dim_data, data['steps']), # pyright: ignore[reportArgumentType]
-        get_value(y_dim_data, 0) # pyright: ignore[reportArgumentType]
-    )
-    stages, step_counts = expand_curriculum(data)
+    if 'model_weights' in data and 'optim_state' in data:
+        data["model"] = get_model(data['model'], x_dim, y_dim, data['model_weights'])
+        data["optim"] = get_optimizer(data['model'], data['optim'], data['optim_state'])
+        del data['model_weights']
+        del data['optim_state']
+    else:
+        data["model"] = get_model(data['model'], x_dim, y_dim)
+        data["optim"] = get_optimizer(data['model'], data['optim'])
 
-    f_classes = [
+    data['loss_fn'] = get_loss_fn(data['loss_fn'])
+
+    data['baseline_models'] = list(map(
+        lambda kw: get_model(kw, x_dim, y_dim), 
+        data['baseline_models']
+    ))
+
+    stages, data['steps'] = expand_curriculum(data)
+
+    data['function_classes'] = [
         get_function_class(
-            get_x_distribution(
-                stage['b_size'], stage['seq_len'], x_dim, stage.get('x_dist', {})
+            init_kwargs=stage['function_class'],
+            x_dist=get_x_distribution(
+                stage['b_size'], stage['seq_len'], x_dim, stage['x_dist']
             ),
-            stage['x_dim'],
-            stage['function_class']
+            x_curr_dim=stage['x_dim'],
+            y_dim=stage['y_dim']
         ) 
         for stage in stages
     ]
 
-    model = get_model(stages[0]['model'] | { "x_dim" : x_dim }, x_dim, y_dim)
-    optimizer = get_optimizer(model, stages[0]['optim'])
-    if 'model_weights' in data and 'optim_state' in data:
-        model.load_state_dict(data['model_weights'])
-        optimizer.load_state_dict(data['optim_state'])
+    for excess_key in EXCESS_KEYS:
+        del data[excess_key]
 
-    loss_fn = get_loss_fn(stages[0]['loss_fn'])
-    baseline_models = list(map(
-        lambda d: get_model(
-            d | {"x_dim" : x_dim},
-            x_dim, y_dim
-        ), 
-        stages[0].get('baseline_models', [])
-    ))
-
-    log_freq = stages[0].get('log_freq', -1)
-    checkpoint_freq = stages[0].get('checkpoint_freq', -1)
-    
-    skip_steps = data.get('skip_steps', 0)
-
-
-    big_trainer = TrainerSteps(
-        function_classes=f_classes,
-        model=model,
-        optim=optimizer, 
-        loss_fn=loss_fn,
-        steps=step_counts,
-        baseline_models=baseline_models,
-        log_freq=log_freq,
-        checkpoint_freq=checkpoint_freq,
-        skip_steps=skip_steps,
-    )
+    big_trainer = TrainerSteps(**data)
 
     return big_trainer
 
-def parse_training(content: str, skip_steps: int = 0, model_weights: Optional[Any] = None, optim_state: Optional[Any] = None) -> TrainerSteps:
-    d = yaml.load(content, Loader=yaml.Loader)
+def parse_training(yaml_content: str, skip_steps: int = 0, model_weights: Optional[Any] = None, 
+                   optim_state: Optional[Any] = None) -> tuple[TrainerSteps, dict]:
+    d = yaml.load(yaml_content, Loader=yaml.Loader)
+
+    d['train'] = DEFAULT_TRAINING_OPTS | d['train'] # override defaults with specified opts
+    training_data = d['train'].copy()
 
     if skip_steps > 0:
-        d['train'] |= {'skip_steps': skip_steps}
+        training_data |= {'skip_steps': skip_steps}
     if model_weights is not None and optim_state is not None:
-        d['train'] |= {'model_weights': model_weights, 'optim_state': optim_state}
+        training_data |= {'model_weights': model_weights, 'optim_state': optim_state}
 
-    big_trainer = _produce_trainer_stages(d['train'])
+    big_trainer = _produce_trainer_stages(training_data)
 
-    return big_trainer
+    return big_trainer, d['train']
 
-def parse_training_from_file(filename: str) -> tuple[TrainerSteps, str]:
+def parse_training_from_file(filename: str, checkpoint_path: Optional[str] = None) -> tuple[TrainerSteps, dict]:
+    
+    conf_dir = os.path.join(os.path.dirname(filename), "..")
+    models_yml_file = os.path.join(conf_dir, "models.yml")
+    with open(models_yml_file, 'r') as f:
+        model_conf = f.read()
     with open(filename, 'r') as f:
-        content = f.read()
-    return parse_training(content), content
+        lines = f.readlines()
 
-## an example usage of the above function:
-# from parse import parse_training
-# trainer, yaml_str = parse_training_from_file("sample.yml")
-# trainer.train()
+    lines = [ ' '*4 + line for line in lines ]
+    content = f"train:\n" + "\n".join(lines)
+
+    full_yaml = model_conf.strip() + '\n\n' + content
+
+    if checkpoint_path is None:
+        return parse_training(full_yaml)
+
+    latest_checkpoint = torch.load(checkpoint_path, 
+                                   map_location=("cuda" if torch.cuda.is_available() else "cpu"))
+    model_state = latest_checkpoint['model_state_dict']
+    optim_state = latest_checkpoint['optimizer_state_dict']
+    latest_step = int(os.path.basename(checkpoint_path).split("_")[-1])
+
+    return parse_training(full_yaml, latest_step, model_state, optim_state)
