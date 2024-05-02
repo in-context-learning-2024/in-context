@@ -35,7 +35,6 @@ def block_var_declare_mambaformer(self, this_mamba_model):
     self.norm_f_2 = this_mamba_model[1].norm_f
     self.mamba_blocks_beg = list(this_mamba_model[0].layers)
     self.mamba_blocks_end = list(this_mamba_model[1].layers)
-    print("Block_var_declare is being called")
     
 #Used for mamba_no_attention and mambafirstformer
 def block_var_declare_mamba_single(self, this_mamba_model):
@@ -158,7 +157,6 @@ def forward_block_mambaformer(
     ) -> Union[Tuple[torch.Tensor], Optional[Tuple[torch.Tensor, Tuple[torch.FloatTensor, ...]]]]:
 
         #Utilizing Mamba...
-        print("Forward_Block_mambaformer is being called")
 
         residual = hidden_states
       
@@ -173,8 +171,6 @@ def forward_block_mambaformer(
             
             ln_cross_attn = self.ln_cross_attn if hasattr(self, "ln_cross_attn") and self.ln_cross_attn else None
             crossattention = self.crossattention if hasattr(self, "crossattention") else None
-            print("this_spot_block_mf")
-            print("LAYER PAST: " + str(layer_past))
             hidden_states, outputs = forward_through_attention(attention_block=self.attn,
                                                                crossattention=crossattention,
                                                                ln_cross_attn=ln_cross_attn,
@@ -305,19 +301,19 @@ def output_processing(outputs, hidden_states, no_attention, use_cache):
     
 def forward_GPT2Model(
         self,
-        input_ids              : Optional[torch.LongTensor] = None,
-        past_key_values        : Optional[Tuple[Tuple[torch.Tensor]]] = None,
-        attention_mask         : Optional[torch.FloatTensor] = None,
-        token_type_ids         : Optional[torch.LongTensor] = None,
-        position_ids           : Optional[torch.LongTensor] = None, # pyright: ignore[reportRedeclaration]
-        head_mask              : Optional[torch.FloatTensor] = None,
-        inputs_embeds          : Optional[torch.FloatTensor] = None,
-        encoder_hidden_states  : Optional[torch.Tensor] = None,
-        encoder_attention_mask : Optional[torch.FloatTensor] = None,
-        use_cache              : Optional[bool] = None,
-        output_attentions      : Optional[bool] = None,
-        output_hidden_states   : Optional[bool] = None,
-        return_dict            : Optional[bool] = None,
+        input_ids: Optional[torch.LongTensor] = None,
+        past_key_values: Optional[Tuple[Tuple[torch.Tensor]]] = None,
+        attention_mask: Optional[torch.FloatTensor] = None,
+        token_type_ids: Optional[torch.LongTensor] = None,
+        position_ids: Optional[torch.LongTensor] = None,
+        head_mask: Optional[torch.FloatTensor] = None,
+        inputs_embeds: Optional[torch.FloatTensor] = None,
+        encoder_hidden_states: Optional[torch.Tensor] = None,
+        encoder_attention_mask: Optional[torch.FloatTensor] = None,
+        use_cache: Optional[bool] = None,
+        output_attentions: Optional[bool] = None,
+        output_hidden_states: Optional[bool] = None,
+        return_dict: Optional[bool] = None,
         no_attention = False,
         want_pos_embeddings = True
     ) -> Union[Tuple, BaseModelOutputWithPastAndCrossAttentions]:
@@ -333,49 +329,52 @@ def forward_GPT2Model(
         elif input_ids is not None:
             self.warn_if_padding_and_no_attention_mask(input_ids, attention_mask)
             input_shape = input_ids.size()
-            input_ids: LongTensor = input_ids.view(-1, input_shape[-1])  # pyright: ignore[reportAssignmentType]
+            input_ids = input_ids.view(-1, input_shape[-1])
             batch_size = input_ids.shape[0]
-            device = input_ids.device
         elif inputs_embeds is not None:
             input_shape = inputs_embeds.size()[:-1]
             batch_size = inputs_embeds.shape[0]
-            device = inputs_embeds.device
         else:
             raise ValueError("You have to specify either input_ids or inputs_embeds")
 
+        device = input_ids.device if input_ids is not None else inputs_embeds.device
+
         if token_type_ids is not None:
-            token_type_ids = token_type_ids.view(-1, input_shape[-1]) # pyright: ignore[reportAssignmentType]
+            token_type_ids = token_type_ids.view(-1, input_shape[-1])
 
-        past_key_values: tuple[tuple[Optional[Tensor], ...]]
-        if no_attention or past_key_values is None:
-            past_length = 0
-            past_key_values = (((None,) * len(self.h)),)
+        if not no_attention:
+            if past_key_values is None:
+                past_length = 0
+                past_key_values = tuple([None] * len(self.h))
+            else:
+                past_length = past_key_values[0][0].size(-2)
         else:
-            past_length = past_key_values[0][0].size(-2)
-
+            past_length = 0
+            past_key_values = tuple([None] * len(self.h))
+                
         if position_ids is None:
-            position_ids: LongTensor = torch.arange(past_length, input_shape[-1] + past_length, dtype=torch.long, device=device) # pyright: ignore[reportAssignmentType]
-            position_ids = position_ids.unsqueeze(0) # pyright: ignore[reportAssignmentType]
+            position_ids = torch.arange(past_length, input_shape[-1] + past_length, dtype=torch.long, device=device)
+            position_ids = position_ids.unsqueeze(0)
 
         # GPT2Attention mask.
         if not no_attention and attention_mask is not None:
             if batch_size <= 0:
                 raise ValueError("batch_size has to be defined and > 0")
-            attention_mask: FloatTensor = attention_mask.view(batch_size, -1) # pyright: ignore[reportAssignmentType]
+            attention_mask = attention_mask.view(batch_size, -1)
             # We create a 3D attention mask from a 2D tensor mask.
             # Sizes are [batch_size, 1, 1, to_seq_length]
             # So we can broadcast to [batch_size, num_heads, from_seq_length, to_seq_length]
             # this attention mask is more simple than the triangular masking of causal attention
             # used in OpenAI GPT, we just need to prepare the broadcast dimension here.
-            attention_mask = attention_mask[:, None, None, :] # pyright: ignore[reportAssignmentType]
+            attention_mask = attention_mask[:, None, None, :]
 
             # Since attention_mask is 1.0 for positions we want to attend and 0.0 for
             # masked positions, this operation will create a tensor which is 0.0 for
             # positions we want to attend and the dtype's smallest value for masked positions.
             # Since we are adding it to the raw scores before the softmax, this is
             # effectively the same as removing these entirely.
-            attention_mask = attention_mask.to(dtype=self.dtype)  # fp16 compatibility # pyright: ignore[reportAssignmentType]
-            attention_mask = (1.0 - attention_mask) * torch.finfo(self.dtype).min # pyright: ignore[reportAssignmentType]
+            attention_mask = attention_mask.to(dtype=self.dtype)  # fp16 compatibility
+            attention_mask = (1.0 - attention_mask) * torch.finfo(self.dtype).min
 
         # If a 2D or 3D attention mask is provided for the cross-attention
         # we need to make broadcastable to [batch_size, num_heads, seq_length, seq_length]
@@ -383,7 +382,7 @@ def forward_GPT2Model(
             encoder_batch_size, encoder_sequence_length, _ = encoder_hidden_states.size()
             encoder_hidden_shape = (encoder_batch_size, encoder_sequence_length)
             if encoder_attention_mask is None:
-                encoder_attention_mask = torch.ones(encoder_hidden_shape, device=device) # pyright: ignore[reportAssignmentType]
+                encoder_attention_mask = torch.ones(encoder_hidden_shape, device=device)
             encoder_attention_mask = self.invert_attention_mask(encoder_attention_mask)
         else:
             encoder_attention_mask = None
@@ -423,11 +422,8 @@ def forward_GPT2Model(
         all_self_attentions = () if output_attentions and not no_attention else None
         all_cross_attentions = () if output_attentions and not no_attention and self.config.add_cross_attention else None
         all_hidden_states = () if output_hidden_states else None
-        print("ENUMERATED BLOCKS")
-        print(list(enumerate(zip(self.h, past_key_values))))
         for i, (block, layer_past) in enumerate(zip(self.h, past_key_values)):
             # Model parallel
-            print("LAYER_PAST: " + str(layer_past))
             if self.model_parallel:
                 torch.cuda.set_device(hidden_states.device)
                 # Ensure layer_past is on same device as hidden_states (might not be correct)
@@ -435,12 +431,14 @@ def forward_GPT2Model(
                     layer_past = tuple(past_state.to(hidden_states.device) for past_state in layer_past)
                 # Ensure that attention_mask is always on the same device as hidden_states
                 if not no_attention and attention_mask is not None:
-                    attention_mask = attention_mask.to(hidden_states.device) # pyright: ignore[reportAssignmentType]
+                    attention_mask = attention_mask.to(hidden_states.device)
                 if not no_attention and isinstance(head_mask, torch.Tensor):
-                    head_mask = head_mask.to(hidden_states.device) # pyright: ignore[reportAssignmentType]
+                    head_mask = head_mask.to(hidden_states.device)
             if output_hidden_states:
                 all_hidden_states = all_hidden_states + (hidden_states,)
 
+            #print(self.gradient_checkpointing)
+            #print(self.training)
             if self.gradient_checkpointing and self.training:
                 outputs = self._gradient_checkpointing_func(
                     block.__call__,
@@ -464,6 +462,7 @@ def forward_GPT2Model(
                     use_cache=use_cache,
                     output_attentions=None if no_attention else output_attentions
                 )
+                #print(outputs)
 
             hidden_states = outputs[0]
             if use_cache is True:
@@ -502,4 +501,3 @@ def forward_GPT2Model(
             attentions=all_self_attentions,
             cross_attentions=all_cross_attentions,
         )
-

@@ -8,11 +8,7 @@ import types
 from core import ContextModel
 
 from .mod_seq_model import ModSeqModel
-from .attention_fns import vit_style_relu_attn, causal_relu_attn
-from .inferencing_fns import forward_GPT2Model, block_var_declare_mamba_single, forward_block_mamba_no_attention, forward_block_mambafirstformer, block_var_declare_mambaformer, forward_block_mambaformer, block_var_declare_no_change, forward_block_mod_transformer
-
-from transformers.modeling_outputs import BaseModelOutputWithPastAndCrossAttentions
-import functools
+from .inferencing_fns import block_var_declare_mamba_single, forward_block_mamba_no_attention, forward_block_mambafirstformer, block_var_declare_mambaformer, forward_block_mambaformer, block_var_declare_no_change, forward_block_mod_transformer
 
 
 class MambaNoAttentionModel(ModSeqModel):
