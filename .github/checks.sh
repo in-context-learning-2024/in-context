@@ -48,7 +48,7 @@ run_check() {
 
     conda run -n in-context-learning wandb offline > /dev/null
     prep_yaml "$FUNC_NAME" "$MODEL_NAME"
-    WANDB_SILENT=true conda run -n in-context-learning python src/ -c conf/test.yml
+    WANDB_SILENT=true conda run -n in-context-learning python src/ -c conf/train/test.yml
     if [[ $? != 0 ]]; then return 1; fi
 
     echo -e "Passed check with model \"$MODEL_NAME\"" \
