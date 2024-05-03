@@ -24,17 +24,31 @@ class ContextModel(nn.Module):
     @staticmethod    # Helper for .forward
     def interleave(xs, ys) -> torch.Tensor:
         # code from Garg et. al.
-        """Interleaves the x's and the y's into a single sequence with shape (batch_size, 2*num_points, x_dim)"""
-        bsize, points, dim = xs.shape
+        """Interleaves the xs and the ys into a single sequence with shape (batch_size, 2*num_points, x_dim)"""
+        bsize, y_points, y_dim = ys.shape
+        bsize, x_points, x_dim = xs.shape
+
+        if x_points not in (y_points, y_points+1):
+            raise ValueError(f"Cannot interleave {x_points} x points and {y_points} y points")
+        elif x_points > y_points:
+            return torch.cat(
+                ( 
+                    ContextModel.interleave(xs[:, :-1], ys),
+                    xs[:, -1:] 
+                ),
+                dim=1
+            )
+
         ys_wide = torch.cat(
             (
-                ys.view(bsize, points, 1),
-                torch.zeros(bsize, points, dim - 1, device=ys.device),
+                ys.view(bsize, y_points, y_dim),
+                torch.zeros(bsize, y_points, x_dim - y_dim, device=ys.device),
             ),
             dim=2,
         )
+
         zs = torch.stack((xs, ys_wide), dim=2)
-        zs = zs.view(bsize, 2 * points, dim)
+        zs = zs.view(bsize, 2 * x_points, x_dim)
         return zs
 
     @staticmethod    # Helper for .forward
