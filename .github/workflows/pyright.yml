@@ -13,7 +13,15 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
+            - name: Load cached miniconda install + env
+              uses: actions/cache/restore@v4
+              id: cache-miniconda-load
+              with:
+                  path: /usr/share/miniconda/
+                  key: ${{ runner.os }}-${{ hashFiles('environment.yaml') }}
+
             - name: Setup Miniconda
+              if: steps.cache-miniconda-load.outputs.cache-hit != 'true'
               uses: conda-incubator/setup-miniconda@v3.0.3
               with:
                   # Specific version of Conda to install after miniconda is located 
@@ -33,6 +41,13 @@ jobs:
                   #    If provided, this will be installed before the "environment-file". 
                   #    See https://anaconda.org/anaconda/python for available "python" versions.
                   python-version: ${{ matrix.python-version }}
+
+            - name: Write cache miniconda install + env
+              id: cache-miniconda-save
+              uses: actions/cache/save@v4
+              with:
+                  path: /usr/share/miniconda/
+                  key: ${{ steps.cache-miniconda-load.outputs.cache-primary-key }}
 
             - name: Run PyRight with PyLance version
               uses: jakebailey/pyright-action@v2
