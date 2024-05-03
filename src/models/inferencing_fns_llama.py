@@ -5,6 +5,7 @@ from torch import nn
 from .transformer import TransformerModel
 from typing import Optional, Tuple, Union
 from transformers.modeling_outputs import BaseModelOutputWithPastAndCrossAttentions
+from .inferencing_fns import forward_through_mamba_blocks
 
 # FOR REFERENCE: A LlamaDecoderLayer is initialized with the following code:
 
@@ -32,13 +33,6 @@ def block_var_declare_llamamamba(self, this_mamba_model):
     self.mamba_blocks_beg = list(this_mamba_model[0].layers)
     self.mamba_blocks_end = list(this_mamba_model[1].layers)
     
-
-def forward_through_mamba_blocks(hidden_states, these_mamba_blocks, this_norm_f):
-    for mb in these_mamba_blocks:
-        hidden_states = mb(hidden_states)
-
-    hidden_states = this_norm_f(hidden_states)
-    return hidden_states
 
 
 def forward_block_llamamamba(
