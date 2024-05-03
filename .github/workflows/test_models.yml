@@ -46,8 +46,8 @@ jobs:
               run: conda env update -n in-context-learning -f environment.yaml
 
             - name: Write env to cache
-              id: cache-miniconda-save
               uses: actions/cache/save@v4
+              if: steps.cache-miniconda-load.outputs.cache-hit != 'true'
               with:
                   path: /usr/share/miniconda/envs/in-context-learning
                   key: ${{ steps.cache-miniconda-load.outputs.cache-primary-key }}
