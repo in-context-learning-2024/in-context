@@ -29,7 +29,7 @@ model:
     type: $MODEL_NAME$MODEL_KWARGS
 "
 
-    echo -e "$TEST_YAML" > conf/test.yml
+    echo -e "$TEST_YAML" > conf/train/test.yml
 }
 
 cut_file() {
