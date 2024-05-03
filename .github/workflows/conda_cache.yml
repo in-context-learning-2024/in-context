@@ -42,7 +42,7 @@ jobs:
 
             - name: Update the conda env
               if: steps.cache-miniconda-load.outputs.cache-hit != 'true'
-              run: conda env update -n my-env -f environment.yml
+              run: conda env update -n in-context-learning -f environment.yaml
 
             - name: Write cache miniconda install + env
               id: cache-miniconda-save
