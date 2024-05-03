@@ -12,15 +12,7 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - name: Load cached miniconda install + env
-              uses: actions/cache/restore@v4
-              id: cache-miniconda-load
-              with:
-                  path: /usr/share/miniconda/
-                  key: ${{ runner.os }}-${{ hashFiles('environment.yaml') }}
-
             - name: Setup Miniconda
-              if: steps.cache-miniconda-load.outputs.cache-hit != 'true'
               uses: conda-incubator/setup-miniconda@v3.0.3
               with:
                   # Specific version of Conda to install after miniconda is located 
@@ -28,7 +20,7 @@ jobs:
                   #    available "conda" versions.
                   # conda-version: # something, this may be useful later
                   # Environment.yml to create an environment.
-                  environment-file: environment.yaml
+                #   environment-file: environment.yaml
                   # Environment name (or path) to activate on all shells. Default 
                   #    is `test` which will be created in `$CONDA/envs/test`. If the 
                   #    environment does not exist, it will be created and activated. 
@@ -41,9 +33,20 @@ jobs:
                   #    See https://anaconda.org/anaconda/python for available "python" versions.
                   python-version: ${{ matrix.python-version }}
 
+            - name: Load cached miniconda install + env
+              uses: actions/cache/restore@v4
+              id: cache-miniconda-load
+              with:
+                  path: /usr/share/miniconda/envs/in-context-learning
+                  key: ${{ runner.os }}-${{ hashFiles('environment.yaml') }}
+
+            - name: Update the conda env
+              if: steps.cache-miniconda-load.outputs.cache-hit != 'true'
+              run: conda env update -n my-env -f environment.yml
+
             - name: Write cache miniconda install + env
               id: cache-miniconda-save
               uses: actions/cache/save@v4
               with:
-                  path: /usr/share/miniconda/
+                  path: /usr/share/miniconda/envs/in-context-learning
                   key: ${{ steps.cache-miniconda-load.outputs.cache-primary-key }}
