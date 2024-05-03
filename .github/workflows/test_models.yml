@@ -5,15 +5,17 @@ on:
         branches: [main]
 
 jobs:
+    conda:
+        uses: ./.github/workflows/conda_cache.yml
+
     test:
+        needs: conda
         runs-on: ubuntu-latest
         strategy:
             matrix:
                 python-version: ["3.10"]
         steps:
             - uses: actions/checkout@v4
-
-            - uses: ./.github/workflows/conda_cache.yml
 
             - name: Test context models
               run: source .github/checks.sh && run_model_checks

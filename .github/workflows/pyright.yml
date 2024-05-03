@@ -5,15 +5,17 @@ on:
         branches: [main]
 
 jobs:
+    conda:
+        uses: ./.github/workflows/conda_cache.yml
+
     type-check:
+        needs: conda
         runs-on: ubuntu-latest
         strategy:
             matrix:
                 python-version: ["3.10"]
         steps:
             - uses: actions/checkout@v4
-
-            - uses: ./.github/workflows/conda_cache.yml
 
             - name: Run PyRight with PyLance version
               uses: jakebailey/pyright-action@v2
