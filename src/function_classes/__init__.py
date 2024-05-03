@@ -12,6 +12,11 @@ from .wrappers import (
     ScaledRegression,
 )
 
+from .chebyshev import (
+    ChebyshevKernelLinearRegression,
+    ChebyshevSharedRoots,
+)
+
 FUNCTION_CLASSES: dict[str, type[FunctionClass]] = {
     "linear regression" : LinearRegression,
     "linear classification" : LinearClassification,
@@ -19,6 +24,9 @@ FUNCTION_CLASSES: dict[str, type[FunctionClass]] = {
     "quadratic regression" : QuadraticRegression,
     "2 layer mlp regression" : MLPRegression,
     "decision tree" : DecisionTreeRegression,
+
+    "chebyshev kernel linear regression" : ChebyshevKernelLinearRegression,
+    "chebyshev shared roots" : ChebyshevSharedRoots,
 }
 
 __all__ = [
