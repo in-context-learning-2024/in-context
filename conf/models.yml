@@ -107,6 +107,18 @@ model: &llama_mamba_classic
     rope_theta: 1000
     num_mamba_layers: 1
     num_mamba_instances: 2
+
+model: &llama_mamba_no_rope
+    type: llama_mamba
+    n_positions: 101
+    n_layer: 3
+    n_embd: 64
+    n_head: 2
+    want_rope: False
+    hidden_act: "silu"
+    rope_theta: 1000
+    num_mamba_layers: 1
+    num_mamba_instances: 2
     
 model: &averaging
     type: averaging
