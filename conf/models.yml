@@ -116,9 +116,11 @@ model: &llama_mamba_no_rope
     n_head: 2
     want_rope: False
     hidden_act: "silu"
-    rope_theta: 0
+    rope_theta: 1000
     num_mamba_layers: 1
     num_mamba_instances: 2
+
+    
     
 model: &averaging
     type: averaging
