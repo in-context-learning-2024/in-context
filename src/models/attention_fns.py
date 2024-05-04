@@ -81,7 +81,6 @@ def vit_style_relu_attn(self, query, key, value, attention_mask=None, head_mask=
   
     return attn_output, attn_weights
 
-
 def forward_llama_attention_standard(
         self,
         hidden_states: torch.Tensor,
