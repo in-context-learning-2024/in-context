@@ -89,7 +89,7 @@ class LlamaMambaModel(ModSeqModelLlama):
 
 class ModLlamaModel(ModSeqModelLlama):
     def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, want_rope=True, hidden_act="silu", custom_attn_func = None, rope_theta=1e4, **kwargs):
-        super(LlamaMambaModel, self).__init__(x_dim, n_positions, n_embd=n_embd, n_layer=n_layer, custom_attn_func = custom_attn_func, n_head=n_head, hidden_act=hidden_act, rope_theta=rope_theta)
+        super(ModLlamaModel, self).__init__(x_dim, n_positions, n_embd=n_embd, n_layer=n_layer, custom_attn_func = custom_attn_func, n_head=n_head, hidden_act=hidden_act, rope_theta=rope_theta)
         
         self.name = f"llamamod_embd={n_embd}_layer={n_layer}_head={n_head}"
       

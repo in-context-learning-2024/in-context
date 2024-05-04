@@ -4,7 +4,7 @@ from .transformer import (
     Llama
 )
 
-from .all_mod_archs import ModTransformerModel, MambaNoAttentionModel, MambaFirstGPT2TransformerModel, MambaformerModel, LlamaMambaModel
+from .all_mod_archs import ModTransformerModel, MambaNoAttentionModel, MambaFirstGPT2TransformerModel, MambaformerModel, ModLlamaModel, LlamaMambaModel
 from .linear import (
     LeastSquaresModel,
     AveragingModel,
