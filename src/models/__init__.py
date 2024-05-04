@@ -32,6 +32,7 @@ MODELS: dict[str, type[ContextModel]] = {
     "mambaformer_classic"   : MambaformerModel,
     "mod_transformer"     : ModTransformerModel,
     "llama_mamba"        : LlamaMambaModel,
+    "llama_mod"          : ModLlamaModel,
     "zero"          : ZeroModel
 }
 
