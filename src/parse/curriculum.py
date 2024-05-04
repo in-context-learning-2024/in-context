@@ -21,7 +21,7 @@ class Curriculum(yaml.YAMLObject):
         return int((self.stop - self.start) / self.step_size)
 
     @property
-    def partitioning_steps(self):
+    def partitioning_steps(self) -> list[int]:
         return [ self.step_len * i for i in range(1, self.max_phases + 1) ]
 
     def __repr__(self):
@@ -47,6 +47,17 @@ def get_value(
     result = obj.start + obj.step_size * effective_phases
     casted_result = type(obj.start)(result)
     return casted_result
+
+def get_max_value(
+    obj: int | float | Curriculum,
+    max_steps: int        
+) -> int | float:
+    if not isinstance(obj, Curriculum):
+        return obj
+    return max(
+        get_value(obj, max_steps), # pyright: ignore[reportArgumentType]
+        get_value(obj, 0) # pyright: ignore[reportArgumentType]
+    )
 
 def expand_curriculum(raw_data: dict) -> tuple[list[dict], list[int]]:
 

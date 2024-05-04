@@ -1,20 +1,11 @@
 import argparse as arg
 import wandb
-import torch
 import os
 import yaml
 
-from typing import Optional
+from typing import Any
 
-from parse import parse_training
-
-def nest_yaml(tag: str, content: str, indent_size:int=4) -> str:
-    indent = indent_size * ' '
-    
-    lines = content.split('\n')
-    lines = [ indent + line for line in lines ]
-
-    return f"{tag}:\n" + "\n".join(lines)
+from parse import parse_training_from_file
 
 def log_yaml(full_yaml: str) -> None:
     # save locally
@@ -32,47 +23,23 @@ def log_yaml(full_yaml: str) -> None:
         f.write(full_yaml)
     wandb.save(wandb_conf_path, base_path=wandb.run.dir) # pyright: ignore [reportOptionalMemberAccess]
 
-def load_config(conffile: str) -> str:
-    with open("conf/models.yml", 'r') as f:
-        model_conf = f.read()
-    with open(conffile, 'r') as f:
-        train_conf = f.read()
-
-    full_yaml = model_conf.strip() + '\n\n' \
-                + nest_yaml("train", train_conf.strip())
-
-    return full_yaml
-
-def load_checkpoint(checkpointfile: str) -> tuple:
-    latest_checkpoint = torch.load(checkpointfile)
-    return latest_checkpoint['model_state_dict'], latest_checkpoint['optimizer_state_dict']
-
 def main(args: arg.Namespace):
 
-    yaml_str = load_config(args.conffile)
+    if args.checkpointfile == "":
+        trainer, config = parse_training_from_file(args.conffile)
+    else:
+        trainer, config = parse_training_from_file(args.conffile, args.checkpointfile)
 
-    init_args = { "config" : yaml.load(yaml_str, Loader=yaml.Loader)['train'] } 
+    init_args: dict[str, Any] = { "config" : config }
     if args.projectname != "":
         init_args |= { "project" : args.projectname }
     if args.runname != "":
         init_args |= { "name" : args.runname }
     wandb.init(**init_args)
 
-    log_yaml(yaml_str)
+    log_yaml(yaml.dump(config, Dumper=yaml.Dumper))
 
-    if args.checkpointfile == "":
-        trainer = parse_training(yaml_str)
-    else:
-        latest_step = int(os.path.basename(args.checkpointfile).split("_")[-1])
-        model_weights, optim_state = load_checkpoint(args.checkpointfile)
-
-        trainer = parse_training(
-            yaml_str,
-            skip_steps=latest_step,
-            model_weights=model_weights,
-            optim_state=optim_state
-        )
-
+    print(f"Starting training ...")
     trainer.train()
 
 
