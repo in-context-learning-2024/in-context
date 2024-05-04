@@ -30,7 +30,6 @@ class FunctionClassError(Benchmark):
                 perfect_pred=perfect_model.forward(x_batch, y_batch)
                 for model_num, model in enumerate(models):
                     with torch.no_grad():
-                        print(model.name)
                         y_pred=model.forward(x_batch, y_batch)
                         errs[batch_num, model_num, :, :, :y_dim]=self.metric.evaluate(y_batch, y_pred)
                         errs[batch_num, model_num, :, :, y_dim:]=self.metric.evaluate(perfect_pred, y_pred)
