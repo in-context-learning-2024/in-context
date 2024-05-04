@@ -4,7 +4,16 @@ from .transformer import (
     Llama
 )
 
-from .all_mod_archs import ModTransformerModel, MambaNoAttentionModel, MambaFirstGPT2TransformerModel, MambaformerModel, ModLlamaModel, LlamaMambaModel
+from .all_mod_archs import (
+        ModTransformerModel,
+        MambaNoAttentionModel,
+        MambaFirstGPT2TransformerModel,
+        MambaformerModel,
+        ModLlamaModel,
+        LlamaMambaModel,
+        LlamaSingleMambaModel
+)
+
 from .linear import (
     LeastSquaresModel,
     AveragingModel,
@@ -33,6 +42,7 @@ MODELS: dict[str, type[ContextModel]] = {
     "mod_transformer"     : ModTransformerModel,
     "llama_mamba"        : LlamaMambaModel,
     "llama_mod"          : ModLlamaModel,
+    "llama_standard_hybrid" : 
     "zero"          : ZeroModel
 }
 
