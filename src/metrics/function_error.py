@@ -151,7 +151,7 @@ class FCErrorOrthogonal(FunctionClassError):
                         for model in models
                     ])[:, :, j]
         
-        errs = torch.reshape(errs, (num_models, num_batches*batch_size, sequence_length))[:, :, 1:]
+        errs = torch.reshape(errs, (num_models, num_batches*batch_size, sequence_length, y_dim))[:, :, 1:]
 
         return errs
 
@@ -190,6 +190,6 @@ class FCErrorSeenPoints(FunctionClassError):
                         for model in models
                     ])[:, :, j]
         
-        errs = torch.reshape(errs, (num_models, num_batches*batch_size, sequence_length))[:, :, 1:]
+        errs = torch.reshape(errs, (num_models, num_batches*batch_size, sequence_length, y_dim))[:, :, 1:]
 
         return errs
