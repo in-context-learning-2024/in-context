@@ -42,7 +42,7 @@ MODELS: dict[str, type[ContextModel]] = {
     "mod_transformer"     : ModTransformerModel,
     "llama_mamba"        : LlamaMambaModel,
     "llama_mod"          : ModLlamaModel,
-    "llama_standard_hybrid" : 
+    "llama_standard_hybrid" : LlamaSingleMambaModel,
     "zero"          : ZeroModel
 }
 
