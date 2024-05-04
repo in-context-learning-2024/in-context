@@ -71,8 +71,8 @@ class ModTransformerModel(ModSeqModel):
         self.change_gpt2_block(block_var_declare_no_change, self.gpt2_configuration, forward_block_mod_transformer)
 
 class LlamaMambaModel(ModSeqModelLlama):
-    def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, want_rope=True, hidden_act="silu", rope_theta=1e4, num_mamba_layers=1, num_mamba_instances=2, **kwargs):
-        super(LlamaMambaModel, self).__init__(x_dim, n_positions, n_embd=n_embd, n_layer=n_layer, n_head=n_head, hidden_act=hidden_act, rope_theta=rope_theta)
+    def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, want_rope=True, custom_attn_func = None, hidden_act="silu", rope_theta=1e4, num_mamba_layers=1, num_mamba_instances=2, **kwargs):
+        super(LlamaMambaModel, self).__init__(x_dim, n_positions, n_embd=n_embd, n_layer=n_layer, custom_attn_func = custom_attn_func, n_head=n_head, hidden_act=hidden_act, rope_theta=rope_theta)
        
         mamba_configuration = MambaConfig(
             vocab_size=self.llama_configuration.vocab_size,
@@ -86,4 +86,11 @@ class LlamaMambaModel(ModSeqModelLlama):
         self.name = f"llamamamba_embd={n_embd}_layer={n_layer}_head={n_head}"
         
         self.change_llama_block(block_var_declare_llamamamba, [MambaModel(mamba_configuration) for _ in range(num_mamba_instances)], forward_block_llamamamba)
+
+class ModLlamaModel(ModSeqModelLlama):
+    def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, want_rope=True, hidden_act="silu", custom_attn_func = None, rope_theta=1e4, num_mamba_layers=1, num_mamba_instances=2, **kwargs):
+        super(LlamaMambaModel, self).__init__(x_dim, n_positions, n_embd=n_embd, n_layer=n_layer, custom_attn_func = custom_attn_func, n_head=n_head, hidden_act=hidden_act, rope_theta=rope_theta)
+        
+        self.name = f"llamamod_embd={n_embd}_layer={n_layer}_head={n_head}"
       
+
