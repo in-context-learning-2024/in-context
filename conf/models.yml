@@ -120,8 +120,36 @@ model: &llama_mamba_no_rope
     num_mamba_layers: 1
     num_mamba_instances: 2
 
+model: &llama_gelu_no_rope
+    type: llama_mod
+    n_positions: 101
+    n_layer: 3
+    n_embd: 64
+    n_head: 2
+    want_rope: False
+    hidden_act: "gelu_new"
+    rope_theta: 1000
     
+model: &llama_no_rope
+    type: llama_mod
+    n_positions: 101
+    n_layer: 3
+    n_embd: 64
+    n_head: 2
+    want_rope: False
+    hidden_act: "silu"
+    rope_theta: 1000
     
+model: &llama_gelu
+    type: llama_mod
+    n_positions: 101
+    n_layer: 3
+    n_embd: 64
+    n_head: 2
+    want_rope: True
+    hidden_act: "gelu_new"
+    rope_theta: 1000
+
 model: &averaging
     type: averaging
 
