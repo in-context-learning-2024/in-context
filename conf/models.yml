@@ -150,6 +150,18 @@ model: &llama_gelu
     hidden_act: "gelu_new"
     rope_theta: 1000
 
+model: &llama_mamba_over_ffn
+    type: llama_standard_hybrid
+    n_positions: 101
+    n_layer: 3
+    n_embd: 64
+    n_head: 2
+    want_rope: True
+    hidden_act: "silu"
+    rope_theta: 1000
+    num_mamba_layers: 1
+    num_mamba_instances: 1
+    
 model: &averaging
     type: averaging
 
