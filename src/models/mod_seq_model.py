@@ -54,8 +54,8 @@ class ModSeqModel(GPT2):
 class ModSeqModelLlama(Llama):
     def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, want_rope=True, hidden_act="silu", rope_theta=1e4, **kwargs):
         super().__init__(x_dim, n_positions, n_embd=n_embd, n_layer=n_layer, n_head=n_head, hidden_act=hidden_act, rope_theta=rope_theta)
-        if hidden_act == "silu":
-            self.custom_attn_func = functools.partial(forward_llama_attention_standard, want_rope=want_rope)
+        #if hidden_act == "silu":
+        #    self.custom_attn_func = functools.partial(forward_llama_attention_standard, want_rope=want_rope)
 
         self.want_rope = want_rope
         self._n_dims = x_dim
@@ -68,4 +68,4 @@ class ModSeqModelLlama(Llama):
             x.forward = types.MethodType(functools.partial(instantiate_forward_fn), x)
             #EX: Block_var_declare_llamamamba
             instantiate_var_fn(x, instantiate_var_arg)
-            x.self_attn.forward = types.MethodType(self.custom_attn_func, x.self_attn)
+            #x.self_attn.forward = types.MethodType(self.custom_attn_func, x.self_attn)
