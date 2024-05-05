@@ -10,7 +10,7 @@ class KNNModel(Baseline):
         self.name = f"KNN_n={n_neighbors}_{weights}"
         self.context_length = -1
 
-    def forward(self, xs, ys):
+    def evaluate(self, xs, ys):
         
         preds = []
 

@@ -6,5 +6,5 @@ class ZeroModel(Baseline):
         self.name = "zero_model"
         self.context_length = -1
 
-    def forward(self, xs, ys):
+    def evaluate(self, xs, ys):
         return 0 * xs[..., 0:self.y_dim]

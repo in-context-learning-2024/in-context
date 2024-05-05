@@ -5,6 +5,7 @@ import os.path
 from typing import Any, Optional
 
 from train import TrainerSteps
+from core import TrainableModel
 
 from .curriculum import expand_curriculum, get_max_value
 from .dist import get_x_distribution
@@ -41,11 +42,15 @@ def _produce_trainer_stages(data: dict) -> TrainerSteps:
 
     if 'model_weights' in data and 'optim_state' in data:
         data["model"] = get_model(data['model'], x_dim, y_dim, data['model_weights'])
+        if not isinstance(data['model'], TrainableModel):
+            raise TypeError(f"Model `{data['model'].name}` is not a TrainableModel!")
         data["optim"] = get_optimizer(data['model'], data['optim'], data['optim_state'])
         del data['model_weights']
         del data['optim_state']
     else:
         data["model"] = get_model(data['model'], x_dim, y_dim)
+        if not isinstance(data['model'], TrainableModel):
+            raise TypeError(f"Model `{data['model'].name}` is not a TrainableModel!")
         data["optim"] = get_optimizer(data['model'], data['optim'])
 
     data['loss_fn'] = get_loss_fn(data['loss_fn'])

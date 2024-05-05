@@ -8,7 +8,7 @@ class XGBoostModel(Baseline):
         self.name = "xgboost"
         self.context_length = -1
 
-    def forward(self, xs, ys):
+    def evaluate(self, xs, ys):
         xs, ys = xs.cpu(), ys.cpu()
         preds = []
         # i: loop over num_points
@@ -36,5 +36,5 @@ class XGBoostModelSGN(XGBoostModel):
         super(XGBoostModelSGN, self).__init__(**kwargs)
         self.name = self.name.replace("xgboost", "xgboostSGN")
 
-    def forward(self, xs, ys):
-        return super().forward(torch.sign(xs), ys)
+    def evaluate(self, xs, ys):
+        return super().evaluate(torch.sign(xs), ys)

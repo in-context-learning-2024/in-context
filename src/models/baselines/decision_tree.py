@@ -13,7 +13,7 @@ class DecisionTreeModel(Baseline):
         self.name = f"decision_tree_max_depth={max_depth}"
         self.context_length = -1
 
-    def forward(self, xs, ys):
+    def evaluate(self, xs, ys):
         xs, ys = xs.cpu(), ys.cpu()
 
         preds = []
@@ -44,5 +44,5 @@ class DecisionTreeModelSGN(DecisionTreeModel):
         super(DecisionTreeModelSGN, self).__init__(**kwargs)
         self.name = self.name.replace("decision_tree", "decision_treeSGN")
 
-    def forward(self, xs, ys):
-        return super().forward(torch.sign(xs), ys)
+    def evaluate(self, xs, ys):
+        return super().evaluate(torch.sign(xs), ys)

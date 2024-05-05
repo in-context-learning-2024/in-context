@@ -17,7 +17,7 @@ class LeastSquaresModel(Baseline):
         self.name = f"OLS_driver={driver}"
         self.context_length = -1
 
-    def forward(self, xs, ys):
+    def evaluate(self, xs, ys):
         DEVICE = xs.device
         xs, ys = xs.cpu(), ys.cpu()
         ys = ys[..., 0] # remove the trivial y_dim=1 dimension
@@ -53,7 +53,7 @@ class AveragingModel(Baseline):
         self.name = "averaging"
         self.context_length = -1
 
-    def forward(self, xs, ys):
+    def evaluate(self, xs, ys):
         preds = []
 
         for i in range(ys.shape[1]):
@@ -83,7 +83,7 @@ class LassoModel(Baseline):
         self.name = f"lasso_alpha={alpha}_max_iter={max_iter}"
         self.context_length = -1
 
-    def forward(self, xs, ys):
+    def evaluate(self, xs, ys):
         DEVICE = xs.device
         xs, ys = xs.cpu(), ys.cpu()
 

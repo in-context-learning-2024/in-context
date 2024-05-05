@@ -2,7 +2,7 @@ import torch
 
 from typing import Callable, Optional
 
-from core import ContextModel
+from core import TrainableModel
 
 from .utils import check_kwargs, clean_instantiate
 
@@ -19,7 +19,7 @@ def get_loss_fn(data: dict) -> torch.nn.Module:
     
     return clean_instantiate(loss_fn_type, **data)
 
-def get_optimizer(model: ContextModel, data: dict, optim_state: Optional[dict] = None) -> torch.optim.Optimizer:
+def get_optimizer(model: TrainableModel, data: dict, optim_state: Optional[dict] = None) -> torch.optim.Optimizer:
 
     OPTIMIZERS = {
         "sgd" : torch.optim.SGD,
