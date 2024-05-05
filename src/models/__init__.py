@@ -1,20 +1,20 @@
 from core import ContextModel
 from .transformer import (
     GPT2,
-    Llama
+    Llama,
 )
 
 from .all_mod_archs import (
-        ModTransformerModel,
-        MambaNoAttentionModel,
-        MambaFirstGPT2TransformerModel,
-        MambaformerModel,
-        ModLlamaModel,
-        LlamaMambaModel,
-        LlamaSingleMambaModel
+    ModTransformerModel,
+    MambaNoAttentionModel,
+    MambaFirstGPT2TransformerModel,
+    MambaformerModel,
+    ModLlamaModel,
+    LlamaMambaModel,
+    LlamaSingleMambaModel,
 )
 
-from baselines import (
+from .baselines import (
     LeastSquaresModel,
     KNNModel,
     AveragingModel,
@@ -43,9 +43,9 @@ MODELS: dict[str, type[ContextModel]] = {
     "grad mlp"      : GDModel,
     "decision tree" : DecisionTreeModel,
     "xgboost"       : XGBoostModel,
-    "zero"          : ZeroModel
+    "zero"          : ZeroModel,
 }
 
 __all__ = [
-    "MODELS"
+    "MODELS",
 ]

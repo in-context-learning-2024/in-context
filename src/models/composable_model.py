@@ -1,4 +1,7 @@
+import torch
+
 from torch import nn, Tensor
+from typing import Callable
 
 from transformers import PretrainedConfig
 
@@ -31,9 +34,9 @@ SUPPORTED_BLOCKS = [
     "residual",
     "rms norm",
     "layer norm",
-    # "rope",
 
     "llama attn",
+    "llama attn no rope",
     "gpt2 attn",
     "mamba mixer",
 
@@ -45,17 +48,42 @@ SUPPORTED_BLOCKS = [
     "mamba block",
 ]
 
+class RotaryEmbeddingStub(LlamaRotaryEmbedding):
+    def __init__(self, actual_embedding: LlamaRotaryEmbedding, enable: bool = False):
+        if enable:
+            self.actual_embedding = actual_embedding
+
+        self.enable = enable
+
+    def forward(self, x, position_ids):
+        cos, sin = self.actual_embedding(x, position_ids)
+        
+        if self.enable:
+            return cos, sin
+        return torch.ones_like(cos), torch.zeros_like(sin)
+
+def _make_llama_attention_factory(config: PretrainedConfig, layer_idx: int, use_rope: bool) -> Callable[[], nn.Module]:
+    def llama_attn_factory():
+        attn_module = LlamaAttention(config=config, layer_idx=layer_idx) # pyright: ignore[reportArgumentType]
+
+        attn_module.rotary_emb = RotaryEmbeddingStub(attn_module.rotary_emb, enable=use_rope)
+
+        return attn_module
+
+    return llama_attn_factory
+
 def SPEC_TO_MODULE(spec_name: str, config: PretrainedConfig, layer_idx: int) -> nn.Module:
     # We wrap the instantiation of each of the modules in a lambda
     # construct to avoid instantiating every layer whenever we call
     # this mapping
-    MAPPING = {
+    MAPPING: dict[str, Callable[[], nn.Module]] = {
         "residual"   : lambda: ResidualMarker(),
         "rms norm"   : lambda: LlamaRMSNorm(config.hidden_size, eps=config.rms_norm_eps), # MambaRMSNorm is identical
         "layer norm" : lambda: nn.LayerNorm(config.hidden_size, eps=config.layer_norm_epsilon),
         # "rope"       : LlamaRotaryEmbedding(),
 
-        "llama attn"  : lambda: LlamaAttention(config=config, layer_idx=layer_idx), # pyright: ignore[reportArgumentType]
+        "llama attn"  : _make_llama_attention_factory(config, layer_idx, use_rope=True),
+        "llama attn no rope" : _make_llama_attention_factory(config, layer_idx, use_rope=False),
         "gpt2 attn"   : lambda: GPT2Attention(config=config, layer_idx=layer_idx),
         "mamba mixer" : lambda: MambaMixer(config, layer_idx=layer_idx),
 
