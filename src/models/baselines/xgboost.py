@@ -1,8 +1,8 @@
 import torch
-from core import ContextModel
+from core import Baseline
 import xgboost as xgb
 
-class XGBoostModel(ContextModel):
+class XGBoostModel(Baseline):
     def __init__(self, **kwargs):
         super(XGBoostModel, self).__init__(**kwargs)
         self.name = "xgboost"

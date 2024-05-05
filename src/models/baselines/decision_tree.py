@@ -3,9 +3,9 @@ import torch
 from sklearn import tree
 from typing import Optional
 
-from core import ContextModel
+from core import Baseline
 
-class DecisionTreeModel(ContextModel):
+class DecisionTreeModel(Baseline):
     def __init__(self, max_depth: Optional[int] = None, **kwargs):
         super(DecisionTreeModel, self).__init__(**kwargs)
 

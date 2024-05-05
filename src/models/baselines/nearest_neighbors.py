@@ -1,8 +1,8 @@
 import torch
-from core import ContextModel
+from core import Baseline
 
 
-class KNNModel(ContextModel):
+class KNNModel(Baseline):
     def __init__(self, n_neighbors, weights="uniform", **kwargs):
         super(KNNModel, self).__init__(**kwargs)
         self._n_neighbors = n_neighbors

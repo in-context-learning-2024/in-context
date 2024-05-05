@@ -1,11 +1,11 @@
 import torch
-from core import ContextModel
+from core import Baseline
 from sklearn.linear_model import Lasso
 from sklearn.exceptions import ConvergenceWarning
 import warnings
 
 # xs and ys should be on cpu for this method. Otherwise the output maybe off in case when train_xs is not full rank due to the implementation of torch.linalg.lstsq.
-class LeastSquaresModel(ContextModel):
+class LeastSquaresModel(Baseline):
     def __init__(self, driver=None, **kwargs):
         super(LeastSquaresModel, self).__init__(**kwargs)
 
@@ -47,7 +47,7 @@ class LeastSquaresModel(ContextModel):
         return torch.stack(preds, dim=1).to(device=DEVICE)
 
 
-class AveragingModel(ContextModel):
+class AveragingModel(Baseline):
     def __init__(self, **kwargs):
         super(AveragingModel, self).__init__(**kwargs)
         self.name = "averaging"
@@ -73,7 +73,7 @@ class AveragingModel(ContextModel):
 
 # Lasso regression (for sparse linear regression).
 # Seems to take more time as we decrease alpha.
-class LassoModel(ContextModel):
+class LassoModel(Baseline):
     def __init__(self, alpha: float, max_iter: int = 100000, **kwargs):
         super(LassoModel, self).__init__(**kwargs)
 

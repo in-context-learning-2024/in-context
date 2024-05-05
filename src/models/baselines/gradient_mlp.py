@@ -4,7 +4,7 @@ from typing import Literal
 
 from tqdm import tqdm
 
-from core import ContextModel
+from core import Baseline
 from utils import curried_throw
 
 def get_activation(act: str) -> nn.Module:
@@ -63,7 +63,7 @@ class ParallelNetworks(nn.Module):
 
 # Gradient Descent and variants.
 # Example usage: gd_model = GDModel("mlp", {'dimensions': [256]}, opt_alg_name = 'adam', batch_size = 100, lr = 5e-3, num_steps = 200)
-class GDModel(ContextModel):
+class GDModel(Baseline):
     def __init__(
         self,
         model_class_name: Literal["mlp"],
