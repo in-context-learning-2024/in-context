@@ -4,6 +4,10 @@ from .transformer import (
     Llama,
 )
 
+from .hybrid import (
+    HybridModel,
+)
+
 from .all_mod_archs import (
     ModTransformerModel,
     MambaNoAttentionModel,
@@ -28,6 +32,7 @@ from .baselines import (
 MODELS: dict[str, type[ContextModel]] = {
     "gpt2" : GPT2,
     "llama" : Llama,
+    "hybrid" : HybridModel,
     "mambafirstgpt2"        : MambaFirstGPT2TransformerModel,
     "mambaonly"             : MambaNoAttentionModel,
     "mambaformer_classic"   : MambaformerModel,
