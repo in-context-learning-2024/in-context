@@ -11,7 +11,7 @@ model: &std_llama
     n_layer: 12
     n_embd: 256
     n_head: 8
-    rope_theta: inf
+    rope_theta: !!python/float inf
     
 model: &knn_3
     type: knn
