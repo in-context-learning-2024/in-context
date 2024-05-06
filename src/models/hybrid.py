@@ -35,10 +35,11 @@ SUPPORTED_BLOCKS = [
     "residual",
     "rms norm",
     "layer norm",
+    "absolute positional embedding",
 
-    "llama attn",
-    "llama attn no rope",
-    "gpt2 attn",
+    "llama attention",
+    "llama attention no rope",
+    "gpt2 attention",
     "mamba mixer",
 
     "llama mlp",
@@ -48,6 +49,33 @@ SUPPORTED_BLOCKS = [
     "gpt2 block",
     "mamba block",
 ]
+
+class ResidualMarker(nn.Module):
+    """
+    This class is a dummy module to mark where 
+    residual connections should be made
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.net = nn.Identity()
+    
+    def forward(self, *args, **kwargs):
+        return self.net(*args, **kwargs)
+
+
+class AbsolutePositionalEmbedding(nn.Module):
+
+    def __init__(self, max_num_positions, hidden_dim):
+        super().__init__()
+        self.positions = torch.arange(0, max_num_positions, dtype=torch.int)
+        self.embed = nn.Embedding(max_num_positions, hidden_dim)
+
+    def forward(self, inp: Tensor) -> Tensor:
+        *_, seq_len, _ = inp.shape
+        pos = self.positions.to(device=inp.device)
+        embeddings = self.embed(pos)[:seq_len]
+        return inp + embeddings
 
 class RotaryEmbeddingStub(LlamaRotaryEmbedding):
     def __init__(self, *args, enable: bool = False, **kwargs):
@@ -88,11 +116,11 @@ def SPEC_TO_MODULE(spec_name: str, config: PretrainedConfig, layer_idx: int) -> 
         "residual"   : lambda: ResidualMarker(),
         "rms norm"   : lambda: LlamaRMSNorm(config.hidden_size, eps=config.rms_norm_eps), # MambaRMSNorm is identical
         "layer norm" : lambda: nn.LayerNorm(config.hidden_size, eps=config.layer_norm_epsilon),
-        # "rope"       : LlamaRotaryEmbedding(),
+        "absolute positional embedding" : lambda: AbsolutePositionalEmbedding(config.max_position_embeddings, config.hidden_size),
 
-        "llama attn"  : _make_llama_attention_factory(config, layer_idx, use_rope=True),
-        "llama attn no rope" : _make_llama_attention_factory(config, layer_idx, use_rope=False),
-        "gpt2 attn"   : lambda: GPT2Attention(config=config, layer_idx=layer_idx),
+        "llama attention"  : _make_llama_attention_factory(config, layer_idx, use_rope=True),
+        "llama attention no rope" : _make_llama_attention_factory(config, layer_idx, use_rope=False),
+        "gpt2 attention"   : lambda: GPT2Attention(config=config, layer_idx=layer_idx),
         "mamba mixer" : lambda: MambaMixer(config, layer_idx=layer_idx),
 
         "llama mlp" : lambda: LlamaMLP(config),
@@ -108,20 +136,6 @@ def SPEC_TO_MODULE(spec_name: str, config: PretrainedConfig, layer_idx: int) -> 
                         "sure `MAPPING` in this function and `SUPPORTED_BLOCKS` "
                         "are equal in this file")
     return MAPPING[spec_name]()
-
-
-class ResidualMarker(nn.Module):
-    """
-    This class is a dummy module to mark where 
-    residual connections should be made
-    """
-
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.net = nn.Identity()
-    
-    def forward(self, *args, **kwargs):
-        return self.net(*args, **kwargs)
 
 
 class HybridBackbone(nn.Module):
