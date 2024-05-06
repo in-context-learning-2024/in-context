@@ -1,0 +1,14 @@
+model: &base_config
+    n_positions: 101
+    n_layer: 12
+    n_embd: 256
+    n_head: 8
+
+model: &std_gpt2
+    type: gpt2
+    <<: *base_config
+
+model: &std_llama
+    type: llama
+    <<: *base_config
+

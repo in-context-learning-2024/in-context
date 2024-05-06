@@ -2,6 +2,7 @@ import torch
 
 from torch import nn, Tensor
 from typing import Callable
+from functools import partial
 
 from transformers import PretrainedConfig
 from transformers.modeling_outputs import BaseModelOutput
@@ -156,7 +157,11 @@ class HybridBackbone(nn.Module):
     ):
         super().__init__()
 
-        self.module_names = module_names
+        flatten = lambda lst: sum(map(flatten, lst), []) if isinstance(lst, list) else [lst]
+        self.module_names = flatten(module_names)
+        if not all(isinstance(mod, str) for mod in self.module_names):
+            raise TypeError(f"Module names for HybridBackbone are malformed! Got:\n{self.module_names}")
+    
         self.raw_config = {
             "n_positions" : n_positions,
             "n_embd" : embed_dim,
@@ -202,7 +207,7 @@ class HybridBackbone(nn.Module):
         ) if self.has("mamba") else None
 
         modules: list[nn.Module] = [ ]
-        for layer_idx, mod_name in enumerate(module_names):
+        for layer_idx, mod_name in enumerate(self.module_names):
             config_for_this_layer = None
 
             if "llama" in mod_name:
@@ -247,7 +252,7 @@ class HybridBackbone(nn.Module):
                 **forward_kwargs
             )
 
-            if isinstance(hidden_state, (tuple, )): # collect only attention outputs for those layers
+            if isinstance(hidden_state, (tuple, )): # collect only attention outputs for attn layers
                 hidden_state = hidden_state[0]
 
             if isinstance(layer, ResidualMarker):

@@ -26,9 +26,9 @@ def log_yaml(full_yaml: str) -> None:
 def main(args: arg.Namespace):
 
     if args.checkpointfile == "":
-        trainer, config = parse_training_from_file(args.conffile)
+        trainer, config = parse_training_from_file(args.conffile, include=args.includedir)
     else:
-        trainer, config = parse_training_from_file(args.conffile, args.checkpointfile)
+        trainer, config = parse_training_from_file(args.conffile, args.checkpointfile, include=args.includedir)
 
     init_args: dict[str, Any] = { "config" : config }
     if args.projectname != "":
@@ -44,6 +44,7 @@ def main(args: arg.Namespace):
 
 
 if __name__ == "__main__":
+    conf_include_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "conf", "include")
     parser = arg.ArgumentParser()
 
     parser.add_argument("--config", '-c', type=str, default="", action='store', dest="conffile",
@@ -54,5 +55,7 @@ if __name__ == "__main__":
                         help="the project to log to in weights and biases")
     parser.add_argument("--run-name", type=str, default="", dest="runname",
                         help="what to name this run in wandb")
+    parser.add_argument("--include-dir", type=str, default=conf_include_dir, action='store', dest="includedir",
+                        help="from what directory to include configurations")
     args = parser.parse_args()
     main(args)

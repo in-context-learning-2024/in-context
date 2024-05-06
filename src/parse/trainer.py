@@ -2,6 +2,7 @@ import yaml
 import torch
 import os.path
 
+from pathlib import Path
 from typing import Any, Optional
 
 from train import TrainerSteps
@@ -97,19 +98,20 @@ def parse_training(yaml_content: str, skip_steps: int = 0, model_weights: Option
 
     return big_trainer, d['train']
 
-def parse_training_from_file(filename: str, checkpoint_path: Optional[str] = None) -> tuple[TrainerSteps, dict]:
-    
-    conf_dir = os.path.join(os.path.dirname(filename), "..")
-    models_yml_file = os.path.join(conf_dir, "models.yml")
-    with open(models_yml_file, 'r') as f:
-        model_conf = f.read()
+def parse_training_from_file(filename: str, include: str, checkpoint_path: Optional[str] = None) -> tuple[TrainerSteps, dict]:
+
+    included = ""
+    for file in Path(include).rglob("*.yml"):
+        with open(file, "r") as f:
+            included += f.read() + "\n"
+
     with open(filename, 'r') as f:
         lines = f.readlines()
 
     lines = [ ' '*4 + line for line in lines ]
     content = f"train:\n" + "\n".join(lines)
 
-    full_yaml = model_conf.strip() + '\n\n' + content
+    full_yaml = included.strip() + '\n\n' + content
 
     if checkpoint_path is None:
         return parse_training(full_yaml)

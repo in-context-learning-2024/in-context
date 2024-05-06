@@ -1,40 +1,12 @@
-model: &std_gpt2
-    type: gpt2
+info: &hybrid_config
     n_positions: 101
     n_layer: 12
     n_embd: 256
     n_head: 8
-
-model: &std_llama
-    type: llama
-    n_positions: 101
-    n_layer: 12
-    n_embd: 256
-    n_head: 8
-
-model: &knn_3
-    type: knn
-    n_neighbors: 3
-
-model: &least_squares
-    type: least squares
-
-model: &lasso
-    type: lasso
-    alpha: 0.1
-
-model: &d_tree
-    type: decision tree
-
-model: &xgboost
-    type: xgboost
 
 model: &mambafirstgpt2_no_pos_embed
     type: mambafirstgpt2
-    n_positions: 101
-    n_layer: 3
-    n_embd: 64
-    n_head: 2
+    <<: *hybrid_config
     want_pos_embeddings: False
     no_attention: False
     num_mamba_layers: 1
@@ -42,10 +14,7 @@ model: &mambafirstgpt2_no_pos_embed
 
 model: &mambafirstgpt2_pos_embed
     type: mambafirstgpt2
-    n_positions: 101
-    n_layer: 3
-    n_embd: 64
-    n_head: 2
+    <<: *hybrid_config
     want_pos_embeddings: True
     no_attention: False
     num_mamba_layers: 4
@@ -53,10 +22,7 @@ model: &mambafirstgpt2_pos_embed
 
 model: &mambaonly_pos_embed
     type: mambaonly
-    n_positions: 101
-    n_layer: 3
-    n_embd: 64
-    n_head: 2
+    <<: *hybrid_config
     want_pos_embeddings: True
     no_attention: True
     num_mamba_layers: 10
@@ -64,10 +30,7 @@ model: &mambaonly_pos_embed
 
 model: &mambaonly_no_pos_embed
     type: mambaonly
-    n_positions: 101
-    n_layer: 3
-    n_embd: 64
-    n_head: 2
+    <<: *hybrid_config
     want_pos_embeddings: False
     no_attention: True
     num_mamba_layers: 5
@@ -76,10 +39,7 @@ model: &mambaonly_no_pos_embed
 
 model: &mambaformer_classic
     type: mambaformer_classic
-    n_positions: 101
-    n_layer: 3
-    n_embd: 64
-    n_head: 2
+    <<: *hybrid_config
     want_pos_embeddings: False
     no_attention: False
     num_mamba_layers: 1
@@ -88,20 +48,14 @@ model: &mambaformer_classic
 
 model: &mod_transformer
     type: mod_transformer
-    n_positions: 101
-    n_layer: 3
-    n_embd: 64
-    n_head: 2
+    <<: *hybrid_config
     want_pos_embeddings: True
     no_attention: False
     custom_attn_func: "relu"
 
 model: &llama_mamba_classic
     type: llama_mamba
-    n_positions: 101
-    n_layer: 3
-    n_embd: 64
-    n_head: 2
+    <<: *hybrid_config
     want_rope: True
     hidden_act: "silu"
     rope_theta: 1000
@@ -110,10 +64,7 @@ model: &llama_mamba_classic
 
 model: &llama_mamba_no_rope
     type: llama_mamba
-    n_positions: 101
-    n_layer: 3
-    n_embd: 64
-    n_head: 2
+    <<: *hybrid_config
     want_rope: False
     hidden_act: "silu"
     rope_theta: 1000
@@ -122,80 +73,30 @@ model: &llama_mamba_no_rope
 
 model: &llama_gelu_no_rope
     type: llama_mod
-    n_positions: 101
-    n_layer: 3
-    n_embd: 64
-    n_head: 2
+    <<: *hybrid_config
     want_rope: False
     hidden_act: "gelu_new"
     rope_theta: 1000
     
 model: &llama_no_rope
     type: llama_mod
-    n_positions: 101
-    n_layer: 3
-    n_embd: 64
-    n_head: 2
+    <<: *hybrid_config
     want_rope: False
     hidden_act: "silu"
     rope_theta: 1000
     
 model: &llama_gelu
     type: llama_mod
-    n_positions: 101
-    n_layer: 3
-    n_embd: 64
-    n_head: 2
+    <<: *hybrid_config
     want_rope: True
     hidden_act: "gelu_new"
     rope_theta: 1000
 
 model: &llama_mamba_over_ffn
     type: llama_standard_hybrid
-    n_positions: 101
-    n_layer: 3
-    n_embd: 64
-    n_head: 2
+    <<: *hybrid_config
     want_rope: True
     hidden_act: "silu"
     rope_theta: 1000
     num_mamba_layers: 1
     num_mamba_instances: 1
-    
-model: &averaging
-    type: averaging
-
-model: &decision_tree_4
-    type: decision tree
-    max_depth: 4
-
-model: &decision_tree
-    type: decision tree
-    max_depth: !!null
-
-model: &zero
-    type: zero
-
-model: &mlp
-    type: grad mlp
-    model_class_name: mlp
-    model_class_args:
-        dimensions: [100]
-    opt_alg_name: adam
-    batch_size: 100
-    lr: !!float 5e-3
-    num_steps: 100
-
-model: &lasso_set
-  - <<: *least_squares
-  - <<: *averaging
-  - <<: *lasso
-    alpha: 0.0001
-  - <<: *lasso
-    alpha: 0.001
-  - <<: *lasso
-    alpha: 0.01
-  - <<: *lasso
-    alpha: 0.1
-  - <<: *lasso
-    alpha: 1

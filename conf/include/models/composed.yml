@@ -1,0 +1,30 @@
+defs:
+    block: &mambaformer_block
+        - llama attention no rope
+        - residual
+        - mamba block
+        - residual
+
+model: &mambaformer_composed
+    type: hybrid
+    n_positions: 101
+    n_embd: 24
+    n_head: 3
+    module_names:
+        - mamba block
+        - residual
+        - *mambaformer_block
+        - *mambaformer_block
+        - *mambaformer_block
+
+        - *mambaformer_block
+        - *mambaformer_block
+        - *mambaformer_block
+
+        - *mambaformer_block
+        - *mambaformer_block
+        - *mambaformer_block
+
+        - *mambaformer_block
+        - *mambaformer_block
+        - *mambaformer_block
