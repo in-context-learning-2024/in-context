@@ -10,7 +10,7 @@ def clean_instantiate(class_type: type, *pass_args, **pass_kwargs):
     try:
         return class_type(*pass_args, **pass_kwargs)
     except Exception as e:
-        raise ParsingError(f"Unexpected error when instantiating {class_type}!: \n\t{e}")
+        raise ParsingError(f"Unexpected error when instantiating {class_type}!: \n\t{e}") from e
 
 def check_kwargs(type_mapping: dict, kwarg_dict: dict, display_name: str) -> None:
     if 'type' not in kwarg_dict:

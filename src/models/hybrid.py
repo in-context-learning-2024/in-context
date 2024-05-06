@@ -4,6 +4,7 @@ from torch import nn, Tensor
 from typing import Callable
 
 from transformers import PretrainedConfig
+from transformers.modeling_outputs import BaseModelOutput
 
 from transformers.models.mamba.modeling_mamba import (
     MambaMixer,
@@ -49,15 +50,14 @@ SUPPORTED_BLOCKS = [
 ]
 
 class RotaryEmbeddingStub(LlamaRotaryEmbedding):
-    def __init__(self, actual_embedding: LlamaRotaryEmbedding, enable: bool = False):
-        if enable:
-            self.actual_embedding = actual_embedding
+    def __init__(self, *args, enable: bool = False, **kwargs):
+        super().__init__(*args, **kwargs)
 
         self.enable = enable
 
     def forward(self, x, position_ids):
-        cos, sin = self.actual_embedding(x, position_ids)
-        
+        cos, sin = super().forward(x, position_ids)
+
         if self.enable:
             return cos, sin
         return torch.ones_like(cos), torch.zeros_like(sin)
@@ -65,8 +65,16 @@ class RotaryEmbeddingStub(LlamaRotaryEmbedding):
 def _make_llama_attention_factory(config: PretrainedConfig, layer_idx: int, use_rope: bool) -> Callable[[], nn.Module]:
     def llama_attn_factory():
         attn_module = LlamaAttention(config=config, layer_idx=layer_idx) # pyright: ignore[reportArgumentType]
+        old_posemb = attn_module.rotary_emb
 
-        attn_module.rotary_emb = RotaryEmbeddingStub(attn_module.rotary_emb, enable=use_rope)
+        attn_module.rotary_emb = RotaryEmbeddingStub(
+            dim=old_posemb.dim,
+            max_position_embeddings=old_posemb.max_position_embeddings,
+            base=old_posemb.base,
+            scaling_factor=old_posemb.scaling_factor,
+            device=None, # TODO: replace with proper value
+            enable=use_rope
+        )
 
         return attn_module
 
@@ -119,15 +127,15 @@ class ResidualMarker(nn.Module):
 class HybridBackbone(nn.Module):
 
     def has(self, module_substr: str):
-        return any(map(lambda mod: module_substr in mod, self.module_spec))
+        return any(map(lambda mod: module_substr in mod, self.module_names))
 
     def __init__(
         self, 
         module_names: list[str] = ["residual", "rms norm", "llama attn", "residual", "llama mlp", "residual"],
         n_positions: int = 101,
-        n_embd=128, 
-        n_layer=12, 
-        n_head=4, 
+        embed_dim: int = 128, 
+        n_layer: int = 12, 
+        n_head: int = 4, 
         hidden_act: str = 'silu', 
         rope_theta: float = 1e4,
         **kwargs
@@ -137,7 +145,7 @@ class HybridBackbone(nn.Module):
         self.module_names = module_names
         self.raw_config = {
             "n_positions" : n_positions,
-            "n_embd" : n_embd,
+            "n_embd" : embed_dim,
             "n_layer" : n_layer,
             "n_head" : n_head,
             "hidden_act" : hidden_act,
@@ -147,18 +155,19 @@ class HybridBackbone(nn.Module):
 
         self.llama_config = LlamaConfig(
             max_position_embeddings=2 * n_positions,
-            hidden_size=n_embd,
-            intermediate_size=4*n_embd,
+            hidden_size=embed_dim,
+            intermediate_size=4*embed_dim,
             num_hidden_layers=n_layer,
             num_attention_heads=n_head,
             hidden_act=hidden_act,
             rope_theta=rope_theta,
             use_cache=False, # On inspection, this only writes to cache, not reads(?)
+            **kwargs # only provide this config all params to serve as default config later on
         ) if self.has("llama") else None
 
         self.gpt2_config = GPT2Config(
             n_positions=2 * n_positions,
-            n_embd=n_embd,
+            n_embd=embed_dim,
             n_layer=n_layer,
             n_head=n_head,
             hidden_act=hidden_act,
@@ -169,7 +178,7 @@ class HybridBackbone(nn.Module):
         ) if self.has("gpt2") else None
 
         self.mamba_config = MambaConfig(
-            hidden_size=n_embd,
+            hidden_size=embed_dim,
             num_hidden_layers=n_layer,
                 state_size=kwargs.get("mamba_state_size", 16),
                 expand=kwargs.get("mamba_expand", 2),
@@ -204,18 +213,36 @@ class HybridBackbone(nn.Module):
 
         self.layers = nn.ModuleList(modules)
 
-    def forward(self, input_embeds) -> Tensor:
-        hidden_state = input_embeds
+    def forward(self, inputs_embeds) -> BaseModelOutput:
+        hidden_state = inputs_embeds
         residual = 0
 
         for layer in self.layers:
-            hidden_state = layer(hidden_state)
+            forward_kwargs = { }
+
+            if isinstance(layer, (LlamaAttention, )):
+                forward_kwargs.update({ 
+                    "position_ids" : torch.arange(
+                        0, hidden_state.shape[1],
+                        device=hidden_state.device
+                    ).unsqueeze(0)
+                })
+
+            hidden_state = layer(
+                hidden_state,
+                **forward_kwargs
+            )
+
+            if isinstance(hidden_state, (tuple, )): # collect only attention outputs for those layers
+                hidden_state = hidden_state[0]
 
             if isinstance(layer, ResidualMarker):
                 hidden_state = residual + hidden_state
                 residual = hidden_state
 
-        return hidden_state
+        return BaseModelOutput(
+            last_hidden_state=hidden_state
+        )
 
 class HybridModel(BackboneModel):
 
