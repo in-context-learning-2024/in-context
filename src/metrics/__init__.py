@@ -8,6 +8,7 @@ from .function_error import (
     FunctionClassError,
     FCErrorQuadrants,
     FCErrorOrthogonal,
+    FCErrorOrthogonal2,
     FCErrorSeenPoints,
 )
 

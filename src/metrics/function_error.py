@@ -155,6 +155,60 @@ class FCErrorOrthogonal(FunctionClassError):
 
         return errs
 
+class FCErrorOrthogonal2(FunctionClassError):
+
+    def __init__(self,metric:Metric, function_class:FunctionClass, test_length=None,):
+        super(FCErrorOrthogonal2, self).__init__(metric, function_class)
+        if test_length==None:
+            self.test_length=self.function_class.x_dim
+        else:
+            self.test_length=test_length
+
+    def evaluate(self, models: Iterable[ContextModel], num_batches: int = 1) -> Iterable[Tensor]:
+        sequence_length = self.function_class.sequence_length
+        batch_size = self.function_class.batch_size
+        y_dim = self.function_class.y_dim
+        num_models = len(list(models))
+        
+        
+        errs = torch.zeros((num_models, num_batches, batch_size, self.test_length, y_dim))
+
+        for batch_num in range(num_batches):
+            params = self.function_class.p_dist.sample()
+            x_batch = self.function_class.x_dist.sample()
+
+            for index in range(self.test_length):
+                _, _, Vt = torch.linalg.svd(x_batch[:, :index, :], full_matrices=False)
+                cur_x = x_batch.clone()
+                proj=Vt.transpose(1, 2) @ Vt
+                if index<x_batch.shape[-1]:
+                    test_x=(x_batch -x_batch @proj)
+                    test_x=test_x*x_batch.norm(dim=2).unsqueeze(2)/test_x.norm(dim=2).unsqueeze(2)
+                else:
+                    test_x=x_batch
+                cur_x[:,index] =test_x[:,index]
+
+
+                if isinstance(params, list):
+                    y_test = self.function_class.evaluate(cur_x, *params)
+                else:
+                    y_test = self.function_class.evaluate(cur_x, params)
+                
+                with torch.no_grad():
+                    errs[:, batch_num, :, index] = torch.stack([
+                        self.metric.evaluate(
+                            y_test,
+                            model.forward(cur_x, y_test)
+                        )
+                        for model in models
+                    ])[:, :, index]
+        
+        errs = torch.reshape(errs, (num_models, num_batches*batch_size, self.test_length))
+        
+                
+        return errs
+
+
 
 class FCErrorSeenPoints(FunctionClassError):
 
@@ -193,3 +247,4 @@ class FCErrorSeenPoints(FunctionClassError):
         errs = torch.reshape(errs, (num_models, num_batches*batch_size, sequence_length))[:, :, 1:]
 
         return errs
+
