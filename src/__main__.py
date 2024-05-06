@@ -26,9 +26,16 @@ def log_yaml(full_yaml: str) -> None:
 def main(args: arg.Namespace):
 
     if args.checkpointfile == "":
-        trainer, config = parse_training_from_file(args.conffile, include=args.includedir)
+        trainer, config = parse_training_from_file(
+            filename=args.conffile,
+            include=args.includedir
+        )
     else:
-        trainer, config = parse_training_from_file(args.conffile, args.checkpointfile, include=args.includedir)
+        trainer, config = parse_training_from_file(
+            filename=args.conffile,
+            checkpoint_path=args.checkpointfile,
+            include=args.includedir
+        )
 
     init_args: dict[str, Any] = { "config" : config }
     if args.projectname != "":
