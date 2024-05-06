@@ -111,3 +111,8 @@ def plot_comparison_2_models(MODELS=None, names=None,errs=None, post_processed_e
     fig.legend(lines, labels, bbox_to_anchor=(0.5, 0.95) , loc='upper center', ncol=len(MODELS))
     plt.show()
 
+
+def load_model(filename, model):
+    content = torch.load(filename)
+    model.load_state_dict(content["model_state_dict"])
+    return model

@@ -135,6 +135,10 @@ class FCErrorQuadrants(FunctionClassError):
 
 class FCErrorOrthogonal(FunctionClassError):
 
+    def __init__(self, metric: Metric, function_class: FunctionClass, rescale=True):
+        super(FCErrorOrthogonal, self).__init__(metric, function_class)
+        self.rescale=rescale
+
     def evaluate(self, models: Iterable[ContextModel], num_batches: int = 1,  perfect_model: ContextModel =None) -> Iterable[Tensor]:
         sequence_length = self.function_class.sequence_length
         batch_size = self.function_class.batch_size
@@ -164,6 +168,11 @@ class FCErrorOrthogonal(FunctionClassError):
             x_context= x_batch @context_space
             x_test =   x_batch @test_space
             
+            if self.rescale:
+                x_context=x_context*x_batch.norm(dim=2).unsqueeze(2)/x_context.norm(dim=2).unsqueeze(2)
+                
+                x_test=x_test*x_batch.norm(dim=2).unsqueeze(2)/x_test.norm(dim=2).unsqueeze(2)
+
             for index in range(sequence_length):
                 
                 cur_x = x_context.clone()
