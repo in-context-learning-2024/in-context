@@ -15,4 +15,4 @@ steps: 500001
 log_freq: 100
 checkpoint_freq: 50000
 model: *modified_gpt2
-baseline_models: [*least_squares, *knn_3, *averaging]
+# baseline_models: [*least_squares, *knn_3, *averaging]
