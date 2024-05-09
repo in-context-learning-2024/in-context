@@ -8,6 +8,7 @@ from .linear import (
 )
 from .mlp import MLPRegression
 from .sparse_parity import SparseParityRegression
+from .retrieval import Retrieval
 from .wrappers import (
     NoisyRegression,
     ScaledRegression,
@@ -26,6 +27,7 @@ FUNCTION_CLASSES: dict[str, type[FunctionClass]] = {
     "2 layer mlp regression" : MLPRegression,
     "decision tree" : DecisionTreeRegression,
     "sparse parity regression" : SparseParityRegression,
+    "retrieval" : Retrieval,
 
     "chebyshev kernel linear regression" : ChebyshevKernelLinearRegression,
     "chebyshev shared roots" : ChebyshevSharedRoots,
