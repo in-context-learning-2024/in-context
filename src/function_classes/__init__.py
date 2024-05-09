@@ -7,14 +7,14 @@ from .linear import (
     QuadraticRegression,
 )
 from .mlp import MLPRegression
-from .wrappers import (
-    NoisyRegression,
-    ScaledRegression,
-)
-
 from .chebyshev import (
     ChebyshevKernelLinearRegression,
     ChebyshevSharedRoots,
+)
+from .sparse_parity import SparseParityRegression
+from .wrappers import (
+    NoisyRegression,
+    ScaledRegression,
 )
 
 FUNCTION_CLASSES: dict[str, type[FunctionClass]] = {
@@ -27,6 +27,8 @@ FUNCTION_CLASSES: dict[str, type[FunctionClass]] = {
 
     "chebyshev kernel linear regression" : ChebyshevKernelLinearRegression,
     "chebyshev shared roots" : ChebyshevSharedRoots,
+
+    "sparse parity regression" : SparseParityRegression,
 }
 
 __all__ = [
