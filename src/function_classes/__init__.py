@@ -25,6 +25,7 @@ FUNCTION_CLASSES: dict[str, type[FunctionClass]] = {
     "2 layer mlp regression" : MLPRegression,
     "decision tree" : DecisionTreeRegression,
     "sparse parity regression" : SparseParityRegression,
+    
     "chebyshev kernel linear regression" : ChebyshevKernelLinearRegression,
     "chebyshev shared roots" : ChebyshevSharedRoots,
 }
