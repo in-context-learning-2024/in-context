@@ -1,18 +1,8 @@
 import torch
 import torch.distributions as D
-from torch.distributions import Distribution
 
+from utils import RandomPermutationDistribution
 from core import FunctionClass
-
-class RandomPermutationDistribution(Distribution):
-
-    def __init__(self, k: int, N: int):
-        super(RandomPermutationDistribution, self).__init__(validate_args=False)
-        self.k = k
-        self.N = N
-
-    def sample(self, sample_shape: torch.Size = torch.Size()):
-        return torch.randperm(self.N)[:self.k]
 
 class SparseParityRegression(FunctionClass):
 

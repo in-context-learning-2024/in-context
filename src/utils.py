@@ -68,3 +68,32 @@ class CombinedDistribution(dist.Distribution):
     @property
     def variance(self) -> List[torch.Tensor]:
         return [ dist.variance for dist in self._dists ]
+    
+class RandomPermutationDistribution(dist.Distribution):
+
+    def __init__(self, k: int, N: int):
+        super(RandomPermutationDistribution, self).__init__(validate_args=False)
+        self.k = k
+        self.N = N
+
+    def sample(self, sample_shape: torch.Size = torch.Size()):
+        return torch.randperm(self.N)[:self.k]
+    
+class SparseDistribution(dist.Distribution):
+
+    def __init__(self, batch_shape: torch.Size, event_shape: torch.Size, *args, **kwargs):
+        super(SparseDistribution, self).__init__(*args, **kwargs | {"validate_args" : False})
+        self.batch_size = batch_shape[0]
+        self.seq_len = batch_shape[1]
+        self.x_dim = event_shape[0]
+
+    def sample(self, sample_shape: torch.Size = torch.Size()):
+        return torch.randint(0, 2, (self.batch_size, self.seq_len, self.x_dim)).float()
+    
+    @property
+    def batch_shape(self) -> torch.Size:
+        return torch.Size([self.batch_size, self.seq_len])
+
+    @property
+    def event_shape(self) -> torch.Size:
+        return torch.Size([self.x_dim])

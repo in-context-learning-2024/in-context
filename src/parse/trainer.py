@@ -8,6 +8,7 @@ from train import TrainerSteps
 from models import MODELS
 from function_classes import FUNCTION_CLASSES
 from core import ContextModel, FunctionClass
+from utils import SparseDistribution
 
 from .curriculum import expand_curriculum, get_value
 
@@ -48,6 +49,12 @@ def get_x_distribution(batch_size: int, seq_len: int, x_dim: int, data: dict) ->
             D.Uniform,
             { "low"  : -torch.ones(full_shape),
               "high" : torch.ones(full_shape),
+            }
+        ),
+        "sparse": (
+            SparseDistribution,
+            { "batch_shape" : batch_shape,
+              "event_shape" : event_shape,
             }
         ),
     }
