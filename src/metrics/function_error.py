@@ -3,6 +3,8 @@ import torch
 from torch import Tensor
 from typing import Iterable
 
+from tqdm import tqdm
+
 from .benchmark import Benchmark
 from .metric import Metric
 from core import (
@@ -26,7 +28,7 @@ class FunctionClassError(Benchmark):
             num_models = len(models)
             metric_dim=y_dim*2
             errs = torch.zeros((num_batches,num_models, batch_size, sequence_length , metric_dim))
-            for batch_num, (x_batch, y_batch) in zip(range(num_batches), self.function_class):
+            for batch_num, (x_batch, y_batch) in tqdm(zip(range(num_batches), self.function_class)):
                 perfect_pred=perfect_model.forward(x_batch, y_batch)
                 for model_num, model in enumerate(models):
                     with torch.no_grad():
@@ -44,7 +46,7 @@ class FunctionClassError(Benchmark):
                         )
                         for model in models
                     ])  
-                    for _, (x_batch, y_batch) in zip(range(num_batches), self.function_class)
+                    for _, (x_batch, y_batch) in tqdm(zip(range(num_batches), self.function_class))
                 ])# errs is of shape: (#batches, #models, batch_size, sequence_length, *metric_dims)
 
         errs = torch.transpose(errs, 0, 1)
@@ -80,7 +82,7 @@ class FCErrorQuadrants(FunctionClassError):
             metric_dim=2*y_dim
 
         errs = torch.zeros((num_batches, num_models, batch_size, sequence_length, metric_dim))
-        for batch_num in range(num_batches):
+        for batch_num in tqdm(range(num_batches)):
             xs = self.function_class.x_dist.sample() # shape (batch_size, sequence_length, x_dim)
 
             # set sign over a full sequence
@@ -151,7 +153,7 @@ class FCErrorOrthogonal(FunctionClassError):
 
         errs = torch.zeros((num_models, num_batches, batch_size, sequence_length, metric_dim))
 
-        for batch_num in range(num_batches):
+        for batch_num in tqdm(range(num_batches)):
             params = self.function_class.p_dist.sample()
             x_batch = self.function_class.x_dist.sample()
             n = x_batch.shape[2]
@@ -222,7 +224,7 @@ class FCErrorSeenPoints(FunctionClassError):
         errs = torch.zeros((num_models, num_batches, batch_size, sequence_length, metric_dim))
 
 
-        for batch_num in range(num_batches):
+        for batch_num in tqdm(range(num_batches)):
             params = self.function_class.p_dist.sample()
             x_batch = self.function_class.x_dist.sample()
             
