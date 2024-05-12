@@ -247,6 +247,7 @@ class HybridBackbone(nn.Module):
                     ).unsqueeze(0)
                 })
 
+            layer = layer.to(hidden_state.device)
             hidden_state = layer(
                 hidden_state,
                 **forward_kwargs
