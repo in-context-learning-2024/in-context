@@ -1,24 +1,4 @@
-optim:
-    type: adam
-    lr: 0.0001
-loss_fn:
-    type: squared
-function_class: 
-    type: sparse linear regression
-    sparsity: 3
-b_size: 64
-seq_len: !curriculum
-    start: 11
-    stop: 41
-    step_size: 2
-    step_len: 2000
-x_dim: !curriculum
-    start: 5
-    stop: 20
-    step_size: 1
-    step_len: 2000
-x_dist:
-    type: normal
+<<: *sparse_linear_regression
 steps: 500001
 log_freq: 100
 checkpoint_freq: 50000
