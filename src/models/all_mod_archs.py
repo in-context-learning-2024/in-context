@@ -2,7 +2,7 @@ import torch
 from torch import LongTensor, FloatTensor, Tensor
 from transformers import GPT2Config, GPT2Model, MambaConfig, MambaPreTrainedModel, MambaModel # pyrigh: ignor[]
 from torch import nn
-from .transformer import TransformerModel
+from .transformer import BackboneModel
 from typing import Optional, Tuple, Union
 import types
 from core import ContextModel
@@ -28,9 +28,9 @@ class MambaNoAttentionModel(ModSeqModel):
         self.change_gpt2_block(block_var_declare_mamba_single, MambaModel(mamba_configuration), forward_block_mamba_no_attention)
 
         
-class MambaFirstGPT2TransformerModel(ModSeqModel):
+class MambaFirstGPT2BackboneModel(ModSeqModel):
     def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, want_pos_embeddings=True, no_attention=False, custom_attn_func=None, num_mamba_layers=1, **kwargs):
-        super(MambaFirstGPT2TransformerModel, self).__init__(x_dim, n_positions, n_embd=n_embd, n_layer=n_layer, n_head=n_head, want_pos_embeddings=want_pos_embeddings, no_attention=no_attention, custom_attn_func=custom_attn_func)
+        super(MambaFirstGPT2BackboneModel, self).__init__(x_dim, n_positions, n_embd=n_embd, n_layer=n_layer, n_head=n_head, want_pos_embeddings=want_pos_embeddings, no_attention=no_attention, custom_attn_func=custom_attn_func)
           
         mamba_configuration = MambaConfig(
             vocab_size=self.gpt2_configuration.vocab_size,
@@ -62,9 +62,9 @@ class MambaformerModel(ModSeqModel):
         
         self.change_gpt2_block(block_var_declare_mambaformer, [MambaModel(mamba_configuration) for _ in range(num_mamba_instances)], forward_block_mambaformer)
       
-class ModTransformerModel(ModSeqModel):
+class ModBackboneModel(ModSeqModel):
     def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, want_pos_embeddings=True, no_attention=False, custom_attn_func=None, num_mamba_layers=1, num_mamba_instances=2, **kwargs):
-        super(ModTransformerModel, self).__init__(x_dim, n_positions, n_embd=n_embd, n_layer=n_layer, n_head=n_head, want_pos_embeddings=want_pos_embeddings, no_attention=no_attention, custom_attn_func=custom_attn_func)
+        super(ModBackboneModel, self).__init__(x_dim, n_positions, n_embd=n_embd, n_layer=n_layer, n_head=n_head, want_pos_embeddings=want_pos_embeddings, no_attention=no_attention, custom_attn_func=custom_attn_func)
 
         self.name = f"mod_gpt2_embd={n_embd}_layer={n_layer}_head={n_head}"
       

@@ -2,7 +2,7 @@ import torch
 from torch import LongTensor, FloatTensor, Tensor
 from transformers import GPT2Config, GPT2Model, MambaConfig, MambaPreTrainedModel, MambaModel # pyrigh: ignor[]
 from torch import nn
-from .transformer import TransformerModel, GPT2, Llama
+from .transformer import BackboneModel, GPT2, Llama
 from typing import Optional, Tuple, Union
 import types
 from core import ContextModel

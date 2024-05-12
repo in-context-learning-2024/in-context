@@ -2,7 +2,7 @@ import torch
 from torch import LongTensor, FloatTensor, Tensor
 from transformers import LlamaModel, LlamaConfig, Cache, MambaConfig, MambaPreTrainedModel, MambaModel # pyrigh: ignor[]
 from torch import nn
-from .transformer import TransformerModel
+from .transformer import BackboneModel
 from typing import Optional, Tuple, Union
 from transformers.modeling_outputs import BaseModelOutputWithPastAndCrossAttentions
 from .inferencing_fns import forward_through_mamba_blocks
