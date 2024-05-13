@@ -1,3 +1,5 @@
+import torch
+
 from typing import Optional
 
 from core import ContextModel
@@ -17,6 +19,7 @@ def get_model(init_kwargs: dict, x_dim: int, y_dim: int, model_weights: Optional
     model = clean_instantiate(model_class, **init_kwargs)
 
     if model_weights is not None:
-        model.load_state_dict(model_weights)
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model.load_state_dict(model_weights, map_location=device)
 
     return model
