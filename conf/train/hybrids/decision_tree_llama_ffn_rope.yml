@@ -1,0 +1,6 @@
+<<: *decision_tree_regression
+steps: 500001
+log_freq: 100
+checkpoint_freq: 50000
+model: *llama_with_ffn_and_rope_replaced
+# baseline_models: [*knn_3, *xgboost, *decision_tree, *decision_tree_4]

@@ -1,30 +1,66 @@
 defs:
-    block: &mambaformer_block
+    block: &lammba_block
+        - rms norm
         - llama attention no rope
         - residual
+        - rms norm
         - mamba block
         - residual
 
-model: &mambaformer_composed
-    type: hybrid
-    n_positions: 101
-    n_embd: 24
-    n_head: 3
+    block: &llammba_block_with_rope
+        - rms norm
+        - llama attention
+        - residual
+        - rms norm
+        - mamba block
+        - residual
+    
+    base: &hybrid_base_config
+        type: hybrid
+        n_positions: 101
+        n_embd: 24
+        n_head: 3
+
+model: &llama_with_ffn_and_rope_replaced
+    <<: *hybrid_base_config
     module_names:
+        - residual
         - mamba block
         - residual
-        - *mambaformer_block
-        - *mambaformer_block
-        - *mambaformer_block
+        - *lammba_block
+        - *lammba_block
+        - *lammba_block
 
-        - *mambaformer_block
-        - *mambaformer_block
-        - *mambaformer_block
+        - *lammba_block
+        - *lammba_block
+        - *lammba_block
 
-        - *mambaformer_block
-        - *mambaformer_block
-        - *mambaformer_block
+        - *lammba_block
+        - *lammba_block
+        - *lammba_block
 
-        - *mambaformer_block
-        - *mambaformer_block
-        - *mambaformer_block
+        - *lammba_block
+        - *lammba_block
+        - *lammba_block
+
+model: &llama_with_ffn_replaced
+    <<: *hybrid_base_config
+    module_names:
+        - residual
+
+        - *llammba_block_with_rope
+        - *llammba_block_with_rope
+        - *llammba_block_with_rope
+        - *llammba_block_with_rope
+        
+        - *llammba_block_with_rope
+        - *llammba_block_with_rope
+        - *llammba_block_with_rope
+        - *llammba_block_with_rope
+
+        - *llammba_block_with_rope
+        - *llammba_block_with_rope
+        - *llammba_block_with_rope
+        - *llammba_block_with_rope
+
+        - rms norm
