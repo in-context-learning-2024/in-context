@@ -2,7 +2,6 @@ import torch
 
 from torch import nn, Tensor
 from typing import Callable
-from functools import partial
 
 from transformers import PretrainedConfig
 from transformers.modeling_outputs import BaseModelOutput

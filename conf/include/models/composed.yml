@@ -1,5 +1,5 @@
 defs:
-    block: &lammba_block
+    block: &llammba_block
         - rms norm
         - llama attention no rope
         - residual
@@ -27,21 +27,23 @@ model: &llama_with_ffn_and_rope_replaced
         - residual
         - mamba block
         - residual
-        - *lammba_block
-        - *lammba_block
-        - *lammba_block
+        - *llammba_block
+        - *llammba_block
+        - *llammba_block
 
-        - *lammba_block
-        - *lammba_block
-        - *lammba_block
+        - *llammba_block
+        - *llammba_block
+        - *llammba_block
 
-        - *lammba_block
-        - *lammba_block
-        - *lammba_block
+        - *llammba_block
+        - *llammba_block
+        - *llammba_block
 
-        - *lammba_block
-        - *lammba_block
-        - *lammba_block
+        - *llammba_block
+        - *llammba_block
+        - *llammba_block
+
+        - rms norm
 
 model: &llama_with_ffn_replaced
     <<: *hybrid_base_config
