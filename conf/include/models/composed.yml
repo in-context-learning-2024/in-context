@@ -18,8 +18,8 @@ defs:
     base: &hybrid_base_config
         type: hybrid
         n_positions: 101
-        n_embd: 24
-        n_head: 3
+        n_embd: 64
+        n_head: 4
 
 model: &llama_with_ffn_and_rope_replaced
     <<: *hybrid_base_config
@@ -27,14 +27,6 @@ model: &llama_with_ffn_and_rope_replaced
         - residual
         - mamba block
         - residual
-        - *llammba_block
-        - *llammba_block
-        - *llammba_block
-
-        - *llammba_block
-        - *llammba_block
-        - *llammba_block
-
         - *llammba_block
         - *llammba_block
         - *llammba_block
@@ -53,14 +45,7 @@ model: &llama_with_ffn_replaced
         - *llammba_block_with_rope
         - *llammba_block_with_rope
         - *llammba_block_with_rope
-        - *llammba_block_with_rope
-        
-        - *llammba_block_with_rope
-        - *llammba_block_with_rope
-        - *llammba_block_with_rope
-        - *llammba_block_with_rope
 
-        - *llammba_block_with_rope
         - *llammba_block_with_rope
         - *llammba_block_with_rope
         - *llammba_block_with_rope

@@ -10,12 +10,12 @@ task: &sparse_linear_regression
     b_size: 64
     seq_len: !curriculum
         start: 11
-        stop: 41
+        stop: 21
         step_size: 2
         step_len: 2000
     x_dim: !curriculum
         start: 5
-        stop: 20
+        stop: 10
         step_size: 1
         step_len: 2000
     x_dist:
