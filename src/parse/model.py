@@ -19,7 +19,6 @@ def get_model(init_kwargs: dict, x_dim: int, y_dim: int, model_weights: Optional
     model = clean_instantiate(model_class, **init_kwargs)
 
     if model_weights is not None:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        model.load_state_dict(model_weights, map_location=device)
+        model.load_state_dict(model_weights)
 
     return model
