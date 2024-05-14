@@ -3,7 +3,6 @@ defs:
         - rms norm
         - llama attention no rope
         - residual
-        - rms norm
         - mamba block
         - residual
 
@@ -11,7 +10,6 @@ defs:
         - rms norm
         - llama attention
         - residual
-        - rms norm
         - mamba block
         - residual
 
