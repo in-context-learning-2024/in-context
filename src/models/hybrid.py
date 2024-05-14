@@ -234,6 +234,17 @@ class HybridBackbone(nn.Module):
     def forward(self, inputs_embeds) -> BaseModelOutput:
         hidden_state = inputs_embeds
         residual = 0
+        attention_mask = torch.triu(
+            torch.full(
+                ( # bsz, n_heads, seq_len, seq_len
+                    inputs_embeds.shape[0], self.raw_config['n_head'],
+                    inputs_embeds.shape[1], inputs_embeds.shape[1]
+                ),
+                fill_value=torch.finfo(inputs_embeds.dtype).min,
+                device=inputs_embeds.device
+            ),
+            diagonal=1
+        )
 
         for layer in self.layers:
             forward_kwargs = { }
@@ -243,7 +254,8 @@ class HybridBackbone(nn.Module):
                     "position_ids" : torch.arange(
                         0, hidden_state.shape[1],
                         device=hidden_state.device
-                    ).unsqueeze(0)
+                    ).unsqueeze(0),
+                    "attention_mask" : attention_mask,
                 })
 
             layer = layer.to(hidden_state.device)
