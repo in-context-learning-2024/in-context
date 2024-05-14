@@ -2,6 +2,7 @@ from core import ContextModel
 from .transformer import (
     GPT2,
     Llama,
+    Mamba,
 )
 
 from .hybrid import (
@@ -32,6 +33,7 @@ from .baselines import (
 MODELS: dict[str, type[ContextModel]] = {
     "gpt2" : GPT2,
     "llama" : Llama,
+    "mamba" : Mamba,
     "hybrid" : HybridModel,
     # "mambafirstgpt2"        : MambaFirstGPT2TransformerModel,
     "mambaonly"             : MambaNoAttentionModel,

@@ -22,3 +22,7 @@ model: &std_llama
 model: &small_llama
     type: llama
     <<: *small_config
+
+model: &small_mamba
+    type: mamba
+    <<: *small_config

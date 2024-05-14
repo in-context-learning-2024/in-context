@@ -3,6 +3,8 @@ from transformers import (
     GPT2Model, 
     LlamaConfig, 
     LlamaModel,
+    MambaConfig,
+    MambaModel,
  ) # pyright: ignore[reportPrivateImportUsage]
 
 from torch import nn
@@ -11,7 +13,7 @@ from core import TrainableModel
 
 class BackboneModel(TrainableModel):
 
-    def __init__(self, backbone: nn.Module, x_dim: int, n_positions: int, n_embd: int=128, y_dim: int = 1):
+    def __init__(self, backbone: nn.Module, x_dim: int, n_positions: int, n_embd: int=128, y_dim: int = 1, **kwargs):
         super().__init__(x_dim, y_dim)
 
         self.context_length = n_positions
@@ -33,6 +35,7 @@ class GPT2(BackboneModel):
     def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, **kwargs):
 
         configuration = GPT2Config(
+            vocab_size=1,
             n_positions=2 * n_positions,
             n_embd=n_embd,
             n_layer=n_layer,
@@ -56,6 +59,7 @@ class Llama(BackboneModel):
     def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, hidden_act: str = 'silu', rope_theta: float = 1e4, **kwargs):
 
         configuration = LlamaConfig(
+            vocab_size=1,
             max_position_embeddings=2 * n_positions,
             hidden_size=n_embd,
             intermediate_size=4*n_embd,
@@ -63,13 +67,34 @@ class Llama(BackboneModel):
             num_attention_heads=n_head,
             hidden_act=hidden_act,
             rope_theta=rope_theta,
-            use_cache=True,
+            use_cache=False,
         )
 
         self.llama_configuration = configuration
         backbone: nn.Module = LlamaModel(configuration) # pyright: ignore[reportAssignmentType]
 
+        print(f"number of parameters", sum(p.numel() for p in backbone.parameters()))
+
         super().__init__(backbone, x_dim, n_positions, n_embd, **kwargs)
 
         self.name = f"llama_embd={n_embd}_layer={n_layer}_head={n_head}"
 
+class Mamba(BackboneModel):
+
+    def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, **kwargs):
+
+        configuration = MambaConfig(
+            vocab_size=1,
+            hidden_size=n_embd,
+            state_size=16,
+            expand=4,
+            num_hidden_layers=n_layer,
+            use_cache=False,
+        )
+
+        self.mamba_configuration = configuration
+        backbone: nn.Module = MambaModel(configuration)
+
+        super().__init__(backbone, x_dim, n_positions, n_embd, **kwargs)
+
+        self.name = f"mamba_embd={n_embd}_layer={n_layer}"
