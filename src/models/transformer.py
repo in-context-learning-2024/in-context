@@ -3,6 +3,8 @@ from transformers import (
     GPT2Model, 
     LlamaConfig, 
     LlamaModel,
+    MambaConfig,
+    MambaModel,
  ) # pyright: ignore[reportPrivateImportUsage]
 
 from torch import nn
@@ -11,7 +13,7 @@ from core import TrainableModel
 
 class BackboneModel(TrainableModel):
 
-    def __init__(self, backbone: nn.Module, x_dim: int, n_positions: int, n_embd: int=128, y_dim: int = 1):
+    def __init__(self, backbone: nn.Module, x_dim: int, n_positions: int, n_embd: int=128, y_dim: int = 1, **kwargs):
         super().__init__(x_dim, y_dim)
 
         self.context_length = n_positions
@@ -71,7 +73,28 @@ class Llama(BackboneModel):
         self.llama_configuration = configuration
         backbone: nn.Module = LlamaModel(configuration) # pyright: ignore[reportAssignmentType]
 
+        print(f"number of parameters", sum(p.numel() for p in backbone.parameters()))
+
         super().__init__(backbone, x_dim, n_positions, n_embd, **kwargs)
 
         self.name = f"llama_embd={n_embd}_layer={n_layer}_head={n_head}"
 
+class Mamba(BackboneModel):
+
+    def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, **kwargs):
+
+        configuration = MambaConfig(
+            vocab_size=1,
+            hidden_size=n_embd,
+            state_size=16,
+            expand=4,
+            num_hidden_layers=n_layer,
+            use_cache=False,
+        )
+
+        self.mamba_configuration = configuration
+        backbone: nn.Module = MambaModel(configuration)
+
+        super().__init__(backbone, x_dim, n_positions, n_embd, **kwargs)
+
+        self.name = f"mamba_embd={n_embd}_layer={n_layer}"
