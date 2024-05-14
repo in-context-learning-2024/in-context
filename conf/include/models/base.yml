@@ -19,6 +19,10 @@ model: &std_llama
     type: llama
     <<: *base_config
 
+model: &small_gpt2
+    type: gpt2
+    <<: *small_config
+
 model: &small_llama
     type: llama
     <<: *small_config

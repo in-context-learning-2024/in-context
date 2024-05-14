@@ -73,8 +73,6 @@ class Llama(BackboneModel):
         self.llama_configuration = configuration
         backbone: nn.Module = LlamaModel(configuration) # pyright: ignore[reportAssignmentType]
 
-        print(f"number of parameters", sum(p.numel() for p in backbone.parameters()))
-
         super().__init__(backbone, x_dim, n_positions, n_embd, **kwargs)
 
         self.name = f"llama_embd={n_embd}_layer={n_layer}_head={n_head}"
