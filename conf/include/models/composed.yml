@@ -14,12 +14,37 @@ defs:
         - rms norm
         - mamba block
         - residual
-    
+
+    block: &llama_block
+        - rms norm
+        - llama attention
+        - residual
+        - rms norm
+        - llama mlp
+        - residual
+
     base: &hybrid_base_config
         type: hybrid
         n_positions: 101
         n_embd: 64
         n_head: 4
+
+model: &llama_with_rope_replaced
+    <<: *hybrid_base_config
+    module_names:
+        - residual
+        - mamba block
+        - residual
+
+        - *llama_block
+        - *llama_block
+        - *llama_block
+
+        - *llama_block
+        - *llama_block
+        - *llama_block
+
+        - rms norm
 
 model: &llama_with_ffn_and_rope_replaced
     <<: *hybrid_base_config

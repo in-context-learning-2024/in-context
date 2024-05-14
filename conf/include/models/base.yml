@@ -1,8 +1,15 @@
-model: &base_config
-    n_positions: 101
-    n_layer: 12
-    n_embd: 256
-    n_head: 8
+defs:
+    model: &base_config
+        n_positions: 101
+        n_layer: 12
+        n_embd: 256
+        n_head: 8
+    
+    model: &small_config
+        n_positions: 101
+        n_layer: 6
+        n_head: 4
+        n_embd: 64
 
 model: &std_gpt2
     type: gpt2
@@ -12,3 +19,6 @@ model: &std_llama
     type: llama
     <<: *base_config
 
+model: &small_llama
+    type: llama
+    <<: *small_config
