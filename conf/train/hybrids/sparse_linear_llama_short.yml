@@ -1,0 +1,6 @@
+<<: *sparse_linear_regression_short
+steps: 500001
+log_freq: 100
+checkpoint_freq: 50000
+model: *small_llama
+# baseline_models: *lasso_set

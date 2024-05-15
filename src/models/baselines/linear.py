@@ -1,11 +1,11 @@
 import torch
-from core import ContextModel
+from core import Baseline
 from sklearn.linear_model import Lasso
 from sklearn.exceptions import ConvergenceWarning
 import warnings
 
 # xs and ys should be on cpu for this method. Otherwise the output maybe off in case when train_xs is not full rank due to the implementation of torch.linalg.lstsq.
-class LeastSquaresModel(ContextModel):
+class LeastSquaresModel(Baseline):
     def __init__(self, driver=None, **kwargs):
         super(LeastSquaresModel, self).__init__(**kwargs)
 
@@ -17,7 +17,7 @@ class LeastSquaresModel(ContextModel):
         self.name = f"OLS_driver={driver}"
         self.context_length = -1
 
-    def forward(self, xs, ys):
+    def evaluate(self, xs, ys):
         DEVICE = xs.device
         xs, ys = xs.cpu(), ys.cpu()
         ys = ys[..., 0] # remove the trivial y_dim=1 dimension
@@ -47,13 +47,13 @@ class LeastSquaresModel(ContextModel):
         return torch.stack(preds, dim=1).to(device=DEVICE)
 
 
-class AveragingModel(ContextModel):
+class AveragingModel(Baseline):
     def __init__(self, **kwargs):
         super(AveragingModel, self).__init__(**kwargs)
         self.name = "averaging"
         self.context_length = -1
 
-    def forward(self, xs, ys):
+    def evaluate(self, xs, ys):
         preds = []
 
         for i in range(ys.shape[1]):
@@ -73,7 +73,7 @@ class AveragingModel(ContextModel):
 
 # Lasso regression (for sparse linear regression).
 # Seems to take more time as we decrease alpha.
-class LassoModel(ContextModel):
+class LassoModel(Baseline):
     def __init__(self, alpha: float, max_iter: int = 100000, **kwargs):
         super(LassoModel, self).__init__(**kwargs)
 
@@ -83,7 +83,7 @@ class LassoModel(ContextModel):
         self.name = f"lasso_alpha={alpha}_max_iter={max_iter}"
         self.context_length = -1
 
-    def forward(self, xs, ys):
+    def evaluate(self, xs, ys):
         DEVICE = xs.device
         xs, ys = xs.cpu(), ys.cpu()
 

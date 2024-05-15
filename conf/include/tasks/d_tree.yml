@@ -1,0 +1,22 @@
+task: &decision_tree_regression
+    optim:
+        type: adam
+        lr: 0.0001
+    loss_fn:
+        type: squared
+    function_class: 
+        type: decision tree
+        depth: 4
+    b_size: 64
+    seq_len: !curriculum
+        start: 26
+        stop: 101
+        step_size: 5
+        step_len: 2000
+    x_dim: !curriculum
+        start: 5
+        stop: 20
+        step_size: 1
+        step_len: 2000
+    x_dist:
+        type: normal

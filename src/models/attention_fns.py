@@ -3,7 +3,7 @@ import math
 from torch import LongTensor, FloatTensor, Tensor
 from transformers import GPT2Config, GPT2Model, DynamicCache, Cache, MambaConfig, MambaPreTrainedModel, MambaModel # pyrigh: ignor[]
 from torch import nn
-from .transformer import TransformerModel
+from .transformer import BackboneModel
 from typing import Optional, Tuple, Union
 import types
 from core import ContextModel

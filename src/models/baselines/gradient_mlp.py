@@ -1,20 +1,12 @@
 import torch
 from torch import nn
+from transformers.activations import ACT2FN
 from typing import Literal
 
 from tqdm import tqdm
 
-from core import ContextModel
+from core import Baseline
 from utils import curried_throw
-
-def get_activation(act: str) -> nn.Module:
-    return {
-        "relu" : nn.ReLU,
-        "gelu" : nn.GELU,
-    }.get(
-        act,
-        curried_throw(ValueError(f"Activation function {act} not implemented!"))
-    )()
 
 class MLP(nn.Module):
     def __init__(self, activation: Literal['relu', 'gelu'] = "relu", dimensions: list = [2,2,2]):
@@ -28,9 +20,7 @@ class MLP(nn.Module):
             )
 
             last_dim = dim
-            layers.append(
-                get_activation(activation)
-            )
+            layers.append(ACT2FN[activation])
         layers = layers[:-1] # remove the extra activation
 
         self.net = nn.Sequential(*layers)
@@ -63,7 +53,7 @@ class ParallelNetworks(nn.Module):
 
 # Gradient Descent and variants.
 # Example usage: gd_model = GDModel("mlp", {'dimensions': [256]}, opt_alg_name = 'adam', batch_size = 100, lr = 5e-3, num_steps = 200)
-class GDModel(ContextModel):
+class GDModel(Baseline):
     def __init__(
         self,
         model_class_name: Literal["mlp"],
@@ -111,7 +101,7 @@ class GDModel(ContextModel):
         self.name = f"gdmodel_model={model_class_name}_model_kwargs={model_class_args}_opt={opt_alg_name}_lr={lr}_bsize={batch_size}_nsteps={num_steps}_loss={loss_name}"
         self.context_length = -1
 
-    def forward(self, xs, ys, verbose=False, print_step=100):
+    def evaluate(self, xs, ys, verbose=False, print_step=100):
         # inds is a list containing indices where we want the prediction.
         # prediction made at all indices by default.
         # xs: bsize X npoints X ndim.
