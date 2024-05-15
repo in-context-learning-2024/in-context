@@ -9,7 +9,7 @@ dependencies:
   - pytorch=2.2.0
   - pytorch-cuda=12.1
   - pip:
-    # - packaging
+    - packaging
     - mamba-ssm
     - causal-conv1d>=1.2.0
     - pyyaml==6.0.1
