@@ -8,10 +8,10 @@ dependencies:
   - python=3.10.13
   - pytorch=2.2.0
   - pytorch-cuda=12.1
+  - packaging
   - pip:
-    # - packaging
-    # - mamba-ssm
     # - causal-conv1d>=1.2.0
+    # - mamba-ssm
     - ipykernel
     - matplotlib
     - pyyaml==6.0.1
