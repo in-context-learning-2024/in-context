@@ -9,9 +9,11 @@ dependencies:
   - pytorch=2.2.0
   - pytorch-cuda=12.1
   - pip:
-    - packaging
-    - mamba-ssm
-    - causal-conv1d>=1.2.0
+    # - packaging
+    # - mamba-ssm
+    # - causal-conv1d>=1.2.0
+    - ipykernel
+    - matplotlib
     - pyyaml==6.0.1
     - scikit-learn==1.0.2
     - tqdm==4.64.0
