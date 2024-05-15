@@ -85,7 +85,6 @@ class ContextTrainer:
 
             if self.log_freq > 0 and i % self.log_freq == 0:
                 for baseline in self.baseline_models:
-                    print(f"Testing ")
                     baseline_output = baseline.evaluate(x_batch, y_batch)
 
                     if baseline_output.shape != y_batch.shape:
