@@ -20,3 +20,4 @@ task: &mlp_regression
         step_len: 7500
     x_dist:
         type: normal
+    # baseline_models: [*knn_3, *least_squares, *mlp]

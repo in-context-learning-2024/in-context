@@ -1,0 +1,5 @@
+<<: *linear_regression
+steps: 500001
+log_freq: 100
+checkpoint_freq: 50000
+model: *llama_without_rope_ffn

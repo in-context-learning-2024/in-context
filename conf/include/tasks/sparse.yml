@@ -20,3 +20,4 @@ task: &sparse_linear_regression
         step_len: 2000
     x_dist:
         type: normal
+    # baseline_models: *lasso_set

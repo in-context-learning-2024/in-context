@@ -1,21 +1,70 @@
 defs:
-    block: &llammba_block
+
+    block: &gpt2_with_llama_ffn_block
+        - layer norm
+        - gpt2 attention
+        - residual
+        - layer norm
+        - llama mlp
+        - residual
+
+    block: &gpt2_with_rms_block
+        - rms norm
+        - gpt2 attention
+        - residual
+        - rms norm
+        - gpt2 mlp
+        - residual
+
+    block: &gpt2_with_rope_block
+        - layer norm
+        - llama attention
+        - residual
+        - layer norm
+        - gpt2 mlp
+        - residual
+
+    block: &gpt2_with_rms_llama_ffn_block
+        - rms norm
+        - gpt2 attention
+        - residual
+        - rms norm
+        - llama mlp
+        - residuals
+
+    block: &gpt2_with_rms_rope_block
+        - rms norm
+        - llama attention
+        - residual
+        - rms norm
+        - gpt2 mlp
+        - residual
+
+    block: &gpt2_with_rope_llama_ffn_block
+        - layer norm
+        - llama attention
+        - residual
+        - layer norm
+        - llama mlp
+        - residual
+
+    block: &llama_without_rope_ffn_block
         - rms norm
         - llama attention no rope
         - residual
         - mamba block
         - residual
 
-    block: &llammba_block_with_rope
+    block: &llama_without_ffn_block
         - rms norm
         - llama attention
         - residual
         - mamba block
         - residual
 
-    block: &llama_block
+    block: &llama_without_rope_block
         - rms norm
-        - llama attention
+        - llama attention no rope
         - residual
         - rms norm
         - llama mlp
@@ -24,53 +73,207 @@ defs:
     base: &hybrid_base_config
         type: hybrid
         n_positions: 101
-        n_embd: 64
-        n_head: 4
+        n_embd: 256
+        n_head: 8
 
-model: &llama_with_rope_replaced
+model: &gpt2_with_llama_ffn
+    <<: *hybrid_base_config
+    module_names:
+        - residual
+
+        - *gpt2_with_llama_ffn_block
+        - *gpt2_with_llama_ffn_block
+        - *gpt2_with_llama_ffn_block
+        - *gpt2_with_llama_ffn_block
+
+        - *gpt2_with_llama_ffn_block
+        - *gpt2_with_llama_ffn_block
+        - *gpt2_with_llama_ffn_block
+        - *gpt2_with_llama_ffn_block
+
+        - *gpt2_with_llama_ffn_block
+        - *gpt2_with_llama_ffn_block
+        - *gpt2_with_llama_ffn_block
+        - *gpt2_with_llama_ffn_block
+
+        - layer norm
+
+model: &gpt2_with_rms
+    <<: *hybrid_base_config
+    module_names:
+        - residual
+
+        - *gpt2_with_rms_block
+        - *gpt2_with_rms_block
+        - *gpt2_with_rms_block
+        - *gpt2_with_rms_block
+        
+        - *gpt2_with_rms_block
+        - *gpt2_with_rms_block
+        - *gpt2_with_rms_block
+        - *gpt2_with_rms_block
+        
+        - *gpt2_with_rms_block
+        - *gpt2_with_rms_block
+        - *gpt2_with_rms_block
+        - *gpt2_with_rms_block
+
+        - rms norm
+
+model: &gpt2_with_rope
+    <<: *hybrid_base_config
+    module_names:
+        - residual
+
+        - *gpt2_with_rope_block
+        - *gpt2_with_rope_block
+        - *gpt2_with_rope_block
+        - *gpt2_with_rope_block
+
+        - *gpt2_with_rope_block
+        - *gpt2_with_rope_block
+        - *gpt2_with_rope_block
+        - *gpt2_with_rope_block
+
+        - *gpt2_with_rope_block
+        - *gpt2_with_rope_block
+        - *gpt2_with_rope_block
+        - *gpt2_with_rope_block
+
+        - layer norm
+
+model: &gpt2_with_rms_llama_ffn
+    <<: *hybrid_base_config
+    module_names:
+        - residual
+
+        - *gpt2_with_rms_llama_ffn_block
+        - *gpt2_with_rms_llama_ffn_block
+        - *gpt2_with_rms_llama_ffn_block
+        - *gpt2_with_rms_llama_ffn_block
+
+        - *gpt2_with_rms_llama_ffn_block
+        - *gpt2_with_rms_llama_ffn_block
+        - *gpt2_with_rms_llama_ffn_block
+        - *gpt2_with_rms_llama_ffn_block
+
+        - *gpt2_with_rms_llama_ffn_block
+        - *gpt2_with_rms_llama_ffn_block
+        - *gpt2_with_rms_llama_ffn_block
+        - *gpt2_with_rms_llama_ffn_block
+
+        - rms norm
+
+model: &gpt2_with_rms_rope
+    <<: *hybrid_base_config
+    module_names:
+        - residual
+
+        - *gpt2_with_rms_rope_block
+        - *gpt2_with_rms_rope_block
+        - *gpt2_with_rms_rope_block
+        - *gpt2_with_rms_rope_block
+
+        - *gpt2_with_rms_rope_block
+        - *gpt2_with_rms_rope_block
+        - *gpt2_with_rms_rope_block
+        - *gpt2_with_rms_rope_block
+
+        - *gpt2_with_rms_rope_block
+        - *gpt2_with_rms_rope_block
+        - *gpt2_with_rms_rope_block
+        - *gpt2_with_rms_rope_block
+
+        - rms norm
+
+model: &gpt2_with_rope_llama_ffn
+    <<: *hybrid_base_config
+    module_names:
+        - residual
+
+        - *gpt2_with_rope_llama_ffn_block
+        - *gpt2_with_rope_llama_ffn_block
+        - *gpt2_with_rope_llama_ffn_block
+        - *gpt2_with_rope_llama_ffn_block
+
+        - *gpt2_with_rope_llama_ffn_block
+        - *gpt2_with_rope_llama_ffn_block
+        - *gpt2_with_rope_llama_ffn_block
+        - *gpt2_with_rope_llama_ffn_block
+
+        - *gpt2_with_rope_llama_ffn_block
+        - *gpt2_with_rope_llama_ffn_block
+        - *gpt2_with_rope_llama_ffn_block
+        - *gpt2_with_rope_llama_ffn_block
+
+        - layer norm
+
+model: &llama_without_rope
     <<: *hybrid_base_config
     module_names:
         - residual
         - mamba block
         - residual
 
-        - *llama_block
-        - *llama_block
-        - *llama_block
+        - *llama_without_rope_block
+        - *llama_without_rope_block
+        - *llama_without_rope_block
+        - *llama_without_rope_block
 
-        - *llama_block
-        - *llama_block
-        - *llama_block
+        - *llama_without_rope_block
+        - *llama_without_rope_block
+        - *llama_without_rope_block
+        - *llama_without_rope_block
+
+        - *llama_without_rope_block
+        - *llama_without_rope_block
+        - *llama_without_rope_block
+        - *llama_without_rope_block
 
         - rms norm
 
-model: &llama_with_ffn_and_rope_replaced
+model: &llama_without_rope_ffn
     <<: *hybrid_base_config
     module_names:
         - residual
         - mamba block
         - residual
-        - *llammba_block
-        - *llammba_block
-        - *llammba_block
 
-        - *llammba_block
-        - *llammba_block
-        - *llammba_block
+        - *llama_without_rope_ffn_block
+        - *llama_without_rope_ffn_block
+        - *llama_without_rope_ffn_block
+        - *llama_without_rope_ffn_block
+
+        - *llama_without_rope_ffn_block
+        - *llama_without_rope_ffn_block
+        - *llama_without_rope_ffn_block
+        - *llama_without_rope_ffn_block
+
+        - *llama_without_rope_ffn_block
+        - *llama_without_rope_ffn_block
+        - *llama_without_rope_ffn_block
+        - *llama_without_rope_ffn_block
 
         - rms norm
 
-model: &llama_with_ffn_replaced
+model: &llama_without_ffn
     <<: *hybrid_base_config
     module_names:
         - residual
 
-        - *llammba_block_with_rope
-        - *llammba_block_with_rope
-        - *llammba_block_with_rope
+        - *llama_without_ffn_block
+        - *llama_without_ffn_block
+        - *llama_without_ffn_block
+        - *llama_without_ffn_block
+        
+        - *llama_without_ffn_block
+        - *llama_without_ffn_block
+        - *llama_without_ffn_block
+        - *llama_without_ffn_block
 
-        - *llammba_block_with_rope
-        - *llammba_block_with_rope
-        - *llammba_block_with_rope
+        - *llama_without_ffn_block
+        - *llama_without_ffn_block
+        - *llama_without_ffn_block
+        - *llama_without_ffn_block
 
         - rms norm

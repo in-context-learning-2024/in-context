@@ -19,3 +19,4 @@ task: &linear_regression
         step_len: 2000
     x_dist:
         type: normal
+    # baseline_models: [*least_squares, *knn_3, *averaging]

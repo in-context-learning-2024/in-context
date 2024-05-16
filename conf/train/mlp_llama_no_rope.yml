@@ -1,6 +1,0 @@
-<<: *mlp_regression
-steps: 500001
-log_freq: 100
-checkpoint_freq: 50000
-model: *llama_no_rope
-# baseline_models: [*knn_3, *least_squares]
