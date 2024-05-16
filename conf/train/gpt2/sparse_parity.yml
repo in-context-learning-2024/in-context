@@ -1,0 +1,12 @@
+model: &sparse_parity_gpt2
+    type: gpt2
+    n_positions: 300
+    n_layer: 12
+    n_embd: 256
+    n_head: 8
+
+<<: *sparse_parity_regression
+steps: 500001
+log_freq: 100
+checkpoint_freq: 50000
+model: *sparse_parity_gpt2

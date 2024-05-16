@@ -1,13 +1,20 @@
-import torch
-from transformers import GPT2Config, GPT2Model, LlamaConfig, LlamaModel # pyright: ignore[reportPrivateImportUsage]
+from transformers import (
+    GPT2Config, 
+    GPT2Model, 
+    LlamaConfig, 
+    LlamaModel,
+    MambaConfig,
+    MambaModel,
+ ) # pyright: ignore[reportPrivateImportUsage]
+
 from torch import nn
 
-from core import ContextModel
+from core import TrainableModel
 
-class TransformerModel(ContextModel):
+class BackboneModel(TrainableModel):
 
     def __init__(self, backbone: nn.Module, x_dim: int, n_positions: int, n_embd: int=128, y_dim: int = 1):
-        super(TransformerModel, self).__init__(x_dim, y_dim)
+        super().__init__(x_dim, y_dim)
 
         self.context_length = n_positions
         self._read_in = nn.Linear(x_dim, n_embd)
@@ -17,17 +24,18 @@ class TransformerModel(ContextModel):
     def forward(self, xs, ys):
         self._backbone.to(xs.device) # pyright: ignore[reportArgumentType,reportAttributeAccessIssue]
 
-        zs = ContextModel.interleave(xs, ys)
+        zs = self.interleave(xs, ys)
         embeds = self._read_in(zs)
         output = self._backbone(inputs_embeds=embeds).last_hidden_state # pyright: ignore[reportCallIssue]
         prediction = self._read_out(output)
         return prediction[:, ::2, :1] # predict only on xs
 
-class GPT2(TransformerModel):
+class GPT2(BackboneModel):
 
     def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, **kwargs):
 
         configuration = GPT2Config(
+            vocab_size=1,
             n_positions=2 * n_positions,
             n_embd=n_embd,
             n_layer=n_layer,
@@ -37,18 +45,21 @@ class GPT2(TransformerModel):
             attn_pdrop=0.0,
             use_cache=False,
         )
+
+        self.gpt2_configuration = configuration
         backbone: nn.Module = GPT2Model(configuration) # pyright: ignore[reportAssignmentType]
 
-        super().__init__(backbone, x_dim, n_positions, n_embd, **kwargs)
+        super().__init__(backbone, x_dim, n_positions, n_embd)
 
         self.name = f"gpt2_embd={n_embd}_layer={n_layer}_head={n_head}"
 
 
-class Llama(TransformerModel):
+class Llama(BackboneModel):
 
     def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, hidden_act: str = 'silu', rope_theta: float = 1e4, **kwargs):
 
         configuration = LlamaConfig(
+            vocab_size=1,
             max_position_embeddings=2 * n_positions,
             hidden_size=n_embd,
             intermediate_size=4*n_embd,
@@ -56,11 +67,32 @@ class Llama(TransformerModel):
             num_attention_heads=n_head,
             hidden_act=hidden_act,
             rope_theta=rope_theta,
-            use_cache=True,
+            use_cache=False,
         )
+
+        self.llama_configuration = configuration
         backbone: nn.Module = LlamaModel(configuration) # pyright: ignore[reportAssignmentType]
 
-        super().__init__(backbone, x_dim, n_positions, n_embd, **kwargs)
+        super().__init__(backbone, x_dim, n_positions, n_embd)
 
-        self.name = self.name = f"llama_embd={n_embd}_layer={n_layer}_head={n_head}"
+        self.name = f"llama_embd={n_embd}_layer={n_layer}_head={n_head}"
 
+class Mamba(BackboneModel):
+
+    def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, **kwargs):
+
+        configuration = MambaConfig(
+            vocab_size=1,
+            hidden_size=n_embd,
+            state_size=16,
+            expand=4,
+            num_hidden_layers=n_layer,
+            use_cache=False,
+        )
+
+        self.mamba_configuration = configuration
+        backbone: nn.Module = MambaModel(configuration)
+
+        super().__init__(backbone, x_dim, n_positions, n_embd,)
+
+        self.name = f"mamba_embd={n_embd}_layer={n_layer}"

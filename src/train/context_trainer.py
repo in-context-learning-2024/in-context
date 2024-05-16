@@ -4,19 +4,19 @@ import os
 from torch import nn
 
 from torch.optim import Optimizer
-from typing import Optional, List, Any
+from typing import Optional, Any
 
-from core import ContextModel, FunctionClass
+from core import Baseline, TrainableModel, FunctionClass
 
 class ContextTrainer:
     def __init__(
         self, 
         function_class: FunctionClass,
-        model: ContextModel,
+        model: TrainableModel,
         optim: Optimizer, 
         loss_fn: nn.Module,
         steps: int,
-        baseline_models: List[ContextModel],
+        baseline_models: list[Baseline],
         log_freq: int = -1,
         checkpoint_freq: int = -1,
         step_offset: int = 0,
@@ -60,13 +60,13 @@ class ContextTrainer:
             torch.save(checkpoint, wandb_path)
             wandb.save(wandb_path, base_path=wandb.run.dir) # pyright: ignore [reportOptionalMemberAccess]
 
-    def train(self, pbar: Optional[Any] = None) -> ContextModel:
+    def train(self, pbar: Optional[Any] = None) -> TrainableModel:
 
         baseline_loss = {}
 
         for i, (x_batch, y_batch) in zip(range(self.skip_steps, self.steps), self.function_class):
 
-            output = self.model(x_batch, y_batch)
+            output = self.model.evaluate(x_batch, y_batch)
             if output.shape != y_batch.shape:
                 raise ValueError(
                     f"Model {self.model.name} produced ill-shaped predictions!"
@@ -85,8 +85,7 @@ class ContextTrainer:
 
             if self.log_freq > 0 and i % self.log_freq == 0:
                 for baseline in self.baseline_models:
-                    baseline.eval()
-                    baseline_output = baseline(x_batch, y_batch)
+                    baseline_output = baseline.evaluate(x_batch, y_batch)
 
                     if baseline_output.shape != y_batch.shape:
                         raise ValueError(
@@ -114,11 +113,11 @@ class TrainerSteps(ContextTrainer):
 
     def __init__(self, 
         function_classes: list[FunctionClass], 
-        model: ContextModel, 
+        model: TrainableModel, 
         optim: Optimizer, 
         loss_fn: nn.Module, 
         steps: list[int], 
-        baseline_models: list[ContextModel],
+        baseline_models: list[Baseline],
         log_freq: int = -1,
         checkpoint_freq: int = -1,
         skip_steps: int = 0,
@@ -141,7 +140,7 @@ class TrainerSteps(ContextTrainer):
         self.skip_steps_left = skip_steps
         self.step_offset = 0
 
-    def train(self, pbar: Optional[Any] = None) -> ContextModel:
+    def train(self, pbar: Optional[Any] = None) -> TrainableModel:
 
         for fc, step_count, in zip(self.function_classes, self.steps):
 

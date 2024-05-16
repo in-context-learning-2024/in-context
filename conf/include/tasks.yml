@@ -1,0 +1,93 @@
+defs: 
+    shared: &task_base_config
+        optim:
+            type: adam
+            lr: 0.0001
+        loss_fn:
+            type: squared
+        b_size: 64
+        x_dist:
+            type: normal
+        x_dim: !curriculum
+            start: 5
+            stop: 20
+            step_size: 1
+            step_len: 2000
+
+task: &decision_tree_regression
+    <<: *task_base_config
+    function_class: 
+        type: decision tree
+        depth: 4
+    seq_len: !curriculum
+        start: 26
+        stop: 101
+        step_size: 5
+        step_len: 2000
+    # baseline_models: [*knn_3, *xgboost, *decision_tree, *decision_tree_4]
+
+task: &linear_regression
+    <<: *task_base_config
+    function_class:
+        type: linear regression
+    seq_len: !curriculum
+        start: 11
+        stop: 41
+        step_size: 2
+        step_len: 2000
+    # baseline_models: [*least_squares, *knn_3, *averaging]
+
+task: &mlp_regression
+    <<: *task_base_config
+    function_class: 
+        type: 2 layer mlp regression
+        hidden_dimension: 100
+    seq_len: !curriculum
+        start: 26
+        stop: 101
+        step_size: 5
+        step_len: 2000
+    # baseline_models: [*knn_3, *least_squares, *mlp]
+
+task: &sparse_linear_regression
+    <<: *task_base_config
+    function_class: 
+        type: sparse linear regression
+        sparsity: 3
+    seq_len: !curriculum
+        start: 11
+        stop: 41
+        step_size: 2
+        step_len: 2000
+    # baseline_models: *lasso_set
+
+task: &sparse_parity_regression
+    optim:
+        type: adam
+        lr: 0.0004
+    loss_fn:
+        type: squared
+    function_class: 
+        type: sparse parity regression
+        k: 2
+    b_size: 64
+    seq_len: 140
+    x_dim: 10
+    x_dist:
+        type: sparse
+    # baseline_models: []
+
+task: &retrieval
+    optim:
+        type: adam
+        lr: 0.0004
+    loss_fn:
+        type: squared
+    function_class: 
+        type: retrieval
+    b_size: 64
+    seq_len: 140
+    x_dim: 10
+    x_dist:
+        type: retrieval
+    # baseline_models: []

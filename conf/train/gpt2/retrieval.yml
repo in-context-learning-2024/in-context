@@ -1,0 +1,12 @@
+model: &retrieval_gpt2
+    type: gpt2
+    n_positions: 130
+    n_layer: 2
+    n_embd: 128
+    n_head: 8
+
+<<: *retrieval
+steps: 500001
+log_freq: 100
+checkpoint_freq: 50000
+model: *retrieval_gpt2
