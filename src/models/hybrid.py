@@ -100,7 +100,7 @@ def _make_llama_attention_factory(config: PretrainedConfig, layer_idx: int, use_
             max_position_embeddings=old_posemb.max_position_embeddings,
             base=old_posemb.base,
             scaling_factor=old_posemb.scaling_factor,
-            device=None, # TODO: replace with proper value
+            device=None,
             enable=use_rope
         )
 
@@ -180,7 +180,7 @@ class HybridBackbone(nn.Module):
             rope_theta=rope_theta,
             use_cache=False, # On inspection, this only writes to cache, not reads(?)
             **kwargs # provide all params to only this config to serve as default later on
-        ) if self.has("llama") else None
+        )
 
         self.gpt2_config = GPT2Config(
             n_positions=2 * n_positions,
