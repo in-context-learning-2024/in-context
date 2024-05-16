@@ -49,7 +49,7 @@ class GPT2(BackboneModel):
         self.gpt2_configuration = configuration
         backbone: nn.Module = GPT2Model(configuration) # pyright: ignore[reportAssignmentType]
 
-        super().__init__(backbone, x_dim, n_positions, n_embd, **kwargs)
+        super().__init__(backbone, x_dim, n_positions, n_embd)
 
         self.name = f"gpt2_embd={n_embd}_layer={n_layer}_head={n_head}"
 
@@ -73,7 +73,7 @@ class Llama(BackboneModel):
         self.llama_configuration = configuration
         backbone: nn.Module = LlamaModel(configuration) # pyright: ignore[reportAssignmentType]
 
-        super().__init__(backbone, x_dim, n_positions, n_embd, **kwargs)
+        super().__init__(backbone, x_dim, n_positions, n_embd)
 
         self.name = f"llama_embd={n_embd}_layer={n_layer}_head={n_head}"
 
@@ -93,6 +93,6 @@ class Mamba(BackboneModel):
         self.mamba_configuration = configuration
         backbone: nn.Module = MambaModel(configuration)
 
-        super().__init__(backbone, x_dim, n_positions, n_embd, **kwargs)
+        super().__init__(backbone, x_dim, n_positions, n_embd,)
 
         self.name = f"mamba_embd={n_embd}_layer={n_layer}"
