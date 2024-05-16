@@ -4,9 +4,10 @@ model: &retrieval_gpt2
     n_layer: 2
     n_embd: 128
     n_head: 8
-    # interleave: False
+    interleave: False
 
 <<: *retrieval
+y_dim: 20
 steps: 500001
 log_freq: 100
 checkpoint_freq: 50000
