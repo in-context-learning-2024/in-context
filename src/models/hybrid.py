@@ -165,7 +165,6 @@ class HybridBackbone(nn.Module):
             "n_embd" : embed_dim,
             "n_layer" : n_layer,
             "n_head" : n_head,
-            "hidden_act" : hidden_act,
             "rope_theta" : rope_theta,
             **kwargs
         }
