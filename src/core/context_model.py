@@ -76,12 +76,12 @@ class ContextModel:
         """
         raise NotImplementedError(f"Abstract class ContextModel does not implement `.evaluate()`!")
 
-    @staticmethod    # Helper for .forward
-    def interleave(xs, ys) -> torch.Tensor:
-        # code from Garg et. al.
+    # Helper for .forward
+    def interleave(self, xs, ys) -> torch.Tensor:
+        # code adapted from Garg et. al.
         """Interleaves the x's and the y's into a single sequence with shape (batch_size, 2*num_points, x_dim)"""
-        bsize, points, x_dim = xs.shape
-        _, _, y_dim = ys.shape
+        bsize, points (x_dim, y_dim) = self.get_dims(xs, ys)
+
         ys_wide = torch.cat(
             (
                 ys.view(bsize, points, y_dim),

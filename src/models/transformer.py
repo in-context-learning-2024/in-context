@@ -13,7 +13,7 @@ from core import TrainableModel
 
 class BackboneModel(TrainableModel):
 
-    def __init__(self, backbone: nn.Module, x_dim: int, n_positions: int, n_embd: int=128, y_dim: int = 1, **kwargs):
+    def __init__(self, backbone: nn.Module, x_dim: int, n_positions: int, n_embd: int=128, y_dim: int = 1):
         super().__init__(x_dim, y_dim)
 
         self.context_length = n_positions

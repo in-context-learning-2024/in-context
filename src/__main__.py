@@ -46,7 +46,6 @@ def main(args: arg.Namespace):
 
     log_yaml(yaml.dump(config, Dumper=yaml.Dumper))
 
-    print(f"Starting training ...")
     trainer.train()
 
 

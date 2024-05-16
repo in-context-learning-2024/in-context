@@ -80,6 +80,7 @@ defs:
 model: &gpt2_with_llama_ffn
     <<: *hybrid_base_config
     module_names:
+        - absolute positional embedding
         - residual
 
         - *gpt2_with_llama_ffn_block
@@ -102,6 +103,7 @@ model: &gpt2_with_llama_ffn
 model: &gpt2_with_rms
     <<: *hybrid_base_config
     module_names:
+        - absolute positional embedding
         - residual
 
         - *gpt2_with_rms_block
@@ -146,6 +148,7 @@ model: &gpt2_with_rope
 model: &gpt2_with_rms_llama_ffn
     <<: *hybrid_base_config
     module_names:
+        - absolute positional embedding
         - residual
 
         - *gpt2_with_rms_llama_ffn_block

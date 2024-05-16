@@ -4,7 +4,7 @@ import os
 from torch import nn
 
 from torch.optim import Optimizer
-from typing import Optional, List, Any
+from typing import Optional, Any
 
 from core import Baseline, TrainableModel, FunctionClass
 
@@ -16,7 +16,7 @@ class ContextTrainer:
         optim: Optimizer, 
         loss_fn: nn.Module,
         steps: int,
-        baseline_models: List[Baseline],
+        baseline_models: list[Baseline],
         log_freq: int = -1,
         checkpoint_freq: int = -1,
         step_offset: int = 0,
