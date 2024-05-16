@@ -145,12 +145,11 @@ class HybridBackbone(nn.Module):
 
     def __init__(
         self, 
-        module_names: list[str] = ["residual", "rms norm", "llama attn", "residual", "llama mlp", "residual"],
-        n_positions: int = 101,
-        embed_dim: int = 128, 
-        n_layer: int = 12, 
-        n_head: int = 4, 
-        hidden_act: str = 'silu', 
+        module_names: list[str],
+        n_positions: int,
+        embed_dim: int, 
+        n_layer: int,
+        n_head: int,
         rope_theta: float = 1e4,
         **kwargs
     ):
@@ -177,7 +176,7 @@ class HybridBackbone(nn.Module):
             intermediate_size=4*embed_dim,
             num_hidden_layers=n_layer,
             num_attention_heads=n_head,
-            hidden_act=hidden_act,
+            hidden_act=kwargs.get("llama_hidden_act", "silu"),
             rope_theta=rope_theta,
             use_cache=False, # On inspection, this only writes to cache, not reads(?)
             **kwargs # provide all params to only this config to serve as default later on
@@ -188,7 +187,7 @@ class HybridBackbone(nn.Module):
             n_embd=embed_dim,
             n_layer=n_layer,
             n_head=n_head,
-            hidden_act=hidden_act,
+            activation_function=kwargs.get("gpt2_hidden_act", "gelu_new"),
             resid_pdrop=0.0,
             embd_pdrop=0.0,
             attn_pdrop=0.0,
@@ -198,10 +197,10 @@ class HybridBackbone(nn.Module):
         self.mamba_config = MambaConfig(
             hidden_size=embed_dim,
             num_hidden_layers=n_layer,
-                state_size=kwargs.get("mamba_state_size", 16),
-                expand=kwargs.get("mamba_expand", 2),
-                conv_kernel=kwargs.get("mamba_conv_kernel", 4),
-                hidden_act=hidden_act,
+            state_size=kwargs.get("mamba_state_size", 16),
+            expand=kwargs.get("mamba_expand", 4),
+            conv_kernel=kwargs.get("mamba_conv_kernel", 4),
+            hidden_act=kwargs.get("mamba_hidden_act", "silu"),
             use_cache=False, # we set this to false only for consistency
         ) if self.has("mamba") else None
 
