@@ -148,7 +148,6 @@ class HybridBackbone(nn.Module):
         module_names: list[str],
         n_positions: int,
         embed_dim: int, 
-        n_layer: int,
         n_head: int,
         rope_theta: float = 1e4,
         **kwargs
@@ -159,7 +158,8 @@ class HybridBackbone(nn.Module):
         self.module_names = flatten(module_names)
         if not all(isinstance(mod, str) for mod in self.module_names):
             raise TypeError(f"Module names for HybridBackbone are malformed! Got:\n{self.module_names}")
-    
+
+        n_layer = len(self.module_names)
         self.raw_config = {
             "n_positions" : n_positions,
             "n_embd" : embed_dim,
