@@ -288,4 +288,3 @@ class HybridModel(BackboneModel):
             **kwargs
         )
         super().__init__(backbone, x_dim, n_positions, n_embd, y_dim)
-

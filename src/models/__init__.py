@@ -24,6 +24,7 @@ MODELS: dict[str, type[ContextModel]] = {
     "gpt2" : GPT2,
     "llama" : Llama,
     "mamba" : Mamba,
+
     "hybrid" : HybridModel,
 
     "least squares" : LeastSquaresModel,
