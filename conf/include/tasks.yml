@@ -8,6 +8,11 @@ defs:
         b_size: 64
         x_dist:
             type: normal
+        x_dim: !curriculum
+            start: 5
+            stop: 20
+            step_size: 1
+            step_len: 2000
 
 task: &decision_tree_regression
     <<: *task_base_config
@@ -18,11 +23,6 @@ task: &decision_tree_regression
         start: 26
         stop: 101
         step_size: 5
-        step_len: 2000
-    x_dim: !curriculum
-        start: 5
-        stop: 20
-        step_size: 1
         step_len: 2000
     # baseline_models: [*knn_3, *xgboost, *decision_tree, *decision_tree_4]
 
@@ -35,28 +35,18 @@ task: &linear_regression
         stop: 41
         step_size: 2
         step_len: 2000
-    x_dim: !curriculum
-        start: 5
-        stop: 20
-        step_size: 1
-        step_len: 2000
     # baseline_models: [*least_squares, *knn_3, *averaging]
 
 task: &mlp_regression
     <<: *task_base_config
     function_class: 
         type: 2 layer mlp regression
-        hidden_dimension: 40
+        hidden_dimension: 100
     seq_len: !curriculum
-        start: 11
-        stop: 42
-        step_size: 2
-        step_len: 5000
-    x_dim: !curriculum
-        start: 5
-        stop: 20
-        step_size: 1
-        step_len: 7500
+        start: 26
+        stop: 101
+        step_size: 5
+        step_len: 2000
     # baseline_models: [*knn_3, *least_squares, *mlp]
 
 task: &sparse_linear_regression
@@ -68,10 +58,5 @@ task: &sparse_linear_regression
         start: 11
         stop: 41
         step_size: 2
-        step_len: 2000
-    x_dim: !curriculum
-        start: 5
-        stop: 20
-        step_size: 1
         step_len: 2000
     # baseline_models: *lasso_set
