@@ -4,6 +4,7 @@ model: &retrieval_gpt2
     n_layer: 2
     n_embd: 128
     n_head: 8
+    # interleave: False
 
 <<: *retrieval
 steps: 500001
