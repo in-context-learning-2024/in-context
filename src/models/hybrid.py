@@ -180,7 +180,7 @@ class HybridBackbone(nn.Module):
             hidden_act=hidden_act,
             rope_theta=rope_theta,
             use_cache=False, # On inspection, this only writes to cache, not reads(?)
-            **kwargs # only provide this config all params to serve as default config later on
+            **kwargs # provide all params to only this config to serve as default later on
         ) if self.has("llama") else None
 
         self.gpt2_config = GPT2Config(
@@ -221,13 +221,16 @@ class HybridBackbone(nn.Module):
             if config_for_this_layer is None:
                 raise NotImplementedError(f"Failed to load a config for layer: {mod_name}!")
 
-            modules.append(
-                SPEC_TO_MODULE(
+            try:
+                mod = SPEC_TO_MODULE(
                     mod_name, 
                     config_for_this_layer, 
                     layer_idx=layer_idx
                 )
-            )
+            except TypeError as e:
+                raise TypeError(f"Invalid arguments!: {e}") from e
+
+            modules.append(mod)
 
         self.layers = nn.ModuleList(modules)
 

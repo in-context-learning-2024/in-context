@@ -9,16 +9,6 @@ from .hybrid import (
     HybridModel,
 )
 
-from .all_mod_archs import (
-    # ModTransformerModel,
-    MambaNoAttentionModel,
-    # MambaFirstGPT2TransformerModel,
-    MambaformerModel,
-    ModLlamaModel,
-    LlamaMambaModel,
-    LlamaSingleMambaModel,
-)
-
 from .baselines import (
     LeastSquaresModel,
     KNNModel,
@@ -35,13 +25,6 @@ MODELS: dict[str, type[ContextModel]] = {
     "llama" : Llama,
     "mamba" : Mamba,
     "hybrid" : HybridModel,
-    # "mambafirstgpt2"        : MambaFirstGPT2TransformerModel,
-    "mambaonly"             : MambaNoAttentionModel,
-    "mambaformer_classic"   : MambaformerModel,
-    # "mod_transformer"       : ModTransformerModel,
-    "llama_mamba"           : LlamaMambaModel,
-    "llama_mod"             : ModLlamaModel,
-    "llama_standard_hybrid" : LlamaSingleMambaModel,
 
     "least squares" : LeastSquaresModel,
     "knn"           : KNNModel,
