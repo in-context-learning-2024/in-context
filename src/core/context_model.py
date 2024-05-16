@@ -80,7 +80,7 @@ class ContextModel:
     def interleave(self, xs, ys) -> torch.Tensor:
         # code adapted from Garg et. al.
         """Interleaves the x's and the y's into a single sequence with shape (batch_size, 2*num_points, x_dim)"""
-        bsize, points (x_dim, y_dim) = self.get_dims(xs, ys)
+        bsize, points, (x_dim, y_dim) = self.get_dims(xs, ys)
 
         ys_wide = torch.cat(
             (
