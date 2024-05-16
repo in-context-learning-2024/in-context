@@ -48,13 +48,6 @@ defs:
         - llama mlp
         - residual
 
-    block: &llama_without_rope_ffn_block
-        - rms norm
-        - llama attention no rope
-        - residual
-        - mamba block
-        - residual
-
     block: &llama_without_ffn_block
         - rms norm
         - llama attention
@@ -68,6 +61,13 @@ defs:
         - residual
         - rms norm
         - llama mlp
+        - residual
+
+    block: &llama_without_rope_ffn_block
+        - rms norm
+        - llama attention no rope
+        - residual
+        - mamba block
         - residual
 
     base: &hybrid_base_config
@@ -208,6 +208,28 @@ model: &gpt2_with_rope_llama_ffn
 
         - layer norm
 
+model: &llama_without_ffn
+    <<: *hybrid_base_config
+    module_names:
+        - residual
+
+        - *llama_without_ffn_block
+        - *llama_without_ffn_block
+        - *llama_without_ffn_block
+        - *llama_without_ffn_block
+        
+        - *llama_without_ffn_block
+        - *llama_without_ffn_block
+        - *llama_without_ffn_block
+        - *llama_without_ffn_block
+
+        - *llama_without_ffn_block
+        - *llama_without_ffn_block
+        - *llama_without_ffn_block
+        - *llama_without_ffn_block
+
+        - rms norm
+
 model: &llama_without_rope
     <<: *hybrid_base_config
     module_names:
@@ -253,27 +275,5 @@ model: &llama_without_rope_ffn
         - *llama_without_rope_ffn_block
         - *llama_without_rope_ffn_block
         - *llama_without_rope_ffn_block
-
-        - rms norm
-
-model: &llama_without_ffn
-    <<: *hybrid_base_config
-    module_names:
-        - residual
-
-        - *llama_without_ffn_block
-        - *llama_without_ffn_block
-        - *llama_without_ffn_block
-        - *llama_without_ffn_block
-        
-        - *llama_without_ffn_block
-        - *llama_without_ffn_block
-        - *llama_without_ffn_block
-        - *llama_without_ffn_block
-
-        - *llama_without_ffn_block
-        - *llama_without_ffn_block
-        - *llama_without_ffn_block
-        - *llama_without_ffn_block
 
         - rms norm
