@@ -7,4 +7,13 @@
     ],
 
     "typeCheckingMode" : "standard",
+
+    "reportMissingParameterType": "error",
+    "reportMissingTypeArgument": "error",
+
+    "reportMissingSuperCall": "warning",
+    "reportUnnecessaryIsInstance": "warning",
+    "reportUnnecessaryCast": "warning",
+    "reportUnnecessaryContains": "warning",
+    "reportUnnecessaryTypeIgnoreComment": "warning",
 }
