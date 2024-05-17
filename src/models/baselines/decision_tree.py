@@ -1,19 +1,19 @@
 import torch
 
 from sklearn import tree
-from typing import Optional
+from typing import Optional, Any
 
 from core import Baseline
 
 class DecisionTreeModel(Baseline):
-    def __init__(self, max_depth: Optional[int] = None, **kwargs):
+    def __init__(self, max_depth: Optional[int] = None, **kwargs: Any):
         super(DecisionTreeModel, self).__init__(**kwargs)
 
         self._max_depth = max_depth
         self.name = f"decision_tree_max_depth={max_depth}"
         self.context_length = -1
 
-    def evaluate(self, xs, ys):
+    def evaluate(self, xs: torch.Tensor, ys: torch.Tensor):
         xs, ys = xs.cpu(), ys.cpu()
 
         preds = []
@@ -40,9 +40,9 @@ class DecisionTreeModel(Baseline):
 
 
 class DecisionTreeModelSGN(DecisionTreeModel):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         super(DecisionTreeModelSGN, self).__init__(**kwargs)
         self.name = self.name.replace("decision_tree", "decision_treeSGN")
 
-    def evaluate(self, xs, ys):
+    def evaluate(self, xs: torch.Tensor, ys: torch.Tensor):
         return super().evaluate(torch.sign(xs), ys)

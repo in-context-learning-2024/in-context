@@ -4,10 +4,10 @@ import torch
 
 from typing import List, Optional, Any
 
-def throw(ex):
+def throw(ex: Exception):
     raise ex
 
-def curried_throw(ex):
+def curried_throw(ex: Exception):
     return lambda *_, **__: throw(ex)
 
 

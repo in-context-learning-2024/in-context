@@ -1,16 +1,19 @@
 import torch
+
+from typing import Any
+
 from core import Baseline
 
 
 class KNNModel(Baseline):
-    def __init__(self, n_neighbors, weights="uniform", **kwargs):
+    def __init__(self, n_neighbors: int, weights: str = "uniform", **kwargs: Any):
         super(KNNModel, self).__init__(**kwargs)
         self._n_neighbors = n_neighbors
         self._weights = weights
         self.name = f"KNN_n={n_neighbors}_{weights}"
         self.context_length = -1
 
-    def evaluate(self, xs, ys):
+    def evaluate(self, xs: torch.Tensor, ys: torch.Tensor):
         
         preds = []
 

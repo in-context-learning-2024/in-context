@@ -1,5 +1,5 @@
 import torch
-from torch import nn
+from torch import nn, Tensor
 from typing import Optional
 
 from .errors import ShapeError
@@ -15,7 +15,7 @@ class ContextModel:
     def __repr__(self):
         return self.name
 
-    def get_dims(self, xs: torch.Tensor, ys: torch.Tensor) -> tuple[int, int, tuple[int, int]]:
+    def get_dims(self, xs: Tensor, ys: Tensor) -> tuple[int, int, tuple[int, int]]:
 
         x_shape_err_msg = " \n\t".join([
             "", "Expected: (batch_size, seq_len, x_dim)",
@@ -68,7 +68,7 @@ class ContextModel:
 
         return (x_bs, x_seq, (x_dim, y_dim))
 
-    def evaluate(self, xs: torch.Tensor, ys: torch.Tensor) -> torch.Tensor:
+    def evaluate(self, xs: Tensor, ys: Tensor) -> Tensor:
         """
         Translate from a sequence of x,y pairs to predicted y 
         values for each presented x value. `xs` must be the 
@@ -77,7 +77,7 @@ class ContextModel:
         raise NotImplementedError(f"Abstract class ContextModel does not implement `.evaluate()`!")
 
     # Helper for .forward
-    def interleave(self, xs, ys) -> torch.Tensor:
+    def interleave(self, xs: Tensor, ys: Tensor) -> Tensor:
         # code adapted from Garg et. al.
         """Interleaves the x's and the y's into a single sequence with shape (batch_size, 2*num_points, x_dim)"""
         bsize, points, (x_dim, y_dim) = self.get_dims(xs, ys)
@@ -94,7 +94,7 @@ class ContextModel:
         return zs
 
     @staticmethod    # Helper for .forward
-    def stack(xs: torch.Tensor, ys: torch.Tensor, ctx_len: int = 1) -> torch.Tensor:
+    def stack(xs: Tensor, ys: Tensor, ctx_len: int = 1) -> Tensor:
         """Stacks the x's and the y's into a single sequence with shape (batch_size, num_points, x_dim + ctx_len * (y_dim + x_dim). Relies on `self.context_len`"""
         bsize, points, dim = xs.shape
         try:
@@ -117,15 +117,15 @@ class ContextModel:
 
 
 class Baseline(ContextModel):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, x_dim: int, y_dim: int = 1):
+        super().__init__(x_dim, y_dim=y_dim)
 
 class TrainableModel(ContextModel, nn.Module):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, x_dim: int, y_dim: int = 1):
+        super().__init__(x_dim, y_dim=y_dim)
 
-    def forward(self, xs: torch.Tensor, ys: torch.Tensor) -> torch.Tensor:
+    def forward(self, xs: Tensor, ys: Tensor) -> Tensor:
         raise NotImplementedError(f"Abstract TrainableModel does not implement .forward()!")
     
-    def evaluate(self, xs: torch.Tensor, ys: torch.Tensor) -> torch.Tensor:
+    def evaluate(self, xs: Tensor, ys: Tensor) -> Tensor:
         return self(xs, ys)

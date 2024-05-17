@@ -1,7 +1,7 @@
 import torch
 
 from torch import nn, Tensor
-from typing import Callable
+from typing import Callable, Any
 
 from transformers import PretrainedConfig
 from transformers.modeling_outputs import BaseModelOutput
@@ -56,17 +56,17 @@ class ResidualMarker(nn.Module):
     residual connections should be made
     """
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.net = nn.Identity()
     
-    def forward(self, *args, **kwargs):
+    def forward(self, *args: Any, **kwargs: Any):
         return self.net(*args, **kwargs)
 
 
 class AbsolutePositionalEmbedding(nn.Module):
 
-    def __init__(self, max_num_positions, hidden_dim):
+    def __init__(self, max_num_positions: int, hidden_dim: int):
         super().__init__()
         self.positions = torch.arange(0, max_num_positions, dtype=torch.int)
         self.embed = nn.Embedding(max_num_positions, hidden_dim)
@@ -78,12 +78,12 @@ class AbsolutePositionalEmbedding(nn.Module):
         return inp + embeddings
 
 class RotaryEmbeddingStub(LlamaRotaryEmbedding):
-    def __init__(self, *args, enable: bool = False, **kwargs):
+    def __init__(self, *args: Any, enable: bool = False, **kwargs: Any):
         super().__init__(*args, **kwargs)
 
         self.enable = enable
 
-    def forward(self, x, position_ids):
+    def forward(self, x: Tensor, position_ids: Tensor):
         cos, sin = super().forward(x, position_ids)
 
         if self.enable:
@@ -150,7 +150,7 @@ class HybridBackbone(nn.Module):
         embed_dim: int, 
         n_head: int,
         rope_theta: float = 1e4,
-        **kwargs
+        **kwargs: Any
     ):
         super().__init__()
 
@@ -232,7 +232,7 @@ class HybridBackbone(nn.Module):
 
         self.layers = nn.ModuleList(modules)
 
-    def forward(self, inputs_embeds) -> BaseModelOutput:
+    def forward(self, inputs_embeds: Tensor) -> BaseModelOutput:
         hidden_state = inputs_embeds
         residual = 0
         attention_mask = torch.triu(

@@ -1,9 +1,12 @@
 import torch
 import torch.distributions as D
 
+from torch import Tensor
+from typing import Any
+
 from core import FunctionClass
 
-def generate_chebyshev_coefficients(lowest_degree, highest_degree):
+def generate_chebyshev_coefficients(lowest_degree: int, highest_degree: int) -> Tensor:
     # Create a matrix to hold the coefficients, initializing with zeros
     n = highest_degree + 1
     coeffs = torch.zeros(n, n, dtype=torch.int32)
@@ -27,7 +30,7 @@ class ChebyshevKernelLinearRegression(FunctionClass):
     Linear combinations are generated randomly by sampling from a normal distribution
     """
 
-    def __init__(self, lowest_degree=3, highest_degree=11, *args, **kwargs):
+    def __init__(self, lowest_degree: int = 3, highest_degree: int = 11, *args: Any, **kwargs: Any):
 
         self.chebyshev_coeffs = generate_chebyshev_coefficients(lowest_degree, highest_degree).float()
         self.lowest_degree = lowest_degree
@@ -71,7 +74,7 @@ class ChebyshevSharedRoots(FunctionClass):
     Roots can be uniformly randomly perturbed
     """
 
-    def __init__(self, degree=5, perturbation=0.1, *args, **kwargs):
+    def __init__(self, degree: int = 5, perturbation: float = 0.1, *args: Any, **kwargs: Any):
 
         self.perturbation = perturbation
         self._one_minus_one = torch.tensor([-1, 1])

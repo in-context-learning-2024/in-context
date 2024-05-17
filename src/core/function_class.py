@@ -3,6 +3,9 @@ from torch import Tensor
 from torch.distributions.distribution import Distribution
 from typing import Optional
 
+FC_ARG_TYPES = Distribution
+FC_KWARG_TYPES = FC_ARG_TYPES | None | int
+
 class FunctionClass:
 
     def __init__(

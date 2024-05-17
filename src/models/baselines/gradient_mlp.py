@@ -1,15 +1,14 @@
 import torch
 from torch import nn
 from transformers.activations import ACT2FN
-from typing import Literal
+from typing import Literal, Any
 
 from tqdm import tqdm
 
 from core import Baseline
-from utils import curried_throw
 
 class MLP(nn.Module):
-    def __init__(self, activation: Literal['relu', 'gelu'] = "relu", dimensions: list = [2,2,2]):
+    def __init__(self, activation: Literal['relu', 'gelu'] = "relu", dimensions: list[int] = [2,2,2]):
         super(MLP, self).__init__()
 
         layers = [ ]
@@ -25,17 +24,17 @@ class MLP(nn.Module):
 
         self.net = nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor):
         return self.net(x)
 
 class ParallelNetworks(nn.Module):
-    def __init__(self, num_models, model_class, init_args):
+    def __init__(self, num_models: int, model_class: type[nn.Module], init_args: dict[str, Any]):
         super(ParallelNetworks, self).__init__()
         self.nets = nn.ModuleList(
             [ model_class(**init_args) for _ in range(num_models) ]
         )
 
-    def forward(self, xs):
+    def forward(self, xs: torch.Tensor):
         assert xs.shape[0] == len(self.nets)
 
         self.nets.to(xs.device)
@@ -57,22 +56,32 @@ class GDModel(Baseline):
     def __init__(
         self,
         model_class_name: Literal["mlp"],
-        model_class_args: dict,
+        model_class_args: dict[str, Any],
         opt_alg_name: Literal["sgd", "adam"]="sgd",
-        batch_size=1,
-        num_steps=1000,
-        lr=1e-3,
-        loss_name="squared",
-        **kwargs
+        batch_size: int = 1,
+        num_steps: int = 1000,
+        lr: float = 1e-3,
+        loss_name: Literal["squared"] = "squared",
+        **kwargs: Any
     ):
         super(GDModel, self).__init__(**kwargs)
 
-        model_class = {
+        MODEL_CLASSES = {
             "mlp" : MLP,
-        }.get(
-            model_class_name, 
-            curried_throw(ValueError(f"GDModel does not support \"{model_class_name}\" model!"))
-        )
+        }
+
+        OPTIMS = {
+            "sgd" : torch.optim.SGD,
+            "adam": torch.optim.Adam  
+        }
+
+        LOSS_FNS = {
+            "squared" : nn.MSELoss
+        }
+
+        if model_class_name not in MODEL_CLASSES:
+            raise ValueError(f"GDModel does not support \"{model_class_name}\" model!")
+        model_class = MODEL_CLASSES[model_class_name]
 
         model_class_args = model_class_args | { 
             "dimensions" : [
@@ -81,19 +90,13 @@ class GDModel(Baseline):
         }
         self._get_new_model = lambda batch_size: ParallelNetworks(batch_size, model_class, model_class_args)
 
-        self._opt = lambda params: {
-            "sgd" : torch.optim.SGD,
-            "adam": torch.optim.Adam  
-        }.get(
-            opt_alg_name,
-            curried_throw(ValueError(f"GDModel does not support \"{opt_alg_name}\" optimizer!"))
-        )(params, lr=lr)
+        if opt_alg_name not in OPTIMS:
+            raise ValueError(f"GDModel does not support \"{opt_alg_name}\" optimizer!")
+        self._opt = lambda params: OPTIMS[opt_alg_name](params, lr=lr)
 
-        self._loss_fn = {
-            "squared" : nn.MSELoss
-        }.get(loss_name,
-            curried_throw(ValueError(f"GDModel does not support \"{loss_name}\" loss function!"))
-        )()
+        if loss_name not in LOSS_FNS:
+            raise ValueError(f"GDModel does not support \"{loss_name}\" loss function!")
+        self._loss_fn = LOSS_FNS[loss_name]()
         
         self._nets_maximum_batch_size = batch_size
         self._num_steps = num_steps
@@ -101,7 +104,7 @@ class GDModel(Baseline):
         self.name = f"gdmodel_model={model_class_name}_model_kwargs={model_class_args}_opt={opt_alg_name}_lr={lr}_bsize={batch_size}_nsteps={num_steps}_loss={loss_name}"
         self.context_length = -1
 
-    def evaluate(self, xs, ys, verbose=False, print_step=100):
+    def evaluate(self, xs: torch.Tensor, ys: torch.Tensor, verbose: bool = False, print_step: int = 100):
         # inds is a list containing indices where we want the prediction.
         # prediction made at all indices by default.
         # xs: bsize X npoints X ndim.

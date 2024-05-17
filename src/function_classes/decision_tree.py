@@ -2,13 +2,15 @@
 import torch
 import torch.distributions as D
 
+from typing import Any
+
 from core import FunctionClass
 from utils import CombinedDistribution
 
 
 class DecisionTreeRegression(FunctionClass):
 
-    def __init__(self, depth: int = 4, *args, **kwargs):
+    def __init__(self, depth: int = 4, *args: Any, **kwargs: Any):
         self._depth = depth
         super(DecisionTreeRegression, self).__init__(*args, **kwargs)
 

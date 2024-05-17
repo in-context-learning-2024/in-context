@@ -1,14 +1,19 @@
 import torch
-from core import Baseline
+
 import xgboost as xgb
 
+from typing import Any
+
+from core import Baseline
+
+
 class XGBoostModel(Baseline):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         super(XGBoostModel, self).__init__(**kwargs)
         self.name = "xgboost"
         self.context_length = -1
 
-    def evaluate(self, xs, ys):
+    def evaluate(self, xs: torch.Tensor, ys: torch.Tensor):
         xs, ys = xs.cpu(), ys.cpu()
         preds = []
         # i: loop over num_points
@@ -32,9 +37,9 @@ class XGBoostModel(Baseline):
         return torch.stack(preds, dim=1)
 
 class XGBoostModelSGN(XGBoostModel):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         super(XGBoostModelSGN, self).__init__(**kwargs)
         self.name = self.name.replace("xgboost", "xgboostSGN")
 
-    def evaluate(self, xs, ys):
+    def evaluate(self, xs: torch.Tensor, ys: torch.Tensor):
         return super().evaluate(torch.sign(xs), ys)
