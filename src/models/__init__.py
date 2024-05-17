@@ -17,6 +17,7 @@ from .baselines import (
     GDModel,
     DecisionTreeModel,
     XGBoostModel,
+    RetrievalDictModel,
     ZeroModel,
 )
 
@@ -34,6 +35,7 @@ MODELS: dict[str, type[ContextModel]] = {
     "grad mlp"      : GDModel,
     "decision tree" : DecisionTreeModel,
     "xgboost"       : XGBoostModel,
+    "retrievaldict" : RetrievalDictModel,
     "zero"          : ZeroModel,
 }
 

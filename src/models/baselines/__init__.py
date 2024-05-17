@@ -8,6 +8,7 @@ from .nearest_neighbors import KNNModel
 from .xgboost import XGBoostModel
 from .decision_tree import DecisionTreeModel
 from .zero_model import ZeroModel
+from .retrieval_dict import RetrievalDictModel
 
 
 __all__ = [
@@ -18,5 +19,6 @@ __all__ = [
     "GDModel",
     "DecisionTreeModel",
     "XGBoostModel",
+    "RetrievalDictModel",
     "ZeroModel",
 ]
