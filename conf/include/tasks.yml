@@ -13,53 +13,102 @@ defs:
             stop: 20
             step_size: 1
             step_len: 2000
-
-task: &decision_tree_regression
-    <<: *task_base_config
-    function_class: 
-        type: decision tree
-        depth: 4
-    seq_len: !curriculum
+    
+    seq_len: &short_sequence_curriculum !curriculum
+        start: 11
+        stop: 41
+        step_size: 2
+        step_len: 2000
+    
+    seq_len: &long_sequence_curriculum !curriculum
         start: 26
         stop: 101
         step_size: 5
         step_len: 2000
+
+task: &decision_tree_regression
+    <<: *task_base_config
+    seq_len: *long_sequence_curriculum
+    function_class: 
+        type: decision tree
+        depth: 4
     # baseline_models: [*knn_3, *xgboost, *decision_tree, *decision_tree_4]
 
 task: &linear_regression
     <<: *task_base_config
+    seq_len: *short_sequence_curriculum
     function_class:
         type: linear regression
-    seq_len: !curriculum
-        start: 11
-        stop: 41
-        step_size: 2
-        step_len: 2000
     # baseline_models: [*least_squares, *knn_3, *averaging]
 
 task: &mlp_regression
     <<: *task_base_config
+    seq_len: *long_sequence_curriculum
     function_class: 
         type: 2 layer mlp regression
         hidden_dimension: 100
-    seq_len: !curriculum
-        start: 26
-        stop: 101
-        step_size: 5
-        step_len: 2000
     # baseline_models: [*knn_3, *least_squares, *mlp]
 
 task: &sparse_linear_regression
     <<: *task_base_config
+    seq_len: *short_sequence_curriculum
     function_class: 
         type: sparse linear regression
         sparsity: 3
-    seq_len: !curriculum
-        start: 11
-        stop: 41
-        step_size: 2
-        step_len: 2000
     # baseline_models: *lasso_set
+
+task: &sparse_parity_regression
+    optim:
+        type: adam
+        lr: 0.0004
+    loss_fn:
+        type: squared
+    function_class: 
+        type: sparse parity regression
+        k: 2
+    b_size: 64
+    seq_len: 140
+    x_dim: 10
+    x_dist:
+        type: sparse
+    # baseline_models: []
+
+task: &retrieval
+    optim:
+        type: adam
+        lr: 0.0002
+    loss_fn:
+        type: squared
+    function_class: 
+        type: retrieval
+    b_size: 64
+    seq_len: 64
+    x_dim: 20
+    x_dist:
+        type: retrieval
+    # baseline_models: []
+
+task: &chebyshev_kernel_linear_regression
+    <<: *task_base_config
+    x_dim: 1
+    x_dist:
+        type: uniform
+    seq_len: *short_sequence_curriculum
+    function_class: 
+        type: chebyshev kernel linear regression
+        lowest_degree: 3
+        highest_degree: 11
+
+task: &chebyshev_shared_roots_regression
+    <<: *task_base_config
+    x_dim: 1
+    x_dist:
+        type: uniform
+    seq_len: *short_sequence_curriculum
+    function_class:
+        type: chebyshev shared roots
+        degree: 5
+        perturbation: 0.2
 
 task: &sparse_parity_regression
     optim:

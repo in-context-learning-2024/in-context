@@ -30,7 +30,7 @@ defs:
         - residual
         - rms norm
         - llama mlp
-        - residuals
+        - residual
 
     block: &gpt2_with_rms_rope_block
         - rms norm
