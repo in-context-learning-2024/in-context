@@ -1,12 +1,14 @@
 import torch
 import torch.distributions as D
 
+from typing import Any
+
 from utils import RandomPermutationDistribution
 from core import FunctionClass
 
 class SparseParityRegression(FunctionClass):
 
-    def __init__(self, k: int = 2, *args, **kwargs):
+    def __init__(self, k: int = 2, *args: Any, **kwargs: Any):
         self.k = k
         super(SparseParityRegression, self).__init__(*args, **kwargs)
 

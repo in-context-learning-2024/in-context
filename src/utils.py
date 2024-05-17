@@ -7,13 +7,6 @@ import math
 
 from typing import List, Optional, Any
 
-def throw(ex: Exception):
-    raise ex
-
-def curried_throw(ex: Exception):
-    return lambda *_, **__: throw(ex)
-
-
 class CombinedDistribution(dist.Distribution):
     """Combine a number of unrelated distributions. i.e. combine a list of distributions to sample from in a combined call"""
 
@@ -86,8 +79,8 @@ class RandomPermutationDistribution(dist.Distribution):
 class SparseDistribution(dist.Distribution):
     """A distribution that returns xs sampled from {-1, 1} uniformly at random."""
 
-    def __init__(self, batch_shape: torch.Size, event_shape: torch.Size, *args, **kwargs):
-        super(SparseDistribution, self).__init__(*args, **kwargs | {"validate_args": False})
+    def __init__(self, batch_shape: torch.Size, event_shape: torch.Size, *args: Any, **kwargs: Any):
+        super(SparseDistribution, self).__init__(*args, **(kwargs | {"validate_args": False}))
         self.batch_size = batch_shape[0]
         self.seq_len = batch_shape[1]
         self.x_dim = event_shape[0]
@@ -106,7 +99,7 @@ class SparseDistribution(dist.Distribution):
 class RetrievalDistribution(dist.Distribution):
     """"""
 
-    def __init__(self, batch_shape: torch.Size, event_shape: torch.Size, *args, **kwargs):
+    def __init__(self, batch_shape: torch.Size, event_shape: torch.Size, *args: Any, **kwargs: Any):
         super(RetrievalDistribution, self).__init__(*args, **kwargs | {"validate_args": False})
         self.batch_size = batch_shape[0]
         self.seq_len = batch_shape[1]
