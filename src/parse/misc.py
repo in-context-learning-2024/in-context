@@ -1,12 +1,16 @@
 import torch
 
-from typing import Callable, Optional
+from typing import Callable, Optional, Any
 
 from core import TrainableModel
 
-from .utils import check_kwargs, clean_instantiate
+from .utils import (
+    check_kwargs,
+    clean_instantiate,
+    YamlMap
+)
 
-def get_loss_fn(data: dict) -> torch.nn.Module:
+def get_loss_fn(data: YamlMap) -> torch.nn.Module:
     
     LOSS_FNS = {
         "squared" : torch.nn.MSELoss,
@@ -19,7 +23,11 @@ def get_loss_fn(data: dict) -> torch.nn.Module:
     
     return clean_instantiate(loss_fn_type, **data)
 
-def get_optimizer(model: TrainableModel, data: dict, optim_state: Optional[dict] = None) -> torch.optim.Optimizer:
+def get_optimizer(
+        model: TrainableModel,
+        data: YamlMap,
+        optim_state: Optional[dict[Any, Any]] = None
+    ) -> torch.optim.Optimizer:
 
     OPTIMIZERS = {
         "sgd" : torch.optim.SGD,

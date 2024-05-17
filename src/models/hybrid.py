@@ -260,7 +260,7 @@ class HybridBackbone(nn.Module):
                 })
 
             layer = layer.to(hidden_state.device)
-            hidden_state = layer(
+            hidden_state: tuple[Tensor, ...] | Tensor = layer(
                 hidden_state,
                 **forward_kwargs
             )
@@ -273,12 +273,19 @@ class HybridBackbone(nn.Module):
                 residual = hidden_state
 
         return BaseModelOutput(
-            last_hidden_state=hidden_state
+            last_hidden_state=hidden_state # pyright: ignore[reportArgumentType]
         )
 
 class HybridModel(BackboneModel):
 
-    def __init__(self, module_names: list[str], x_dim: int, n_positions: int, n_embd: int = 128, y_dim: int = 1, **kwargs):
+    def __init__(self,
+            module_names: list[str],
+            x_dim: int,
+            n_positions: int,
+            n_embd: int = 128,
+            y_dim: int = 1,
+            **kwargs: Any
+        ):
         backbone = HybridBackbone(
             module_names, 
             embed_dim=n_embd,

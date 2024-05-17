@@ -3,7 +3,7 @@ import torch
 import os.path
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, TypeAlias
 
 from train import TrainerSteps
 from core import TrainableModel
@@ -13,6 +13,9 @@ from .dist import get_x_distribution
 from .model import get_model
 from .function_class import get_function_class
 from .misc import get_optimizer, get_loss_fn
+from .utils import YamlMap
+
+ParsedYamlMap: TypeAlias = YamlMap
 
 DEFAULT_TRAINING_OPTS = {
     "y_dim" : 1,
@@ -30,7 +33,7 @@ NEEDED_TRAINING_DATA = [
 EXCESS_KEYS = ["y_dim", "x_dist", "function_class", "b_size", "seq_len", "x_dim"]
 
 
-def _produce_trainer_stages(data: dict) -> TrainerSteps:
+def _produce_trainer_stages(data: YamlMap) -> TrainerSteps:
     """Convert a YAML primitive stage dicts to a instantiated Trainer object"""
 
     for key in NEEDED_TRAINING_DATA:
@@ -83,7 +86,7 @@ def _produce_trainer_stages(data: dict) -> TrainerSteps:
     return big_trainer
 
 def parse_training(yaml_content: str, skip_steps: int = 0, model_weights: Optional[Any] = None, 
-                   optim_state: Optional[Any] = None) -> tuple[TrainerSteps, dict]:
+                   optim_state: Optional[Any] = None) -> tuple[TrainerSteps, ParsedYamlMap]:
     d = yaml.load(yaml_content, Loader=yaml.Loader)
 
     d['train'] = DEFAULT_TRAINING_OPTS | d['train'] # override defaults with specified opts
@@ -98,7 +101,11 @@ def parse_training(yaml_content: str, skip_steps: int = 0, model_weights: Option
 
     return big_trainer, d['train']
 
-def parse_training_from_file(filename: str, include: str, checkpoint_path: Optional[str] = None) -> tuple[TrainerSteps, dict]:
+def parse_training_from_file(
+        filename: str,
+        include: str,
+        checkpoint_path: Optional[str] = None
+    ) -> tuple[TrainerSteps, ParsedYamlMap]:
 
     included = ""
     for file in Path(include).rglob("*.yml"):

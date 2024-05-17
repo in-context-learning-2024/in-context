@@ -7,7 +7,8 @@ from transformers import (
     MambaModel,
  ) # pyright: ignore[reportPrivateImportUsage]
 
-from torch import nn
+from torch import nn, Tensor
+from typing import Any
 
 from core import TrainableModel
 
@@ -21,7 +22,7 @@ class BackboneModel(TrainableModel):
         self._backbone = backbone
         self._read_out = nn.Linear(n_embd, y_dim)
 
-    def forward(self, xs, ys):
+    def forward(self, xs: Tensor, ys: Tensor):
         self._backbone.to(xs.device) # pyright: ignore[reportArgumentType,reportAttributeAccessIssue]
 
         zs = self.interleave(xs, ys)
@@ -32,7 +33,14 @@ class BackboneModel(TrainableModel):
 
 class GPT2(BackboneModel):
 
-    def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, **kwargs):
+    def __init__(self,
+            x_dim: int,
+            n_positions: int,
+            n_embd: int = 128,
+            n_layer: int = 12,
+            n_head: int = 4,
+            **kwargs: Any
+        ):
 
         configuration = GPT2Config(
             vocab_size=1,
@@ -56,7 +64,16 @@ class GPT2(BackboneModel):
 
 class Llama(BackboneModel):
 
-    def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, n_head=4, hidden_act: str = 'silu', rope_theta: float = 1e4, **kwargs):
+    def __init__(self,
+            x_dim: int,
+            n_positions: int,
+            n_embd: int = 128,
+            n_layer: int = 12,
+            n_head: int = 4,
+            hidden_act: str = 'silu',
+            rope_theta: float = 1e4,
+            **kwargs: Any
+        ):
 
         configuration = LlamaConfig(
             vocab_size=1,
@@ -79,7 +96,13 @@ class Llama(BackboneModel):
 
 class Mamba(BackboneModel):
 
-    def __init__(self, x_dim, n_positions, n_embd=128, n_layer=12, **kwargs):
+    def __init__(self,
+            x_dim: int,
+            n_positions: int,
+            n_embd: int = 128,
+            n_layer: int = 12,
+            **kwargs: Any
+        ):
 
         configuration = MambaConfig(
             vocab_size=1,

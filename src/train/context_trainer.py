@@ -21,7 +21,7 @@ class ContextTrainer:
         checkpoint_freq: int = -1,
         step_offset: int = 0,
         skip_steps: int = 0,
-        **kwargs, 
+        **kwargs: Any, 
     ):
         self.function_class = function_class
         self.model = model
@@ -34,7 +34,7 @@ class ContextTrainer:
         self.step_offset = step_offset
         self.skip_steps = skip_steps
 
-    def _log(self, step: int, data: dict) -> None:
+    def _log(self, step: int, data: dict[str, Any]) -> None:
         global_step_num = step + self.step_offset
         wandb.log(
             data=data,
