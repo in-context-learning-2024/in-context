@@ -1,4 +1,4 @@
-model: &sparse_parity_gpt2
+model: &sparse_parity_gpt2 # SEE COMMENT ON tasks.yml FOR SPARSE PARITY REGRESSION TASK
     type: gpt2
     n_positions: 300
     n_layer: 12
@@ -9,4 +9,4 @@ model: &sparse_parity_gpt2
 steps: 500001
 log_freq: 100
 checkpoint_freq: 50000
-model: *sparse_parity_gpt2
+model: *std_gpt2
