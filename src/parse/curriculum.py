@@ -15,6 +15,7 @@ class Curriculum(yaml.YAMLObject):
             stop : int | float,
             step_size : int | float,
         ):
+        super().__init__()
         self.start = start
         self.stop = stop
         self.step_size = step_size

@@ -12,6 +12,7 @@ from core import (
 
 class FunctionClassError(Benchmark):
     def __init__(self, metric: Metric, function_class: FunctionClass):
+        super().__init__()
         self.function_class = function_class
         self.metric = metric
 

@@ -1,4 +1,6 @@
 # pyright: reportIncompatibleMethodOverride=information
+# pyright: reportMissingSuperCall=information
+
 import torch.distributions as dist
 import torch
 
