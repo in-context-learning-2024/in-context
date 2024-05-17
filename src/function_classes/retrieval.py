@@ -18,8 +18,5 @@ class Retrieval(FunctionClass):
         _, retrieval_inds = torch.max(inner_products, dim=1)
         retrieval_inds = retrieval_inds.view(-1, 1, 1).expand(-1, -1, values_b.size(-1))
         y_batch = torch.gather(values_b, 1, retrieval_inds).squeeze(1)
-
-        # print(y_batch.shape)
-        # print(y_batch)
         
         return y_batch

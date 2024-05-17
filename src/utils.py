@@ -97,7 +97,7 @@ class SparseDistribution(dist.Distribution):
         return torch.Size([self.x_dim])
     
 class RetrievalDistribution(dist.Distribution):
-    """"""
+    """A distribution that samples from a normalized gaussian and repeats a sampled x at the end of the prompt."""
 
     def __init__(self, batch_shape: torch.Size, event_shape: torch.Size, *args: Any, **kwargs: Any):
         super(RetrievalDistribution, self).__init__(*args, **kwargs | {"validate_args": False})
