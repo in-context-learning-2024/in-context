@@ -1,12 +1,16 @@
 import torch
-from core import Baseline
+import warnings
+
+from typing import Optional, Any
 from sklearn.linear_model import Lasso
 from sklearn.exceptions import ConvergenceWarning
-import warnings
+
+from core import Baseline
+
 
 # xs and ys should be on cpu for this method. Otherwise the output maybe off in case when train_xs is not full rank due to the implementation of torch.linalg.lstsq.
 class LeastSquaresModel(Baseline):
-    def __init__(self, driver=None, **kwargs):
+    def __init__(self, driver: Optional[str] = None, **kwargs: Any):
         super(LeastSquaresModel, self).__init__(**kwargs)
 
         y_dim = kwargs.get('y_dim', 1)
@@ -17,7 +21,7 @@ class LeastSquaresModel(Baseline):
         self.name = f"OLS_driver={driver}"
         self.context_length = -1
 
-    def evaluate(self, xs, ys):
+    def evaluate(self, xs: torch.Tensor, ys: torch.Tensor):
         DEVICE = xs.device
         xs, ys = xs.cpu(), ys.cpu()
         ys = ys[..., 0] # remove the trivial y_dim=1 dimension
@@ -48,12 +52,12 @@ class LeastSquaresModel(Baseline):
 
 
 class AveragingModel(Baseline):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         super(AveragingModel, self).__init__(**kwargs)
         self.name = "averaging"
         self.context_length = -1
 
-    def evaluate(self, xs, ys):
+    def evaluate(self, xs: torch.Tensor, ys: torch.Tensor):
         preds = []
 
         for i in range(ys.shape[1]):
@@ -74,7 +78,7 @@ class AveragingModel(Baseline):
 # Lasso regression (for sparse linear regression).
 # Seems to take more time as we decrease alpha.
 class LassoModel(Baseline):
-    def __init__(self, alpha: float, max_iter: int = 100000, **kwargs):
+    def __init__(self, alpha: float, max_iter: int = 100000, **kwargs: Any):
         super(LassoModel, self).__init__(**kwargs)
 
         # the l1 regularizer gets multiplied by alpha.
@@ -83,7 +87,7 @@ class LassoModel(Baseline):
         self.name = f"lasso_alpha={alpha}_max_iter={max_iter}"
         self.context_length = -1
 
-    def evaluate(self, xs, ys):
+    def evaluate(self, xs: torch.Tensor, ys: torch.Tensor):
         DEVICE = xs.device
         xs, ys = xs.cpu(), ys.cpu()
 

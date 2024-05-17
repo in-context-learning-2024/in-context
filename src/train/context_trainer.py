@@ -1,3 +1,5 @@
+# pyright: reportMissingSuperCall=information
+
 import torch
 import wandb
 import os
@@ -21,8 +23,9 @@ class ContextTrainer:
         checkpoint_freq: int = -1,
         step_offset: int = 0,
         skip_steps: int = 0,
-        **kwargs, 
+        **kwargs: Any, 
     ):
+        super().__init__()
         self.function_class = function_class
         self.model = model
         self.optim = optim 
@@ -34,7 +37,7 @@ class ContextTrainer:
         self.step_offset = step_offset
         self.skip_steps = skip_steps
 
-    def _log(self, step: int, data: dict) -> None:
+    def _log(self, step: int, data: dict[str, Any]) -> None:
         global_step_num = step + self.step_offset
         wandb.log(
             data=data,
@@ -111,7 +114,7 @@ class ContextTrainer:
 
 class TrainerSteps(ContextTrainer):
 
-    def __init__(self, 
+    def __init__(self,
         function_classes: list[FunctionClass], 
         model: TrainableModel, 
         optim: Optimizer, 

@@ -1,14 +1,16 @@
 # pyright: reportIncompatibleMethodOverride=information
+# pyright: reportMissingSuperCall=information
+
 import torch.distributions as dist
 import torch
 import math
 
 from typing import List, Optional, Any
 
-def throw(ex):
+def throw(ex: Exception):
     raise ex
 
-def curried_throw(ex):
+def curried_throw(ex: Exception):
     return lambda *_, **__: throw(ex)
 
 
