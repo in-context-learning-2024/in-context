@@ -23,8 +23,8 @@ class FunctionClassError(Benchmark):
             errs = torch.stack([
                 torch.stack([
                     self.metric.evaluate(
-                        y_batch,
-                        model.evaluate(x_batch, y_batch)
+                        y_batch.to('cpu'),
+                        model.evaluate(x_batch.to('cpu'), y_batch.to('cpu'))
                     )
                     for model in models
                 ])
