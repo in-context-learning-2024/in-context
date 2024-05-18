@@ -58,35 +58,32 @@ task: &sparse_linear_regression
     # baseline_models: *lasso_set
 
 task: &sparse_parity_regression
-    optim:
-        type: adam
-        lr: 0.0004
-    loss_fn:
-        type: squared
-    function_class: 
-        type: sparse parity regression
-        k: 2
-    b_size: 64
-    seq_len: 101 # MAMBAFORMER TESTS ON 140, CHANGED TO 101 FOR TESTING
+    <<: *task_base_config
     x_dim: 10
     x_dist:
         type: sparse
-    # baseline_models: []
-
-task: &retrieval
     optim:
         type: adam
-        lr: 0.0002
-    loss_fn:
-        type: squared
+        lr: 0.0004
     function_class: 
-        type: retrieval
-    b_size: 64
-    seq_len: 64
+        type: sparse parity regression
+        k: 2
+    seq_len: 140
+    # baseline_models: [] # TODO: provide at least *one* baseline here
+
+task: &retrieval
+    <<: *task_base_config
     x_dim: 20
     x_dist:
         type: retrieval
-    # baseline_models: []
+    optim:
+        type: adam
+        lr: 0.0002
+    seq_len: 64
+    function_class: 
+        type: retrieval
+    y_dim: 20
+    # baseline_models: [] # TODO: provide at least *one* baseline here
 
 task: &chebyshev_kernel_linear_regression
     <<: *task_base_config
