@@ -11,6 +11,12 @@ defs:
         n_head: 4
         n_embd: 64
 
+    model: &retrieval_config
+        n_positions: 130
+        n_layer: 2
+        n_head: 8
+        n_embd: 128
+
 model: &std_gpt2
     type: gpt2
     <<: *base_config
@@ -34,3 +40,15 @@ model: &small_llama
 model: &small_mamba
     type: mamba
     <<: *small_config
+
+model: &retrieval_gpt2
+    type: gpt2
+    <<: *retrieval_config
+
+model: &retrieval_llama
+    type: llama
+    <<: *retrieval_config
+
+model: &retrieval_mamba
+    type: mamba
+    <<: *retrieval_config

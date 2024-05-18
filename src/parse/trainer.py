@@ -109,7 +109,6 @@ def parse_training_from_file(
 
     included = ""
     for file in Path(include).rglob("*.yml"):
-        print(file)
         with open(file, "r") as f:
             included += f.read() + "\n"
 
@@ -129,7 +128,5 @@ def parse_training_from_file(
     model_state = latest_checkpoint['model_state_dict']
     optim_state = latest_checkpoint['optimizer_state_dict']
     latest_step = int(os.path.basename(checkpoint_path).split("_")[-1])
-
-    print("full_yaml:", full_yaml)
 
     return parse_training(full_yaml, latest_step, model_state, optim_state)

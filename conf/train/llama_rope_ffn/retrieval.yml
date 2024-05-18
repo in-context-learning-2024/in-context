@@ -3,6 +3,4 @@ y_dim: 20
 steps: 500001
 log_freq: 100
 checkpoint_freq: 50000
-model: 
-    <<: *llama_without_rope_ffn
-    interleave: False
+model: *llama_without_rope_ffn_retrieval
