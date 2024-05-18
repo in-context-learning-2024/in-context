@@ -16,6 +16,7 @@ defs:
         n_layer: 2
         n_head: 8
         n_embd: 128
+        retrieval: False
 
 model: &std_gpt2
     type: gpt2
