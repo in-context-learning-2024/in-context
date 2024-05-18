@@ -9,6 +9,7 @@ from core import (
     FunctionClass,
     ContextModel,
 )
+from models.zero_model import ZeroModel
 
 class FunctionClassError(Benchmark):
     def __init__(self, metric: Metric, function_class: FunctionClass):
@@ -37,6 +38,36 @@ class FunctionClassError(Benchmark):
 
         return errs
 
+class RegressionScore(Benchmark):
+    # optimal is the optimal model for predicting function_class
+    # we can change this to call from a dictionary later
+    def __init__(self, metric: Metric, function_class: FunctionClass, optimal: ContextModel):
+        self.function_class = function_class
+        self.metric = metric
+        self.optimal = optimal
+
+    # returns reg_score for the given models
+    def evaluate(self, models: Iterable[ContextModel]) -> Iterable[Tensor]:
+        model_funct = FunctionClassError(self.metric, self.function_class)
+        model_err = model_funct.evaluate(models)
+
+        zero_err = model_funct.evaluate([ZeroModel(x_dim = model_err.shape[-1])])
+
+        optimal_err = model_funct.evaluate([self.optimal])
+        return reg_score(model_err, zero_err, optimal_err).squeeze(dim=-1)
+    
+# errors for each model, in shape (#models, batch size, seq_len)
+# errors for the zero estimator, in shape (batch size, seq_len,)
+# error for the optimal estimator, in shape (batch size, seq_len)
+def reg_score(model_err, zero_err, optimal_err):
+    norm_model_err = torch.sub(model_err, zero_err)
+    norm_optimal_err = torch.sub(optimal_err, zero_err)
+
+
+    avg_model_err = torch.mean(norm_model_err, dim=(1,2))
+    avg_optimal_err = torch.mean(norm_optimal_err)
+
+    return avg_optimal_err/avg_model_err
 
 class FCErrorQuadrants(FunctionClassError):
     """For prompt (x1, y1,, ..., xn, yn, xq), where xi[k].sign() ==  xj[k].sign() for all i,j = 1, ..., n,

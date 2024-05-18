@@ -5,6 +5,7 @@ from .metric import (
     CrossEntropy,
 )
 from .function_error import (
+    RegressionScore,
     FunctionClassError,
     FCErrorQuadrants,
     FCErrorOrthogonal,
@@ -21,4 +22,6 @@ __all__ = [
     "MeanSquaredError",
     "Accuracy",
     "CrossEntropy",
+
+    "RegressionScore",
 ]
