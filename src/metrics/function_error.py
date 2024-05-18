@@ -38,16 +38,18 @@ class FunctionClassError(Benchmark):
         return errs
 
 class RegressionScore(Benchmark):
+    # zero_err is of shape (1)
+    # optimal_err is of shape (seq_length,)
     def __init__(self, metric: Metric, function_class: FunctionClass, zero_err, optimal_err):
         self.function_class = function_class
         self.metric = metric
         self.zero_err = zero_err
-        self.optimal_err = optimal_err
+        self.optimal_err = optimal_err.mean(dim = 1)
 
     def evaluate(self, models: Iterable[ContextModel]) -> Iterable[Tensor]:
         # generating model errors
         model_funct = FunctionClassError(self.metric, self.function_class)
-        model_err = model_funct.evaluate(models)
+        model_err = torch.Tensor(model_funct.evaluate(models))
 
         # computations for reg_score
         norm_model_err = torch.sub(model_err, self.zero_err)
@@ -56,7 +58,7 @@ class RegressionScore(Benchmark):
         avg_model_err = torch.mean(norm_model_err, dim=(1,2))
         avg_optimal_err = torch.mean(norm_optimal_err)
 
-        return avg_optimal_err/avg_model_err
+        return avg_model_err/avg_optimal_err
 
 class FCErrorQuadrants(FunctionClassError):
     """For prompt (x1, y1,, ..., xn, yn, xq), where xi[k].sign() ==  xj[k].sign() for all i,j = 1, ..., n,
