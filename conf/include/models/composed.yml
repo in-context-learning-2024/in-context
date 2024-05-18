@@ -78,11 +78,9 @@ defs:
         n_head: 8
 
     base: &hybrid_retrieval_config
-        type: hybrid
-        layer_norm_epsilon: !!float 1e-5
+        <<: *hybrid_base_config
         n_positions: 130
         n_embd: 128
-        n_head: 8
         interleave: False
 
 model: &gpt2_with_llama_ffn
