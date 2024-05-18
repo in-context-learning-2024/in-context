@@ -12,9 +12,9 @@ defs:
         n_embd: 64
 
     model: &retrieval_config
+        <<: *base_config
         n_positions: 130
         n_layer: 2
-        n_head: 8
         n_embd: 128
         interleave: False
 
