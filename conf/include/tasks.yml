@@ -83,7 +83,7 @@ task: &retrieval
     function_class: 
         type: retrieval
     y_dim: 20
-    # baseline_models: [] # TODO: provide at least *one* baseline here
+    # baseline_models: [*retrieval_dict]
 
 task: &chebyshev_kernel_linear_regression
     <<: *task_base_config

@@ -28,15 +28,15 @@ MODELS: dict[str, type[ContextModel]] = {
 
     "hybrid" : HybridModel,
 
-    "least squares" : LeastSquaresModel,
-    "knn"           : KNNModel,
-    "averaging"     : AveragingModel,
-    "lasso"         : LassoModel,
-    "grad mlp"      : GDModel,
-    "decision tree" : DecisionTreeModel,
-    "xgboost"       : XGBoostModel,
-    "retrievaldict" : RetrievalDictModel,
-    "zero"          : ZeroModel,
+    "least squares"  : LeastSquaresModel,
+    "knn"            : KNNModel,
+    "averaging"      : AveragingModel,
+    "lasso"          : LassoModel,
+    "grad mlp"       : GDModel,
+    "decision tree"  : DecisionTreeModel,
+    "xgboost"        : XGBoostModel,
+    "retrieval dict" : RetrievalDictModel,
+    "zero"           : ZeroModel,
 }
 
 __all__ = [
