@@ -46,7 +46,6 @@ for run_name in specified_runs:
                 checkpoint_name = file.name.split('/')[-1]
                 checkpoint_number = checkpoint_name.split('_')[-1].split('.')[0]
                 if checkpoint_number in specified_checkpoint_numbers:
-                    # Download the file
                     file_path = os.path.join(save_dir, run_name, "models", checkpoint_name)
                     os.makedirs(os.path.dirname(file_path), exist_ok=True)
                     file.download(root=os.path.dirname(file_path), replace=True)
