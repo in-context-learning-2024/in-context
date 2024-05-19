@@ -5,11 +5,14 @@ from .metric import (
     CrossEntropy,
 )
 from .function_error import (
-    RegressionScore,
     FunctionClassError,
     FCErrorQuadrants,
     FCErrorOrthogonal,
     FCErrorSeenPoints,
+)
+
+from .score import (
+    RegressionScore
 )
 
 __all__ = [
