@@ -14,8 +14,8 @@ class Retrieval(FunctionClass):
             D.Categorical(
                 torch.ones([self.sequence_length])
                 / self.sequence_length
-            # expand by both batch_shape and seq_len to avoid inconsistency with CombinedDistribution properties
-            ).expand(torch.size([self.batch_shape, self.sequence_length])) 
+            # expand by both batch_size and seq_len to avoid inconsistency with CombinedDistribution properties
+            ).expand(torch.Size([self.batch_size, self.sequence_length])) 
         )
 
     def __next__(self) -> tuple[Tensor, Tensor]:
@@ -27,11 +27,12 @@ class Retrieval(FunctionClass):
         y_batch, query_idxs, *_ = params
         query_idxs = query_idxs[:, 0] # ignore the excess sampled indices
 
-        x_batch = torch.cat((x_batch, x_batch[..., query_idxs]), dim=1)
-        y_batch = torch.cat((y_batch, y_batch[..., query_idxs]), dim=1)
+        x_batch = torch.cat((x_batch, x_batch[:, query_idxs]), dim=1)
+        y_batch = torch.cat((y_batch, y_batch[:, query_idxs]), dim=1)
 
-        x_batch = x_batch / torch.norm(x_batch, p=2, dim=-1, keepdim=True) * math.sqrt(self.x_dim)
-        y_batch = y_batch / torch.norm(y_batch, p=2, dim=-1, keepdim=True) * math.sqrt(self.x_dim)
+        magnitude = torch.sqrt(torch.tensor(self.x_dim))
+        x_batch = x_batch / torch.norm(x_batch, p=2, dim=-1, keepdim=True) * magnitude
+        y_batch = y_batch / torch.norm(y_batch, p=2, dim=-1, keepdim=True) * magnitude
 
         if torch.cuda.is_available():
             return x_batch.cuda(), y_batch.cuda() 
@@ -42,4 +43,3 @@ class Retrieval(FunctionClass):
         raise NotImplementedError(
             f"Function Class Retrieval cannot `.evaluate` because it must mutate sampled x-values!"
         )
-    

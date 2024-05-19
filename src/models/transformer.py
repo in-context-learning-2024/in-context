@@ -37,7 +37,7 @@ class BackboneModel(TrainableModel):
         output = self._backbone(inputs_embeds=embeds).last_hidden_state # pyright: ignore[reportCallIssue]
         prediction = self._read_out(output)
 
-        return prediction[:, ::2, :1] # predict only on xs
+        return prediction[:, ::2] # predict only on xs
 
 class GPT2(BackboneModel):
 
