@@ -1,3 +1,15 @@
+"""
+
+Before running:
+
+'pip install wandb'
+'wandb login [YOUR API KEY]'
+
+If loading llama or gpt2 modification-free fails, then comment out the line where vocab size is set in models/transformers.py
+
+"""
+
+
 import wandb
 import os
 
