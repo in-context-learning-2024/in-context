@@ -34,5 +34,7 @@ class Retrieval(FunctionClass):
             return x_batch, y_batch
 
     def evaluate(self, x_batch: Tensor, *params: Tensor) -> Tensor:
-        raise NotImplementedError(f"Function Class Retrieval cannot `.evaluate` because it must mutate sampled x-values!")
+        raise NotImplementedError(
+            f"Function Class Retrieval cannot `.evaluate` because it must mutate sampled x-values!"
+        )
     
