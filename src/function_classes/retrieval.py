@@ -11,7 +11,10 @@ class Retrieval(FunctionClass):
     def _init_param_dist(self) -> D.Distribution:
         return CombinedDistribution(
             self.x_dist,
-            D.Categorical(torch.ones([self.x_dim]) / self.x_dim)
+            D.Categorical(
+                torch.ones([self.sequence_length]) 
+                / self.sequence_length
+            )
         )
 
     def __next__(self) -> tuple[Tensor, Tensor]:
@@ -29,3 +32,7 @@ class Retrieval(FunctionClass):
             return x_batch.cuda(), y_batch.cuda() 
         else:
             return x_batch, y_batch
+
+    def evaluate(self, x_batch: Tensor, *params: Tensor) -> Tensor:
+        raise NotImplementedError(f"Function Class Retrieval cannot `.evaluate` because it must mutate sampled x-values!")
+    

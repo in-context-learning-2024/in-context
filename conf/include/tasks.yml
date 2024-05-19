@@ -74,8 +74,6 @@ task: &sparse_parity_regression
 task: &retrieval
     <<: *task_base_config
     x_dim: 20
-    x_dist:
-        type: retrieval
     optim:
         type: adam
         lr: 0.0002
