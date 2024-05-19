@@ -18,9 +18,9 @@ class SparseParityRegression(FunctionClass):
     def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
         indicies, *_ = params
         assert x_batch.shape[2] >= len(indicies)
-        
-        y_batch = torch.ones(x_batch.shape[0], x_batch.shape[1], device=x_batch.device)
-        for idx in indicies:
-            y_batch *= x_batch[:, :, idx]
+
+        selected_x = x_batch[:, :, indices]
+
+        y_batch = torch.prod(selected_x, dim=2)
 
         return y_batch.unsqueeze(-1)
