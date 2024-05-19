@@ -95,30 +95,3 @@ class SparseDistribution(dist.Distribution):
     @property
     def event_shape(self) -> torch.Size:
         return torch.Size([self.x_dim])
-    
-class RetrievalDistribution(dist.Distribution):
-    """A distribution that samples from a normalized gaussian and repeats a sampled x at the end of the prompt."""
-
-    def __init__(self, batch_shape: torch.Size, event_shape: torch.Size, *args: Any, **kwargs: Any):
-        super(RetrievalDistribution, self).__init__(*args, **kwargs | {"validate_args": False})
-        self.batch_size = batch_shape[0]
-        self.seq_len = batch_shape[1]
-        self.x_dim = event_shape[0]
-
-    def sample(self, query_pos: int = -1, sample_shape: torch.Size = torch.Size()):
-        is_random_query = query_pos < 0
-        x_batch = torch.randn(self.batch_size, 2 * self.seq_len + 1, self.x_dim)
-        for i in range(self.batch_size):
-            if is_random_query:
-                query_pos = 2 * int(torch.randint(0, self.seq_len, torch.Size()))
-            x_batch[i][-1, :] = x_batch[i][query_pos, :]
-        x_batch = x_batch / torch.norm(x_batch, p=2, dim=-1, keepdim=True) * math.sqrt(self.x_dim)
-        return x_batch
-
-    @property
-    def batch_shape(self) -> torch.Size:
-        return torch.Size([self.batch_size, self.seq_len])
-
-    @property
-    def event_shape(self) -> torch.Size:
-        return torch.Size([self.x_dim])
