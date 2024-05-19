@@ -12,9 +12,10 @@ class Retrieval(FunctionClass):
         return CombinedDistribution(
             self.x_dist,
             D.Categorical(
-                torch.ones([self.sequence_length]) 
+                torch.ones([self.sequence_length])
                 / self.sequence_length
-            )
+            # expand by both batch_shape and seq_len to avoid inconsistency with CombinedDistribution properties
+            ).expand(torch.size([self.batch_shape, self.sequence_length])) 
         )
 
     def __next__(self) -> tuple[Tensor, Tensor]:
@@ -24,9 +25,13 @@ class Retrieval(FunctionClass):
 
         params: list[Tensor] = self.p_dist.sample() # pyright: ignore[reportAssignmentType]
         y_batch, query_idxs, *_ = params
+        query_idxs = query_idxs[:, 0] # ignore the excess sampled indices
 
         x_batch = torch.cat((x_batch, x_batch[..., query_idxs]), dim=1)
         y_batch = torch.cat((y_batch, y_batch[..., query_idxs]), dim=1)
+
+        x_batch = x_batch / torch.norm(x_batch, p=2, dim=-1, keepdim=True) * math.sqrt(self.x_dim)
+        y_batch = y_batch / torch.norm(y_batch, p=2, dim=-1, keepdim=True) * math.sqrt(self.x_dim)
 
         if torch.cuda.is_available():
             return x_batch.cuda(), y_batch.cuda() 
