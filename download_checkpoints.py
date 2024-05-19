@@ -13,14 +13,12 @@ If loading llama or gpt2 modification-free fails, then comment out the line wher
 import wandb
 import os
 
-api = wandb.Api()
-
 entity = 'in-context-learning-2024'
 project = 'neurips'
 
 save_dir = 'checkpoints'
 
-def get_user_inputs():
+def get_user_inputs() -> tuple[list[str], list[str]]:
     print("Enter the run names, each on a new line. Enter a blank line to finish:")
     run_names = []
     while True:
@@ -32,8 +30,7 @@ def get_user_inputs():
     checkpoint_numbers = input("Enter the checkpoint numbers separated by spaces: ").strip().split()
     return run_names, [cp.strip() for cp in checkpoint_numbers if cp.strip()]
 
-
-def get_run_id_by_name(run_name):
+def get_run_id_by_name(run_name: str, api):
     runs = api.runs(f"{entity}/{project}")
     for run in runs:
         if run_name in run.name:
@@ -41,11 +38,13 @@ def get_run_id_by_name(run_name):
     return None
 
 if __name__ == "__main__":
+    api = wandb.Api()
+
     os.makedirs(save_dir, exist_ok=True)
     specified_runs, specified_checkpoint_numbers = get_user_inputs()
 
     for run_name in specified_runs:
-        run_id = get_run_id_by_name(run_name)
+        run_id = get_run_id_by_name(run_name, api=api)
         if run_id is None:
             print(f"Run with name '{run_name}' not found.")
             exit(1)
@@ -65,10 +64,12 @@ if __name__ == "__main__":
                         file.download(root=os.path.dirname(file_path), replace=True)
                         print(f"Downloaded {file.name} to {file_path}")
                         checkpoints_downloaded = True
+
             if not checkpoints_downloaded:
                 print(f"No specified checkpoints found for run {run_name}")
 
         except Exception as e:
             print(f"Error downloading files for run {run_name}: {e}")
+            exit(1)
 
-    print("Download complete.")
+    print("Done.")
