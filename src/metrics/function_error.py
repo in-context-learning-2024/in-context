@@ -37,6 +37,7 @@ class FunctionClassError(Benchmark):
 
         return errs
 
+
 class FCErrorQuadrants(FunctionClassError):
     """For prompt (x1, y1,, ..., xn, yn, xq), where xi[k].sign() ==  xj[k].sign() for all i,j = 1, ..., n,
        measure the error for the model's prediction on xq, where:
