@@ -65,16 +65,21 @@ class CombinedDistribution(dist.Distribution):
     def variance(self) -> List[torch.Tensor]:
         return [ dist.variance for dist in self._dists ]
     
-class RandomPermutationDistribution(dist.Distribution):
-    """A distribution that samples uniformly at random from the set of permutations of length k of {1, 2, ..., N}."""
+class RandomMaskDistribution(dist.Distribution):
+    """A distribution that samples masks uniformly at random."""
 
-    def __init__(self, k: int, N: int):
-        super(RandomPermutationDistribution, self).__init__(validate_args=False)
+    def __init__(self, k: int, x_dim: int, batch_size: int):
+        super(RandomMaskDistribution, self).__init__(validate_args=False)
         self.k = k
-        self.N = N
+        self.x_dim = x_dim
+        self.batch_size = batch_size
 
     def sample(self, sample_shape: torch.Size = torch.Size()):
-        return torch.randperm(self.N)[:self.k]
+        random_values = torch.rand((self.batch_size, self.x_dim))
+        indices = random_values.argsort(dim=1)
+        masks = torch.zeros((self.batch_size, self.x_dim), dtype=torch.int)
+        masks[:, indices[:, :self.k]] = 1
+        return masks
     
 class SparseDistribution(dist.Distribution):
     """A distribution that returns xs sampled from {-1, 1} uniformly at random."""
