@@ -79,7 +79,6 @@ defs:
 
     base: &hybrid_retrieval_config
         <<: *hybrid_base_config
-        n_layer: 2
         n_embd: 128
 
 model: &gpt2_with_llama_ffn
