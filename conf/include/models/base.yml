@@ -15,7 +15,6 @@ defs:
         <<: *base_config
         n_layer: 2
         n_embd: 128
-        interleave: False
 
 model: &std_gpt2
     <<: *base_config

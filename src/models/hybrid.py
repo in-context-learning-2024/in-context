@@ -284,7 +284,6 @@ class HybridModel(BackboneModel):
             n_positions: int,
             n_embd: int = 128,
             y_dim: int = 1,
-            interleave: bool = True,
             **kwargs: Any
         ):
         backbone = HybridBackbone(
@@ -293,4 +292,4 @@ class HybridModel(BackboneModel):
             n_positions=n_positions,
             **kwargs
         )
-        super().__init__(backbone, x_dim, n_positions, n_embd, y_dim, interleave=interleave)
+        super().__init__(backbone, x_dim, n_positions, n_embd, y_dim)
