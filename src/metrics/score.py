@@ -27,8 +27,9 @@ class RegressionScore(Benchmark):
         norm_model_err = torch.sub(model_err, self.zero_err)
         norm_optimal_err = torch.sub(self.optimal_err, self.zero_err)
 
-        # avg over batch_size
+        # avg across batch_size
         avg_model_err = torch.mean(norm_model_err, dim=1)
 
-        # divide over seq_length, then mean over seq_length to get score
-        return torch.mean(torch.div(avg_model_err,norm_optimal_err), dim=1)
+        # divide across seq_length, then mean over seq_length to get score
+        scores = torch.div(avg_model_err, norm_optimal_err)
+        return torch.mean(scores, dim=1)
