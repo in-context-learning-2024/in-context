@@ -16,12 +16,11 @@ class SparseParityRegression(FunctionClass):
         return RandomMaskDistribution(self.k, self.x_dim, self.batch_size)
 
     def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
-        
         masks, *_ = params
 
         # mask out xs with 1s
         selected_x = x_batch * masks.unsqueeze(1) 
-        selected_x += 1 - masks.unsqueeze(1)
+        selected_x += 1 - masks.unsqueeze(1) 
 
         # multiply all xs to see the parity of non-masked out xs
         y_batch = torch.prod(selected_x, dim=2)
