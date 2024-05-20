@@ -78,9 +78,11 @@ class RandomMaskDistribution(dist.Distribution):
         random_values = torch.rand((self.batch_size, self.x_dim))
         indices = random_values.argsort(dim=1)
         masks = torch.zeros((self.batch_size, self.x_dim), dtype=torch.int)
-        masks[:, indices[:, :self.k]] = 1
+        for i in range(self.batch_size):
+            masks[i, indices[i, :self.k]] = 1
+
         return masks
-    
+
 class SparseDistribution(dist.Distribution):
     """A distribution that returns xs sampled from {-1, 1} uniformly at random."""
 
