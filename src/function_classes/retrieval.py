@@ -1,22 +1,45 @@
 import torch
 import torch.distributions as D
 
+from torch import Tensor
+
 from core import FunctionClass
+from utils import CombinedDistribution
 
 class Retrieval(FunctionClass):
 
     def _init_param_dist(self) -> D.Distribution:
-        return D.Categorical(torch.Tensor([1]))
-    
-    def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
-        assert x_batch.shape[0] == self.batch_size and x_batch.shape[2] == self.x_dim
-        assert x_batch.shape[1] % 2 == 1
+        return CombinedDistribution(
+            self.x_dist,
+            D.Categorical(
+                torch.ones([self.sequence_length])
+                / self.sequence_length
+            # expand by both batch_size and seq_len to avoid inconsistency with CombinedDistribution properties
+            ).expand(torch.Size([self.batch_size, self.sequence_length])) 
+        )
 
-        keys_b, values_b = x_batch[:, :-1:2, :], x_batch[:, 1::2, :]
-        query_b = x_batch[:, -1, :].unsqueeze(dim=1)
-        inner_products = torch.bmm(query_b, keys_b.transpose(1, 2)).squeeze(1)
-        _, retrieval_inds = torch.max(inner_products, dim=1)
-        retrieval_inds = retrieval_inds.view(-1, 1, 1).expand(-1, -1, values_b.size(-1))
-        y_batch = torch.gather(values_b, 1, retrieval_inds).squeeze(1)
-        
-        return y_batch
+    def __next__(self) -> tuple[Tensor, Tensor]:
+        x_batch_tmp: Tensor = self.x_dist.sample()
+        x_batch = torch.zeros_like(x_batch_tmp)
+        x_batch[..., :self.x_curriculum_dim] = x_batch_tmp[..., :self.x_curriculum_dim]
+
+        params: list[Tensor] = self.p_dist.sample() # pyright: ignore[reportAssignmentType]
+        y_batch, query_idxs, *_ = params
+        query_idxs = query_idxs[:, 0] # ignore the excess sampled indices
+
+        x_batch = torch.cat((x_batch, x_batch[:, query_idxs]), dim=1)
+        y_batch = torch.cat((y_batch, y_batch[:, query_idxs]), dim=1)
+
+        magnitude = torch.sqrt(torch.tensor(self.x_dim))
+        x_batch = x_batch / torch.norm(x_batch, p=2, dim=-1, keepdim=True) * magnitude
+        y_batch = y_batch / torch.norm(y_batch, p=2, dim=-1, keepdim=True) * magnitude
+
+        if torch.cuda.is_available():
+            return x_batch.cuda(), y_batch.cuda() 
+        else:
+            return x_batch, y_batch
+
+    def evaluate(self, x_batch: Tensor, *params: Tensor) -> Tensor:
+        raise NotImplementedError(
+            f"Function Class Retrieval cannot `.evaluate` because it must mutate sampled x-values!"
+        )

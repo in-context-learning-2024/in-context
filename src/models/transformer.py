@@ -15,12 +15,12 @@ from core import TrainableModel
 class BackboneModel(TrainableModel):
 
     def __init__(self, 
-                 backbone: nn.Module, 
-                 x_dim: int, 
-                 n_positions: int, 
-                 n_embd: int=128, 
-                 y_dim: int = 1,
-                 interleave: bool = True,):
+            backbone: nn.Module, 
+            x_dim: int, 
+            n_positions: int, 
+            n_embd: int=128, 
+            y_dim: int = 1,
+        ):
         super().__init__(x_dim, y_dim)
 
         self.context_length = n_positions
@@ -28,22 +28,16 @@ class BackboneModel(TrainableModel):
         self._backbone = backbone
         self._read_out = nn.Linear(n_embd, y_dim)
 
-        self._interleave = interleave
-
     def forward(self, xs: Tensor, ys: Tensor):
         self._backbone.to(xs.device) # pyright: ignore[reportArgumentType,reportAttributeAccessIssue]
 
-        zs = xs
-        if self._interleave:
-            zs = self.interleave(xs, ys)
+        zs = self.interleave(xs, ys)
 
         embeds = self._read_in(zs)
         output = self._backbone(inputs_embeds=embeds).last_hidden_state # pyright: ignore[reportCallIssue]
         prediction = self._read_out(output)
 
-        if self._interleave:
-            return prediction[:, ::2, :1] # predict only on xs (if _interleave is True)
-        return prediction[:, -1, :] # predict only on last vector (if _interleave is False)
+        return prediction[:, ::2] # predict only on xs
 
 class GPT2(BackboneModel):
 
@@ -54,7 +48,6 @@ class GPT2(BackboneModel):
             n_layer: int = 12,
             n_head: int = 4,
             y_dim: int = 1,
-            interleave: bool = True,
             **kwargs: Any
         ):
 
@@ -73,7 +66,7 @@ class GPT2(BackboneModel):
         self.gpt2_configuration = configuration
         backbone: nn.Module = GPT2Model(configuration) # pyright: ignore[reportAssignmentType]
 
-        super().__init__(backbone, x_dim, n_positions, n_embd, y_dim=y_dim, interleave=interleave,)
+        super().__init__(backbone, x_dim, n_positions, n_embd, y_dim=y_dim,)
 
         self.name = f"gpt2_embd={n_embd}_layer={n_layer}_head={n_head}"
 
@@ -89,7 +82,6 @@ class Llama(BackboneModel):
             hidden_act: str = 'silu',
             rope_theta: float = 1e4,
             y_dim: int = 1,
-            interleave: bool = True,
             **kwargs: Any
         ):
 
@@ -108,7 +100,7 @@ class Llama(BackboneModel):
         self.llama_configuration = configuration
         backbone: nn.Module = LlamaModel(configuration) # pyright: ignore[reportAssignmentType]
 
-        super().__init__(backbone, x_dim, n_positions, n_embd, y_dim=y_dim, interleave=interleave,)
+        super().__init__(backbone, x_dim, n_positions, n_embd, y_dim=y_dim,)
 
         self.name = f"llama_embd={n_embd}_layer={n_layer}_head={n_head}"
 
@@ -120,7 +112,6 @@ class Mamba(BackboneModel):
             n_embd: int = 128,
             n_layer: int = 12,
             y_dim: int = 1,
-            interleave: bool = True,
             **kwargs: Any
         ):
 
@@ -136,6 +127,6 @@ class Mamba(BackboneModel):
         self.mamba_configuration = configuration
         backbone: nn.Module = MambaModel(configuration)
 
-        super().__init__(backbone, x_dim, n_positions, n_embd, y_dim=y_dim, interleave=interleave,)
+        super().__init__(backbone, x_dim, n_positions, n_embd, y_dim=y_dim,)
 
         self.name = f"mamba_embd={n_embd}_layer={n_layer}"
