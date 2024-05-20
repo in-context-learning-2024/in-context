@@ -12,6 +12,7 @@ from core import (
 
 class FunctionClassError(Benchmark):
     def __init__(self, metric: Metric, function_class: FunctionClass):
+        super().__init__()
         self.function_class = function_class
         self.metric = metric
 
@@ -22,8 +23,8 @@ class FunctionClassError(Benchmark):
             errs = torch.stack([
                 torch.stack([
                     self.metric.evaluate(
-                        y_batch,
-                        model.forward(x_batch, y_batch)
+                        y_batch.to('cpu'),
+                        model.evaluate(x_batch.to('cpu'), y_batch.to('cpu'))
                     )
                     for model in models
                 ])
@@ -94,7 +95,7 @@ class FCErrorQuadrants(FunctionClassError):
                     errs[batch_num, index] = torch.stack([
                         self.metric.evaluate(
                             y_query, # shape (batch_size, y_dim)
-                            model.forward(x_comb, ys_context[:, :index])[:, -1] # shape (batch_size, y_dim)
+                            model.evaluate(x_comb, ys_context[:, :index])[:, -1] # shape (batch_size, y_dim)
                         ) for model in models
                     ])
 
@@ -146,7 +147,7 @@ class FCErrorOrthogonal(FunctionClassError):
                     errs[:, i, :, j] = torch.stack([
                         self.metric.evaluate(
                             y_test,
-                            model.forward(cur_x, y_test)
+                            model.evaluate(cur_x, y_test)
                         )
                         for model in models
                     ])[:, :, j]
@@ -185,7 +186,7 @@ class FCErrorSeenPoints(FunctionClassError):
                   
                         self.metric.evaluate(
                             y_test,
-                            model.forward(x_test, y_test)
+                            model.evaluate(x_test, y_test)
                         )
                         for model in models
                     ])[:, :, j]

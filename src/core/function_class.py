@@ -1,7 +1,12 @@
+# pyright: reportMissingSuperCall=information
+
 import torch
 from torch import Tensor
 from torch.distributions.distribution import Distribution
 from typing import Optional
+
+FC_ARG_TYPES = Distribution
+FC_KWARG_TYPES = FC_ARG_TYPES | None | int
 
 class FunctionClass:
 
@@ -11,6 +16,8 @@ class FunctionClass:
             x_curriculum_dim: Optional[int] = None, 
             y_dim: int = 1
         ):
+
+        super().__init__()
 
         # we pull as much information from the `x_distribution` as possible, so all 
         #   torch.(...).Distribution docs: https://pytorch.org/docs/stable/distributions.html

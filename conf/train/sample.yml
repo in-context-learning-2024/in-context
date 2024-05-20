@@ -20,5 +20,14 @@ x_dim: !curriculum
     step_len: 2000
 x_dist:
     type: normal
-model: *std_gpt2
-baseline_models: [*knn_3, *least_squares]
+model: *std_mamba
+baseline_models: 
+    - <<: *knn_3
+    - <<: *xgboost
+    - <<: *decision_tree
+    - <<: *decision_tree_4
+    - <<: *least_squares
+    - <<: *averaging
+    - <<: *mlp
+    - <<: *lasso
+      alpha: 0.001

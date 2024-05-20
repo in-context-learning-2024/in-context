@@ -1,6 +1,8 @@
 import torch
 import torch.distributions as D
 
+from typing import Any
+
 from core import FunctionClass
 
 class LinearRegression(FunctionClass):
@@ -25,7 +27,7 @@ class LinearRegression(FunctionClass):
 
 class SparseLinearRegression(LinearRegression):
 
-    def __init__(self, sparsity: int = 3, *args, **kwargs):
+    def __init__(self, sparsity: int = 3, *args: Any, **kwargs: Any):
         super(SparseLinearRegression, self).__init__(*args, **kwargs)
         self._sparsity = sparsity
 

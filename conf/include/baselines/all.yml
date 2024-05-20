@@ -1,0 +1,57 @@
+model: &retrieval_dict
+    type: retrieval dict
+    
+model: &knn_3
+    type: knn
+    n_neighbors: 3
+
+model: &least_squares
+    type: least squares
+
+model: &lasso
+    type: lasso
+    alpha: 0.1
+
+model: &d_tree
+    type: decision tree
+
+model: &xgboost
+    type: xgboost
+
+model: &averaging
+    type: averaging
+
+model: &decision_tree_4
+    type: decision tree
+    max_depth: 4
+
+model: &decision_tree
+    type: decision tree
+    max_depth: !!null
+
+model: &zero
+    type: zero
+
+model: &mlp
+    type: grad mlp
+    model_class_name: mlp
+    model_class_args:
+        dimensions: [100]
+    opt_alg_name: adam
+    batch_size: 100
+    lr: !!float 5e-3
+    num_steps: 100
+
+model: &lasso_set
+  - <<: *least_squares
+  - <<: *averaging
+  - <<: *lasso
+    alpha: 0.0001
+  - <<: *lasso
+    alpha: 0.001
+  - <<: *lasso
+    alpha: 0.01
+  - <<: *lasso
+    alpha: 0.1
+  - <<: *lasso
+    alpha: 1

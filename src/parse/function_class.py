@@ -1,11 +1,13 @@
 import torch.distributions as D
 
+from typing import Any
+
 from core import FunctionClass
 from function_classes import FUNCTION_CLASSES
 
 from .utils import check_kwargs, clean_instantiate
 
-def get_function_class(init_kwargs: dict, x_dist: D.Distribution, x_curr_dim: int, y_dim: int = 1) -> FunctionClass:
+def get_function_class(init_kwargs: dict[str, Any], x_dist: D.Distribution, x_curr_dim: int, y_dim: int = 1) -> FunctionClass:
     check_kwargs(FUNCTION_CLASSES, init_kwargs, "function class")
     f_class_type: type[FunctionClass] = FUNCTION_CLASSES[init_kwargs['type']]
 
