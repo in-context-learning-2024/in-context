@@ -23,6 +23,7 @@ class ContextTrainer:
         checkpoint_freq: int = -1,
         step_offset: int = 0,
         skip_steps: int = 0,
+        predict_last: bool = False,
         **kwargs: Any, 
     ):
         super().__init__()
@@ -36,6 +37,7 @@ class ContextTrainer:
         self.checkpoint_freq = checkpoint_freq
         self.step_offset = step_offset
         self.skip_steps = skip_steps
+        self.predict_last = predict_last
 
     def _log(self, step: int, data: dict[str, Any]) -> None:
         global_step_num = step + self.step_offset
@@ -76,7 +78,10 @@ class ContextTrainer:
                     + f"Expected: {y_batch.shape}    Got: {output.shape}"
                 )
 
-            loss = self.loss_fn(output, y_batch)
+            if not self.predict_last:
+                loss = self.loss_fn(output, y_batch)
+            else:
+                loss = self.loss_fn(output[:, -1], y_batch[:, -1])
 
             self.optim.zero_grad()
             loss.backward()
@@ -124,6 +129,7 @@ class TrainerSteps(ContextTrainer):
         log_freq: int = -1,
         checkpoint_freq: int = -1,
         skip_steps: int = 0,
+        predict_last: bool = False,
     ):
 
         assert len(function_classes) == len(steps), \
@@ -142,6 +148,7 @@ class TrainerSteps(ContextTrainer):
         self.checkpoint_freq = checkpoint_freq
         self.skip_steps_left = skip_steps
         self.step_offset = 0
+        self.predict_last = predict_last
 
     def train(self, pbar: Optional[Any] = None) -> TrainableModel:
 
@@ -157,7 +164,8 @@ class TrainerSteps(ContextTrainer):
                 self.log_freq,
                 self.checkpoint_freq,
                 self.step_offset,
-                self.skip_steps_left
+                self.skip_steps_left,
+                self.predict_last,
             )
 
             self.model = trainer.train(pbar)
