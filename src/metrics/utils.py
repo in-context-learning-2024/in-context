@@ -45,13 +45,6 @@ def post_process(results: Iterable[Tensor],
         })
     return summaries
 
-def average_evals(MODELS, Benchmark, num_batches, num_rounds, perfect_model=None): #runs multiple rounds of evalutions and averages them to save memory
-
-    errs=Benchmark.evaluate(MODELS, num_batches, perfect_model=perfect_model)
-    for i in tqdm(range(1, num_rounds)):
-        errs=(i*errs+Benchmark.evaluate(MODELS, num_batches, perfect_model=perfect_model))/(i+1)
-    return errs
-
 def plot_comparison_2_models(MODELS=None, names=None,errs=None, post_processed_errs=None, post_processed_diff=None, title=None, confidence_level=[0.95, 0.99], ylim=None): 
     #compares the two first models in values or errs
     #if diff or errs is included the difference in their losses is also plotted
@@ -111,6 +104,39 @@ def plot_comparison_2_models(MODELS=None, names=None,errs=None, post_processed_e
     fig.legend(lines, labels, bbox_to_anchor=(0.5, 0.95) , loc='upper center', ncol=len(names))
     plt.show()
 
+def plot_square(title, results, subtitles, labels, confidence_lower, confidence_upper, ylims=None, zeroline=False):
+    n=len(results[0])
+
+    fig, axs =plt.subplots(n, n, figsize=(6*n,6*n))
+
+    fig.suptitle(title)
+    
+    for row in range(n):
+        for col in range(n):
+            axs[row, col].set_title(subtitles[row][col])
+            if len(labels)>1:
+                for modelnum, label in enumerate(labels):
+                    xs=range(len(confidence_lower[modelnum][row][col]))
+                    axs[row, col].plot(results[modelnum][row][col], label=label)
+                    axs[row, col].fill_between(xs, confidence_lower[modelnum][row][col], confidence_upper[modelnum][row][col], alpha=0.5)
+                if zeroline:
+                    axs[row, col].axhline(y=0, color='gray', linestyle='--', linewidth=0.5)
+                if ylims!=None:
+                    axs[row, col].set_ylim(bottom=ylims[0], top=ylims[1])
+            else:
+                xs=range(len(confidence_lower[row][col]))
+                axs[row, col].plot(results[row][col])
+                axs[row, col].fill_between(xs, confidence_lower[row][col], confidence_upper[row][col], alpha=0.5)
+                if zeroline:
+                    axs[row, col].axhline(y=0, color='gray', linestyle='--', linewidth=0.5)
+                if ylims!=None:
+                    axs[row, col].set_ylim(bottom=ylims[0], top=ylims[1])
+
+    if len(labels)>1:
+        lines, labels = axs[0, 0].get_legend_handles_labels()
+        fig.legend(lines, labels, bbox_to_anchor=(0.5, 0.95) , loc='upper center', ncol=len(labels))
+    plt.show()
+
 def load_model(filename, model):
     content = torch.load(filename)
     model.load_state_dict(content["model_state_dict"])
@@ -144,8 +170,8 @@ def compare_2_models_multiple_training_runs(file_paths_1, file_paths_2, models, 
         cur_summary={}
         cur_summary["mean"]=sum([values[j][i]["mean"] for j in range(num_runs)])/num_runs
         #I think it averages over wrong thing when calculating std:
-        cur_summary["std_mean"]=torch.sqrt(torch.std(torch.stack([values[j][i]["mean"] for j in range(num_runs)]))**2/num_runs+ sum([values[j][i]["std_mean"]**2/num_runs for j in range(num_runs)]))
-        cur_summary["std"]=torch.sqrt(torch.std(torch.stack([values[j][i]["mean"] for j in range(num_runs)]))**2+ sum([values[j][i]["std"]**2/num_runs for j in range(num_runs)]))
+        cur_summary["std_mean"]=torch.sqrt(torch.std(torch.stack([values[j][i]["mean"] for j in range(num_runs)]), dim=0)**2/num_runs+ sum([values[j][i]["std_mean"]**2/num_runs for j in range(num_runs)]))
+        cur_summary["std"]=torch.sqrt(torch.std(torch.stack([values[j][i]["mean"] for j in range(num_runs)]), dim=0)**2+ sum([values[j][i]["std"]**2/num_runs for j in range(num_runs)]))
         cur_summary["training_std_mean"]=torch.std(torch.stack([values[j][i]["mean"] for j in range(num_runs)]))/num_runs**(1/2)
         for level in confidence_levels:
             interval_jump = norm.ppf((1+level)/2) * cur_summary["std_mean"]
@@ -157,8 +183,8 @@ def compare_2_models_multiple_training_runs(file_paths_1, file_paths_2, models, 
         summaries.append(cur_summary)
 
     diff["mean"]=sum([values_diff[j][0]["mean"] for j in range(num_runs)])/num_runs
-    diff["std_mean"]=torch.sqrt(torch.std(torch.stack([values_diff[j][0]["mean"] for j in range(num_runs)]))**2/num_runs+ sum([values_diff[j][0]["std_mean"]**2/num_runs for j in range(num_runs)]))
-    diff["std"]=torch.sqrt(torch.std(torch.stack([values_diff[j][0]["mean"] for j in range(num_runs)]))**2+ sum([values_diff[j][0]["std"]**2/num_runs for j in range(num_runs)]))
+    diff["std_mean"]=torch.sqrt(torch.std(torch.stack([values_diff[j][0]["mean"] for j in range(num_runs)]), dim=0)**2/num_runs+ sum([values_diff[j][0]["std_mean"]**2/num_runs for j in range(num_runs)]))
+    diff["std"]=torch.sqrt(torch.std(torch.stack([values_diff[j][0]["mean"] for j in range(num_runs)]), dim=0)**2+ sum([values_diff[j][0]["std"]**2/num_runs for j in range(num_runs)]))
     diff["training_std_mean"]=torch.std(torch.stack([values_diff[j][0]["mean"] for j in range(num_runs)]))/num_runs**(1/2)
 
     for level in confidence_levels:
@@ -170,3 +196,4 @@ def compare_2_models_multiple_training_runs(file_paths_1, file_paths_2, models, 
         diff[f"training_confidence_{level}_lower"] = diff["mean"] - interval_jump
 
     return summaries, diff
+
