@@ -11,6 +11,10 @@ from .function_error import (
     FCErrorSeenPoints,
 )
 
+from .score import (
+    RegressionScore
+)
+
 __all__ = [
     "FCErrorQuadrants",
     "FunctionClassError",
@@ -21,4 +25,6 @@ __all__ = [
     "MeanSquaredError",
     "Accuracy",
     "CrossEntropy",
+
+    "RegressionScore",
 ]

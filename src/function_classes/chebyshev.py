@@ -1,12 +1,14 @@
 import torch
 import torch.distributions as D
 
+
 from torch import Tensor
 from typing import Any
 
 from core import FunctionClass
 
 def generate_chebyshev_coefficients(lowest_degree: int, highest_degree: int) -> Tensor:
+
     # Create a matrix to hold the coefficients, initializing with zeros
     n = highest_degree + 1
     coeffs = torch.zeros(n, n, dtype=torch.int32)
