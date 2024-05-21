@@ -33,7 +33,7 @@ def get_user_inputs() -> tuple[list[str], list[str]]:
 def get_run_id_by_name(run_name: str, api):
     runs = api.runs(f"{entity}/{project}")
     for run in runs:
-        if run_name in run.name:
+        if run_name == run.name:
             return run.id
     return None
 
@@ -59,10 +59,14 @@ if __name__ == "__main__":
                     checkpoint_name = file.name.split('/')[-1]
                     checkpoint_number = checkpoint_name.split('_')[-1].split('.')[0]
                     if checkpoint_number in specified_checkpoint_numbers:
-                        file_path = os.path.join(save_dir, run_name, "models", checkpoint_name)
-                        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                        file.download(root=os.path.dirname(file_path), replace=True)
+
+                        local_run_dir = os.path.join(save_dir, run_name, "./")
+                        os.makedirs(f"{local_run_dir}/", exist_ok=True)
+                        file.download(root=os.path.dirname(local_run_dir), replace=True)
+
+                        file_path = os.path.join(local_run_dir, "models", checkpoint_name)
                         print(f"Downloaded {file.name} to {file_path}")
+
                         checkpoints_downloaded = True
 
             if not checkpoints_downloaded:
