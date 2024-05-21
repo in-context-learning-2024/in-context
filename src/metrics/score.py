@@ -1,8 +1,6 @@
 import torch
-
 from torch import Tensor
 from typing import Iterable
-
 from .benchmark import Benchmark
 from .metric import Metric
 from core import (
@@ -22,15 +20,13 @@ class RegressionScore(Benchmark):
     def evaluate(self, models: Iterable[ContextModel], num_batches: int = 1) -> Iterable[Tensor]:
         # generating model errors
         model_err = torch.tensor(self.funct_err.evaluate(models, num_batches=num_batches))
-        model_err = model_err.squeeze()
+        model_err = model_err.squeeze(-1)
 
-        # avg across batch_size
-        avg_model_err = torch.mean(model_err, dim=1)
-
-        norm_model_err = torch.sub(avg_model_err, self.zero_err)
+        norm_model_err = torch.sub(model_err, self.zero_err)
         norm_base_err = torch.sub(self.base_err, self.zero_err)
-        
-        # divide across seq_length, then mean over seq_length to get score
-        scores = torch.div(norm_model_err, norm_base_err)
-        scores = torch.mean(scores[:, 1:], dim=1) # we skip the first point because all models are trivially the zero estimator with no context
-        return scores
+
+        scores = torch.div(torch.mean(norm_model_err, dim=-1), torch.mean(norm_base_err, dim=-1))
+        scores_mean = torch.mean(scores, dim=1)
+        scores_std = torch.std(scores, dim=1) / (scores.shape[1] ** 0.5)
+
+        return scores_mean, scores_std
