@@ -52,7 +52,7 @@ class GPT2(BackboneModel):
         ):
 
         configuration = GPT2Config(
-            vocab_size=1,
+            # vocab_size=1,
             n_positions=2 * n_positions,
             n_embd=n_embd,
             n_layer=n_layer,
