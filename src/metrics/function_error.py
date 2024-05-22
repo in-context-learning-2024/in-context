@@ -19,19 +19,31 @@ class FunctionClassError(Benchmark):
     def evaluate(self, models: Iterable[ContextModel], num_batches: int = 1) -> Iterable[Tensor]:
         """Produce a tensor of shape (batch_size * num_batches, metric_shape) for each model provided"""
 
-        with torch.no_grad():
-            errs = torch.stack([
-                torch.stack([
-                    self.metric.evaluate(
-                        y_batch.to('cpu'),
-                        model.evaluate(x_batch, y_batch).to('cpu')
-                    )
-                    for model in models
-                ])
-                for _, (x_batch, y_batch) in zip(range(num_batches), self.function_class)
-            ])
+        models = list(models)
+        for model in models:
+            if hasattr(model, 'eval'):
+                model.eval()
 
-            # errs is of shape: (#batches, #models, batch_size, sequence_length, *metric_dims)
+        errs = torch.zeros((num_batches, len(models), self.function_class.batch_size, self.function_class.sequence_length, self.function_class.y_dim))
+
+        temp1 = []
+        for _, (x_batch, y_batch) in zip(range(num_batches), self.function_class):
+            temp2 = []
+            for model in models:
+                if isinstance(model, TrainableModel):
+                    with torch.no_grad():
+                        evaluation = model.evaluate(x_batch, y_batch)
+                else:
+                    evaluation = model.evaluate(x_batch, y_batch)
+                error = self.metric.evaluate(
+                    y_batch,
+                    evaluation
+                )
+                temp2.append(error)
+            temp2 = torch.stack(temp2)
+            temp1.append(temp2)
+        temp1 = torch.stack(temp1)
+        errs = temp1
 
         errs = torch.transpose(errs, 0, 1)
         errs = torch.flatten(errs, 1, 2)
