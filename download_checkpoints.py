@@ -54,13 +54,14 @@ if __name__ == "__main__":
             print(f"Fetching files for run: {run.name} ({run.id})")
             files = run.files()
             checkpoints_downloaded = False
+            local_run_dir = os.path.join(save_dir, run_name, "./")
             for file in files:
+                if file.name.startswith("conf/"):
+                    file.download(root=os.path.dirname(local_run_dir), replace=True)
                 if file.name.startswith("models/"):
                     checkpoint_name = file.name.split('/')[-1]
                     checkpoint_number = checkpoint_name.split('_')[-1].split('.')[0]
                     if checkpoint_number in specified_checkpoint_numbers:
-
-                        local_run_dir = os.path.join(save_dir, run_name, "./")
                         os.makedirs(f"{local_run_dir}/", exist_ok=True)
                         file.download(root=os.path.dirname(local_run_dir), replace=True)
 
