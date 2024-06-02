@@ -52,7 +52,7 @@ class GPT2(BackboneModel):
         ):
 
         configuration = GPT2Config(
-            # vocab_size=1,
+            # vocab_size=1,  # this is commented to load our pretrained GPT2 models. Uncomment if doing a new training run
             n_positions=2 * n_positions,
             n_embd=n_embd,
             n_layer=n_layer,

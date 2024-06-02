@@ -23,8 +23,8 @@ class FunctionClassError(Benchmark):
             errs = torch.stack([
                 torch.stack([
                     self.metric.evaluate(
-                        y_batch.to('cpu'),
-                        model.evaluate(x_batch, y_batch).to('cpu')
+                        y_batch,
+                        model.evaluate(x_batch, y_batch)
                     )
                     for model in models
                 ])
@@ -36,7 +36,7 @@ class FunctionClassError(Benchmark):
         errs = torch.transpose(errs, 0, 1)
         errs = torch.flatten(errs, 1, 2)
 
-        return errs
+        return errs.to("cpu")
 
 
 class FCErrorQuadrants(FunctionClassError):
@@ -103,7 +103,7 @@ class FCErrorQuadrants(FunctionClassError):
         errs = torch.transpose(errs, 0, 2) # shape (num_models, batch_size, #batches, seq_len, metric_dim)
         errs = torch.flatten(errs, 1, 2)
 
-        return errs
+        return errs.to("cpu")
 
 
 class FCErrorOrthogonal(FunctionClassError):
@@ -152,9 +152,9 @@ class FCErrorOrthogonal(FunctionClassError):
                         for model in models
                     ])[:, :, j]
         
-        errs = torch.reshape(errs, (num_models, num_batches*batch_size, sequence_length))[:, :, 1:]
+        errs = torch.reshape(errs, (num_models, num_batches*batch_size, sequence_length, y_dim))[:, :, 1:]
 
-        return errs
+        return errs.to("cpu")
 
 
 class FCErrorSeenPoints(FunctionClassError):
@@ -191,6 +191,6 @@ class FCErrorSeenPoints(FunctionClassError):
                         for model in models
                     ])[:, :, j]
         
-        errs = torch.reshape(errs, (num_models, num_batches*batch_size, sequence_length))[:, :, 1:]
+        errs = torch.reshape(errs, (num_models, num_batches*batch_size, sequence_length, y_dim))[:, :, 1:]
 
-        return errs
+        return errs.to("cpu")
