@@ -66,6 +66,9 @@ def get_model(data: dict, x_dim: int, y_dim: int) -> ContextModel:
 
     _check_kwargs(MODELS, data, "model")
 
+    if 'base_model' in data:
+        data['base_model'] = get_model(data['base_model'] | { 'x_dim' : data['x_dim'] }, x_dim, y_dim)
+
     model_class: type[ContextModel] = MODELS[data['type']]
 
     return _clean_instantiate(model_class, **data)
@@ -144,8 +147,19 @@ def _produce_trainer_stages(data: dict) -> TrainerSteps:
 
     model = get_model(stages[0]['model'] | { "x_dim" : x_dim }, x_dim, y_dim)
     optimizer = get_optimizer(model, stages[0]['optim'])
-    if 'model_weights' in data and 'optim_state' in data:
+
+    resume = 'model_weights' in data and not 'base_model' in stages[0]['model']
+    lora = 'base_model' in stages[0]['model'] and type(model) == MODELS['lora']
+    lora_resume = lora and 'model_weights' in data and any(['lora' in weight for weight in list(data.get('model_weights', {}).keys())])
+    if resume:
         model.load_state_dict(data['model_weights'])
+    elif lora_resume:
+        model.setup_peft_model(lora_model_weights=data['model_weights'])
+    elif lora:
+        model.setup_peft_model(base_model_weights=data.get('model_weights', False))
+
+    load_optimizer = 'optim_state' in data and len(optimizer.state_dict()['param_groups'][0]['params']) == len(data['optim_state']['param_groups'][0]['params'])
+    if load_optimizer: 
         optimizer.load_state_dict(data['optim_state'])
 
     loss_fn = get_loss_fn(stages[0]['loss_fn'])

@@ -12,6 +12,28 @@ model: &std_llama
     n_embd: 256
     n_head: 8
 
+model: &lora_std_gpt2
+    type: lora
+    base_model: *std_gpt2
+    lora_config:
+        r: 16
+        lora_alpha: 16
+        bias: none
+        fan_in_fan_out: True
+        lora_dropout: 0.0
+        target_modules: ["attn.c_attn", "mlp.c_fc", "mlp.c_proj"]
+
+model: &lora_std_llama
+    type: lora
+    base_model: *std_llama
+    lora_config:
+        r: 16
+        lora_alpha: 16
+        bias: none
+        fan_in_fan_out: False
+        lora_dropout: 0.0
+        target_modules: ["self_attn.q_proj", "self_attn.k_proj", "self_attn.v_proj", "self_attn.o_proj"]
+
 model: &knn_3
     type: knn
     n_neighbors: 3
