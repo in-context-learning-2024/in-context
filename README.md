@@ -1,3 +1,7 @@
+## Background
+
+In-context learning (ICL) describes a model's ability to learn an underlying task given input-output pairs for that task. We typically determine ICL performance for a given function class (e.g. linear, sparse linear, decision tree) by randomly sampling a function and . We repeat this process for each prompt. we autoregress on a sampled function given its (x, y) pairs in the context (Garg et. al.).
+
 ## Quickstart
 
 
