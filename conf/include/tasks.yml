@@ -67,7 +67,7 @@ task: &sparse_parity_regression
         lr: 0.0004
     function_class: 
         type: sparse parity regression
-        k: 2
+        sparsity: 2
     seq_len: 140
     # baseline_models: [] # TODO: provide at least *one* baseline here
 

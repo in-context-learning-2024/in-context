@@ -8,8 +8,8 @@ from core import FunctionClass
 
 class SparseParityRegression(FunctionClass):
 
-    def __init__(self, k: int = 2, *args: Any, **kwargs: Any):
-        self.k = k
+    def __init__(self, sparsity: int = 2, *args: Any, **kwargs: Any):
+        self.sparsity = sparsity
         super(SparseParityRegression, self).__init__(*args, **kwargs)
 
     def _init_param_dist(self) -> D.Distribution:
