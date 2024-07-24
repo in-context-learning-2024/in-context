@@ -42,8 +42,8 @@ run_model_checks() {
     MODEL_DEF_DIR=conf/include/models/
 
     # extract all models with root-level anchor definitions as "model: &MODEL_NAME\n"
-    MODELS="$(sed -n 's/^model: &\(.*\)$/\1/p' $MODEL_DEF_DIR/base.yml)"
-    MODELS+="\n$(sed -n 's/^model: &\(.*\)$/\1/p' $MODEL_DEF_DIR/composed.yml)"
+    MODELS="$(sed -n 's/^model: &\(.*\)$/\1/p' $MODEL_DEF_DIR/base.yml)"$'\n'
+    MODELS+="$(sed -n 's/^model: &\(.*\)$/\1/p' $MODEL_DEF_DIR/composed.yml)"
 
     echo -e "Detected the following models:\n$MODELS"
     while read model; do
