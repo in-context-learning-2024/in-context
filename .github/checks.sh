@@ -12,16 +12,6 @@ model: *$MODEL_NAME
     echo -e "$TEST_YAML" > conf/test.yml
 }
 
-cut_file() {
-    FILE_PATH=$1
-    START_REGEX=$2
-    END_REGEX=$3
-
-    START_LINE=$(($(grep -n "$START_REGEX" "$FILE_PATH" | cut -f1 -d:)+1))
-    END_LINE=$(($(grep -n "$END_REGEX" "$FILE_PATH" | cut -f1 -d:)-1))
-    echo -e "$(sed -n "$(echo $START_LINE),$(echo $END_LINE) p" $FILE_PATH)"
-}
-
 run_check() {
     FUNC_NAME=$1
     MODEL_NAME=$2
