@@ -103,14 +103,15 @@ def parse_training(yaml_content: str, skip_steps: int = 0, model_weights: Option
 
 def parse_training_from_file(
         filename: str,
-        include: str,
+        include: Optional[str],
         checkpoint_path: Optional[str] = None
     ) -> tuple[TrainerSteps, ParsedYamlMap]:
 
     included = ""
-    for file in Path(include).rglob("*.yml"):
-        with open(file, "r") as f:
-            included += f.read() + "\n"
+    if include is not None:
+        for file in Path(include).rglob("*.yml"):
+            with open(file, "r") as f:
+                included += f.read() + "\n"
 
     with open(filename, 'r') as f:
         lines = f.readlines()

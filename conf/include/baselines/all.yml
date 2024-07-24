@@ -1,3 +1,6 @@
+model: &retrieval_dict
+    type: retrieval dict
+    
 model: &knn_3
     type: knn
     n_neighbors: 3

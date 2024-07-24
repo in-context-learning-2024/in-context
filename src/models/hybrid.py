@@ -248,7 +248,7 @@ class HybridBackbone(nn.Module):
         )
 
         for layer in self.layers:
-            forward_kwargs = { }
+            forward_kwargs: dict[str, Any] = { }
 
             if isinstance(layer, (LlamaAttention, )):
                 forward_kwargs.update({ 

@@ -12,6 +12,7 @@ dependencies:
   - pip:
     # - causal-conv1d>=1.2.0
     # - mamba-ssm
+    - numpy<2
     - ipykernel
     - matplotlib
     - pyyaml==6.0.1

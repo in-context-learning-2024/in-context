@@ -1,0 +1,33 @@
+function_class: 
+    type: linear regression
+steps: 500000
+log_freq: 100
+checkpoint_freq: 1000
+optim:
+    type: adam
+loss_fn:
+    type: mse
+b_size: 64
+seq_len: !curriculum
+    start: 11
+    stop: 42
+    step_size: 2
+    step_len: 2000
+x_dim: !curriculum
+    start: 5
+    stop: 20
+    step_size: 1
+    step_len: 2000
+x_dist:
+    type: normal
+model: *std_mamba
+baseline_models: 
+    - <<: *knn_3
+    - <<: *xgboost
+    - <<: *decision_tree
+    - <<: *decision_tree_4
+    - <<: *least_squares
+    - <<: *averaging
+    - <<: *mlp
+    - <<: *lasso
+      alpha: 0.001

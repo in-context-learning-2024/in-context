@@ -14,7 +14,13 @@ from core import TrainableModel
 
 class BackboneModel(TrainableModel):
 
-    def __init__(self, backbone: nn.Module, x_dim: int, n_positions: int, n_embd: int=128, y_dim: int = 1):
+    def __init__(self, 
+            backbone: nn.Module, 
+            x_dim: int, 
+            n_positions: int, 
+            n_embd: int=128, 
+            y_dim: int = 1,
+        ):
         super().__init__(x_dim, y_dim)
 
         self.context_length = n_positions
@@ -29,7 +35,8 @@ class BackboneModel(TrainableModel):
         embeds = self._read_in(zs)
         output = self._backbone(inputs_embeds=embeds).last_hidden_state # pyright: ignore[reportCallIssue]
         prediction = self._read_out(output)
-        return prediction[:, ::2, :1] # predict only on xs
+
+        return prediction[:, ::2] # predict only on xs
 
 class GPT2(BackboneModel):
 
@@ -39,11 +46,12 @@ class GPT2(BackboneModel):
             n_embd: int = 128,
             n_layer: int = 12,
             n_head: int = 4,
+            y_dim: int = 1,
             **kwargs: Any
         ):
 
         configuration = GPT2Config(
-            vocab_size=1,
+            # vocab_size=1,  # this is commented to load our pretrained GPT2 models. Uncomment if doing a new training run
             n_positions=2 * n_positions,
             n_embd=n_embd,
             n_layer=n_layer,
@@ -57,7 +65,7 @@ class GPT2(BackboneModel):
         self.gpt2_configuration = configuration
         backbone: nn.Module = GPT2Model(configuration) # pyright: ignore[reportAssignmentType]
 
-        super().__init__(backbone, x_dim, n_positions, n_embd)
+        super().__init__(backbone, x_dim, n_positions, n_embd, y_dim=y_dim,)
 
         self.name = f"gpt2_embd={n_embd}_layer={n_layer}_head={n_head}"
 
@@ -72,6 +80,7 @@ class Llama(BackboneModel):
             n_head: int = 4,
             hidden_act: str = 'silu',
             rope_theta: float = 1e4,
+            y_dim: int = 1,
             **kwargs: Any
         ):
 
@@ -90,7 +99,7 @@ class Llama(BackboneModel):
         self.llama_configuration = configuration
         backbone: nn.Module = LlamaModel(configuration) # pyright: ignore[reportAssignmentType]
 
-        super().__init__(backbone, x_dim, n_positions, n_embd)
+        super().__init__(backbone, x_dim, n_positions, n_embd, y_dim=y_dim,)
 
         self.name = f"llama_embd={n_embd}_layer={n_layer}_head={n_head}"
 
@@ -101,6 +110,7 @@ class Mamba(BackboneModel):
             n_positions: int,
             n_embd: int = 128,
             n_layer: int = 12,
+            y_dim: int = 1,
             **kwargs: Any
         ):
 
@@ -116,6 +126,6 @@ class Mamba(BackboneModel):
         self.mamba_configuration = configuration
         backbone: nn.Module = MambaModel(configuration)
 
-        super().__init__(backbone, x_dim, n_positions, n_embd,)
+        super().__init__(backbone, x_dim, n_positions, n_embd, y_dim=y_dim,)
 
         self.name = f"mamba_embd={n_embd}_layer={n_layer}"
