@@ -61,7 +61,7 @@ task: &sparse_parity_regression
     <<: *task_base_config
     x_dim: 10
     x_dist:
-        type: sparse
+        type: parity
     optim:
         type: adam
         lr: 0.0004

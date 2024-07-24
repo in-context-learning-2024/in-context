@@ -68,7 +68,7 @@ class RandomMaskDistribution(dist.Distribution):
     """A distribution that samples masks uniformly at random."""
 
     def __init__(self, k: int, x_dim: int, batch_size: int):
-        super(RandomMaskDistribution, self).__init__(validate_args=False)
+        super().__init__(validate_args=False)
         self.k = k
         self.x_dim = x_dim
         self.batch_size = batch_size
@@ -82,11 +82,11 @@ class RandomMaskDistribution(dist.Distribution):
 
         return masks
 
-class SparseDistribution(dist.Distribution):
+class ParityDistribution(dist.Distribution):
     """A distribution that returns xs sampled from {-1, 1} uniformly at random."""
 
     def __init__(self, batch_shape: torch.Size, event_shape: torch.Size, *args: Any, **kwargs: Any):
-        super(SparseDistribution, self).__init__(*args, **(kwargs | {"validate_args": False}))
+        super().__init__(*args, **(kwargs | {"validate_args": False}))
         self.batch_size = batch_shape[0]
         self.seq_len = batch_shape[1]
         self.x_dim = event_shape[0]

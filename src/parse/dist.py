@@ -3,7 +3,7 @@ import torch.distributions as D
 
 from typing import Any
 
-from utils import SparseDistribution
+from utils import ParityDistribution
 from .utils import check_kwargs, clean_instantiate
 
 def get_distribution(batch_shape: torch.Size, event_shape: torch.Size, init_kwargs: dict[str, Any]) -> D.Distribution:
@@ -22,8 +22,8 @@ def get_distribution(batch_shape: torch.Size, event_shape: torch.Size, init_kwar
               "high" : torch.ones(full_shape),
             }
         ),
-        "sparse": (
-            SparseDistribution,
+        "parity": (
+            ParityDistribution,
             { "batch_shape" : batch_shape,
               "event_shape" : event_shape,
             }
