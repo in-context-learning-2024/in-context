@@ -13,7 +13,7 @@ class SparseParityRegression(FunctionClass):
         super(SparseParityRegression, self).__init__(*args, **kwargs)
 
     def _init_param_dist(self) -> D.Distribution:
-        return RandomMaskDistribution(self.k, self.x_dim, self.batch_size)
+        return RandomMaskDistribution(self.sparsity, self.x_dim, self.batch_size)
 
     def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
         masks, *_ = params
