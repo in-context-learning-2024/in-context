@@ -15,5 +15,10 @@
         }
     },
 
-    "onCreateCommand" : "docker system prune -fa && conda env create -f environment.yaml && conda init && conda init zsh"
+    "onCreateCommand" : [
+        "docker system prune -fa",
+        "conda env create -f environment.yaml",
+        "conda init",
+        "conda init zsh"
+    ]
 }
