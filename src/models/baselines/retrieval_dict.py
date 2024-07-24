@@ -10,8 +10,7 @@ class RetrievalDictModel(Baseline):
         self.name = f"retrieval_dict"
 
     def evaluate(self, xs: torch.Tensor, ys: torch.Tensor):
-        keys_b, values_b = xs[:, :-1:2, :], xs[:, 1::2, :]
-        query_b = xs[:, -1, :].unsqueeze(dim=1)
+        keys_b, values_b, query_b = xs[:, :-1], ys[:, :-1], xs[:, -1:]
         inner_products = torch.bmm(query_b, keys_b.transpose(1, 2)).squeeze(1)
         _, retrieval_inds = torch.max(inner_products, dim=1)
         retrieval_inds = retrieval_inds.view(-1, 1, 1).expand(-1, -1, values_b.size(-1))
