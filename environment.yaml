@@ -12,12 +12,13 @@ dependencies:
   - pip:
     # - causal-conv1d>=1.2.0
     # - mamba-ssm
+    - numpy<2
     - ipykernel
     - matplotlib
     - pyyaml==6.0.1
     - scikit-learn==1.0.2
     - tqdm==4.64.0
     - transformers==4.39.3
-    - wandb==0.17.5
+    - wandb==0.12.11
     - xgboost==1.6.1
     - protobuf==3.20.1

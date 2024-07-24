@@ -9,6 +9,8 @@ from utils import CombinedDistribution
 class Retrieval(FunctionClass):
 
     def _init_param_dist(self) -> D.Distribution:
+        # Params are (1) Values (of shape identical to sampled x values)
+        #            (2) a selection of an x/y pair by indexing into sampled xs/ys
         return CombinedDistribution(
             self.x_dist,
             D.Categorical(
@@ -27,8 +29,10 @@ class Retrieval(FunctionClass):
         y_batch, query_idxs, *_ = params
         query_idxs = query_idxs[:, 0] # ignore the excess sampled indices
 
-        x_batch = torch.cat((x_batch, x_batch[:, query_idxs]), dim=1)
-        y_batch = torch.cat((y_batch, y_batch[:, query_idxs]), dim=1)
+        selected_x = x_batch[torch.arange(x_batch.shape[0]), query_idxs].unsqueeze(1)
+        selected_y = y_batch[torch.arange(y_batch.shape[0]), query_idxs].unsqueeze(1)
+        x_batch = torch.cat((x_batch, selected_x), dim=1)
+        y_batch = torch.cat((y_batch, selected_y), dim=1)
 
         magnitude = self.x_dim ** 0.5
         x_batch *= magnitude / torch.norm(x_batch, p=2, dim=-1, keepdim=True)
