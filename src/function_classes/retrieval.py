@@ -30,9 +30,9 @@ class Retrieval(FunctionClass):
         x_batch = torch.cat((x_batch, x_batch[:, query_idxs]), dim=1)
         y_batch = torch.cat((y_batch, y_batch[:, query_idxs]), dim=1)
 
-        magnitude = torch.sqrt(torch.tensor(self.x_dim))
-        x_batch = x_batch / torch.norm(x_batch, p=2, dim=-1, keepdim=True) * magnitude
-        y_batch = y_batch / torch.norm(y_batch, p=2, dim=-1, keepdim=True) * magnitude
+        magnitude = self.x_dim ** 0.5
+        x_batch *= magnitude / torch.norm(x_batch, p=2, dim=-1, keepdim=True)
+        y_batch *= magnitude / torch.norm(y_batch, p=2, dim=-1, keepdim=True)
 
         if torch.cuda.is_available():
             return x_batch.cuda(), y_batch.cuda() 
