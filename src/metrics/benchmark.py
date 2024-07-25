@@ -2,11 +2,13 @@
 from torch import Tensor
 from typing import Iterable
 
-from core import ContextModel
+from core import ContextModel, AbstractionError
 
 class Benchmark:
     def __init__(self):
-        raise NotImplementedError("Abstract Class Benchmark cannot be instantiated!")
+        if type(self) is Benchmark:
+            raise AbstractionError("Abstract Class Benchmark cannot be instantiated!")
+        super().__init__()
 
     def evaluate(self, models: Iterable[ContextModel]) -> Iterable[Tensor]:
         """Produce a benchmark value for an iterable collection of ContextModels"""

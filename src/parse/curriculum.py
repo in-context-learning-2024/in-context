@@ -1,5 +1,9 @@
 import yaml
 
+from typing import Any
+
+from .utils import YamlMap, YamlList
+
 class Curriculum(yaml.YAMLObject):
 
     yaml_tag = u'!curriculum'
@@ -11,6 +15,7 @@ class Curriculum(yaml.YAMLObject):
             stop : int | float,
             step_size : int | float,
         ):
+        super().__init__()
         self.start = start
         self.stop = stop
         self.step_size = step_size
@@ -21,7 +26,7 @@ class Curriculum(yaml.YAMLObject):
         return int((self.stop - self.start) / self.step_size)
 
     @property
-    def partitioning_steps(self):
+    def partitioning_steps(self) -> list[int]:
         return [ self.step_len * i for i in range(1, self.max_phases + 1) ]
 
     def __repr__(self):
@@ -29,7 +34,7 @@ class Curriculum(yaml.YAMLObject):
                 f"step_size={self.step_size}, step_length={self.step_len})"
 
 def get_value(
-    obj: int | float | list | dict | str | Curriculum, 
+    obj: int | float | YamlList | YamlMap | str | Curriculum, 
     step_num: int
 ):
     if not isinstance(obj, (Curriculum, dict, list)):
@@ -48,9 +53,20 @@ def get_value(
     casted_result = type(obj.start)(result)
     return casted_result
 
-def expand_curriculum(raw_data: dict) -> tuple[list[dict], list[int]]:
+def get_max_value(
+    obj: int | float | Curriculum,
+    max_steps: int        
+) -> int | float:
+    if not isinstance(obj, Curriculum):
+        return obj
+    return max(
+        get_value(obj, max_steps), # pyright: ignore[reportArgumentType]
+        get_value(obj, 0) # pyright: ignore[reportArgumentType]
+    )
 
-    def identify_curriculum_params(data: dict) -> list[list]:
+def expand_curriculum(raw_data: YamlMap) -> tuple[list[YamlMap], list[int]]:
+
+    def identify_curriculum_params(data: YamlMap) -> list[list]: # pyright: ignore[reportMissingTypeArgument]
         paths = [ ]
         for key, val in data.items():
             if isinstance(val, Curriculum):

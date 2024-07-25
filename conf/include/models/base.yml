@@ -1,0 +1,53 @@
+defs:
+    model: &base_config
+        n_positions: 141
+        n_layer: 12
+        n_embd: 256
+        n_head: 8
+    
+    model: &small_config
+        <<: *base_config
+        n_layer: 6
+        n_head: 4
+        n_embd: 64
+
+    model: &retrieval_config
+        <<: *base_config
+        n_layer: 2
+        n_embd: 128
+
+model: &std_gpt2
+    <<: *base_config
+    type: gpt2
+
+model: &std_llama
+    <<: *base_config
+    type: llama
+
+model: &std_mamba
+    <<: *base_config
+    type: mamba
+
+model: &small_gpt2
+    <<: *small_config
+    type: gpt2
+
+model: &small_llama
+    <<: *small_config
+    type: llama
+
+model: &small_mamba
+    <<: *small_config
+    type: mamba
+
+model: &retrieval_gpt2
+    <<: *retrieval_config
+    type: gpt2
+
+model: &retrieval_llama
+    <<: *retrieval_config
+    type: llama
+
+model: &retrieval_mamba
+    <<: *retrieval_config
+    type: mamba

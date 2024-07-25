@@ -1,9 +1,12 @@
 import torch
 import torch.distributions as D
 
+from torch import Tensor
+from typing import Any
+
 from core import FunctionClass
 
-def generate_chebyshev_coefficients(lowest_degree, highest_degree):
+def generate_chebyshev_coefficients(lowest_degree: int, highest_degree: int) -> Tensor:
     # Create a matrix to hold the coefficients, initializing with zeros
     n = highest_degree + 1
     coeffs = torch.zeros(n, n, dtype=torch.int32)
@@ -27,13 +30,15 @@ class ChebyshevKernelLinearRegression(FunctionClass):
     Linear combinations are generated randomly by sampling from a normal distribution
     """
 
-    def __init__(self, lowest_degree=3, highest_degree=11, *args, **kwargs):
+    def __init__(self, lowest_degree: int = 3, highest_degree: int = 11, *args: Any, **kwargs: Any):
 
         self.chebyshev_coeffs = generate_chebyshev_coefficients(lowest_degree, highest_degree).float()
         self.lowest_degree = lowest_degree
         self.highest_degree = highest_degree
 
-        super(ChebyshevKernelLinearRegression, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+        assert self.x_dim == 1, f"Chebyshev Functions only support an x dimension of 1! Got: {self.x_dim}"
+        assert self.y_dim == 1, f"Chebyshev Functions only support an y dimension of 1! Got: {self.y_dim}"
 
     def _init_param_dist(self) -> D.Distribution:
         """Produce the distribution with which to sample parameters"""
@@ -62,7 +67,7 @@ class ChebyshevKernelLinearRegression(FunctionClass):
         combinations[mask_indices] = 0
 
         # Combine basis polynomials into 1
-        return (combinations @ basis_polys).squeeze(1)
+        return (combinations @ basis_polys).squeeze(1).unsqueeze(2)
 
 class ChebyshevSharedRoots(FunctionClass):
 
@@ -71,7 +76,7 @@ class ChebyshevSharedRoots(FunctionClass):
     Roots can be uniformly randomly perturbed
     """
 
-    def __init__(self, degree=5, perturbation=0.1, *args, **kwargs):
+    def __init__(self, degree: int = 5, perturbation: float = 0.1, *args: Any, **kwargs: Any):
 
         self.perturbation = perturbation
         self._one_minus_one = torch.tensor([-1, 1])
@@ -80,11 +85,16 @@ class ChebyshevSharedRoots(FunctionClass):
         self.chebyshev_roots = torch.cos((2 * k - 1) * torch.pi / (2 * degree)).view(1, -1)
         self.chebyshev_roots = self.chebyshev_roots.expand(kwargs['x_distribution'].batch_shape[0], -1)
 
-        super(ChebyshevSharedRoots, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+        assert self.x_dim == 1, f"Chebyshev Functions only support an x dimension of 1! Got: {self.x_dim}"
+        assert self.y_dim == 1, f"Chebyshev Functions only support an y dimension of 1! Got: {self.y_dim}"
 
     def _init_param_dist(self) -> D.Distribution:
         """Produce the distribution with which to sample parameters"""
-        perturbationd_dist = D.Uniform(-self.perturbation*torch.ones_like(self.chebyshev_roots), self.perturbation*torch.ones_like(self.chebyshev_roots))
+        perturbationd_dist = D.Uniform(
+            - self.perturbation * torch.ones_like(self.chebyshev_roots),
+              self.perturbation * torch.ones_like(self.chebyshev_roots)
+        )
         return perturbationd_dist
     
     def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
@@ -105,4 +115,4 @@ class ChebyshevSharedRoots(FunctionClass):
         max_per_sample = torch.max(torch.abs(poly_values), dim=1).values
         poly_values = poly_values * self._one_minus_one[torch.randint(0, 2, (self.batch_size, 1))] / max_per_sample.unsqueeze(1)
 
-        return poly_values
+        return poly_values.unsqueeze(2)

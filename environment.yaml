@@ -4,15 +4,21 @@ channels:
   - defaults
   - nvidia
 dependencies:
-  - pip=21.2.4
+  - pip=24.0
   - python=3.10.13
   - pytorch=2.2.0
   - pytorch-cuda=12.1
+  - packaging
   - pip:
+    # - causal-conv1d>=1.2.0
+    # - mamba-ssm
+    - numpy<2
+    - ipykernel
+    - matplotlib
     - pyyaml==6.0.1
     - scikit-learn==1.0.2
     - tqdm==4.64.0
-    - transformers==4.39.1
+    - transformers==4.39.3
     - wandb==0.12.11
     - xgboost==1.6.1
     - protobuf==3.20.1
