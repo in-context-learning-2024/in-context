@@ -7,8 +7,6 @@ from typing import Optional
 
 from .errors import AbstractionError
 
-FC_ARG_TYPES = Distribution
-FC_KWARG_TYPES = FC_ARG_TYPES | None | int
 
 class FunctionClass:
 
