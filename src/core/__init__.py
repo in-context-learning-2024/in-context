@@ -6,8 +6,6 @@ from .context_model import (
 from .function_class import (
     FunctionClass, 
     ModifiedFunctionClass,
-    FC_ARG_TYPES,
-    FC_KWARG_TYPES,
 )
 from .errors import (
     ShapeError,
@@ -22,6 +20,4 @@ __all__ = [
     "ModifiedFunctionClass",
     "ShapeError",
     "AbstractionError",
-    "FC_ARG_TYPES",
-    "FC_KWARG_TYPES",
 ]
