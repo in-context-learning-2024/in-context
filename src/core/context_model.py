@@ -2,10 +2,14 @@ import torch
 from torch import nn, Tensor
 from typing import Optional
 
-from .errors import ShapeError
+from core import ShapeError, AbstractionError
 
 class ContextModel:
     def __init__(self, x_dim: int, y_dim: int = 1):
+        
+        if type(self) is ContextModel:
+            raise AbstractionError("Abstract Class ContextModel cannot be instantiated!")
+        
         super().__init__()
         self.context_length: Optional[int] = None
         self.name: str = "Unknown_ContextModel"
@@ -118,10 +122,18 @@ class ContextModel:
 
 class Baseline(ContextModel):
     def __init__(self, x_dim: int, y_dim: int = 1):
+        
+        if type(self) is Baseline:
+            raise AbstractionError("Abstract Class Baseline cannot be instantiated!")
+        
         super().__init__(x_dim, y_dim=y_dim)
 
 class TrainableModel(ContextModel, nn.Module):
     def __init__(self, x_dim: int, y_dim: int = 1):
+
+        if type(self) is TrainableModel:
+            raise AbstractionError("Abstract Class TrainableModel cannot be instantiated!")
+
         super().__init__(x_dim, y_dim=y_dim)
 
     def forward(self, xs: Tensor, ys: Tensor) -> Tensor:

@@ -5,6 +5,8 @@ from torch import Tensor
 from torch.distributions.distribution import Distribution
 from typing import Optional
 
+from core import AbstractionError
+
 FC_ARG_TYPES = Distribution
 FC_KWARG_TYPES = FC_ARG_TYPES | None | int
 
@@ -16,6 +18,9 @@ class FunctionClass:
             x_curriculum_dim: Optional[int] = None, 
             y_dim: int = 1
         ):
+
+        if type(self) is FunctionClass:
+            raise AbstractionError("Abstract Class FunctionClass cannot be instantiated!")
 
         super().__init__()
 
@@ -73,6 +78,10 @@ class FunctionClass:
 class ModifiedFunctionClass(FunctionClass):
 
     def __init__(self, inner_function_class: FunctionClass):
+
+        if type(self) is ModifiedFunctionClass:
+            raise AbstractionError("Abstract Class ModifiedFunctionClass cannot be instantiated!")
+
         self._in_fc = inner_function_class
 
         self.x_dist = self._in_fc.x_dist

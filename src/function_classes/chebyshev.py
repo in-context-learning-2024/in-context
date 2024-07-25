@@ -36,7 +36,9 @@ class ChebyshevKernelLinearRegression(FunctionClass):
         self.lowest_degree = lowest_degree
         self.highest_degree = highest_degree
 
-        super(ChebyshevKernelLinearRegression, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+        assert self.x_dim == 1, f"Chebyshev Functions only support an x dimension of 1! Got: {self.x_dim}"
+        assert self.y_dim == 1, f"Chebyshev Functions only support an y dimension of 1! Got: {self.y_dim}"
 
     def _init_param_dist(self) -> D.Distribution:
         """Produce the distribution with which to sample parameters"""
@@ -83,11 +85,16 @@ class ChebyshevSharedRoots(FunctionClass):
         self.chebyshev_roots = torch.cos((2 * k - 1) * torch.pi / (2 * degree)).view(1, -1)
         self.chebyshev_roots = self.chebyshev_roots.expand(kwargs['x_distribution'].batch_shape[0], -1)
 
-        super(ChebyshevSharedRoots, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+        assert self.x_dim == 1, f"Chebyshev Functions only support an x dimension of 1! Got: {self.x_dim}"
+        assert self.y_dim == 1, f"Chebyshev Functions only support an y dimension of 1! Got: {self.y_dim}"
 
     def _init_param_dist(self) -> D.Distribution:
         """Produce the distribution with which to sample parameters"""
-        perturbationd_dist = D.Uniform(-self.perturbation*torch.ones_like(self.chebyshev_roots), self.perturbation*torch.ones_like(self.chebyshev_roots))
+        perturbationd_dist = D.Uniform(
+            - self.perturbation * torch.ones_like(self.chebyshev_roots),
+              self.perturbation * torch.ones_like(self.chebyshev_roots)
+        )
         return perturbationd_dist
     
     def evaluate(self, x_batch: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
