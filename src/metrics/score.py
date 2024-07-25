@@ -12,7 +12,7 @@ from .function_error import FunctionClassError
 class RegressionScore(Benchmark):
     # zero_err is of shape (1)
     # optimal_err is of shape (seq_length,)
-    def __init__(self, metric: Metric, function_class: FunctionClass, zero_err: Tensor, optimal_err: Tensor):
+    def __init__(self, metric: Metric, function_class: FunctionClass, zero_err: Tensor, base_err: Tensor):
         super().__init__()
         self.funct_err = FunctionClassError(metric, function_class)
         self.zero_err = zero_err
