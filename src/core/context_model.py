@@ -2,7 +2,7 @@ import torch
 from torch import nn, Tensor
 from typing import Optional
 
-from core import ShapeError, AbstractionError
+from .errors import ShapeError, AbstractionError
 
 class ContextModel:
     def __init__(self, x_dim: int, y_dim: int = 1):

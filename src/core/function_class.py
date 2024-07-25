@@ -5,7 +5,7 @@ from torch import Tensor
 from torch.distributions.distribution import Distribution
 from typing import Optional
 
-from core import AbstractionError
+from .errors import AbstractionError
 
 FC_ARG_TYPES = Distribution
 FC_KWARG_TYPES = FC_ARG_TYPES | None | int

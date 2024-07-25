@@ -67,7 +67,7 @@ class ChebyshevKernelLinearRegression(FunctionClass):
         combinations[mask_indices] = 0
 
         # Combine basis polynomials into 1
-        return (combinations @ basis_polys).squeeze(1)
+        return (combinations @ basis_polys).squeeze(1).unsqueeze(2)
 
 class ChebyshevSharedRoots(FunctionClass):
 
@@ -115,4 +115,4 @@ class ChebyshevSharedRoots(FunctionClass):
         max_per_sample = torch.max(torch.abs(poly_values), dim=1).values
         poly_values = poly_values * self._one_minus_one[torch.randint(0, 2, (self.batch_size, 1))] / max_per_sample.unsqueeze(1)
 
-        return poly_values
+        return poly_values.unsqueeze(2)
