@@ -1,7 +1,11 @@
+import inspect
+
+from typing import Callable, Any
+from importlib import import_module
+
 import torch
 
 from torch import nn, Tensor
-from typing import Callable, Any
 
 from transformers import PretrainedConfig
 
@@ -87,13 +91,9 @@ class _RotaryEmbeddingStub(LlamaRotaryEmbedding):
 def _make_llama_attention_factory(config: PretrainedConfig, layer_idx: int, use_rope: bool) -> Callable[[], nn.Module]:
     def llama_attn_factory():
         attn_module = LlamaAttention(config=config, layer_idx=layer_idx) # pyright: ignore[reportArgumentType]
-        old_posemb = attn_module.rotary_emb
 
         attn_module.rotary_emb = _RotaryEmbeddingStub(
-            dim=old_posemb.dim,
-            max_position_embeddings=old_posemb.max_position_embeddings,
-            base=old_posemb.base,
-            scaling_factor=old_posemb.scaling_factor,
+            config=config,
             device=None,
             enable=use_rope
         )
@@ -115,7 +115,7 @@ def SPEC_TO_MODULE(spec_name: str, config: PretrainedConfig, layer_idx: int) -> 
         "llama attention"  : _make_llama_attention_factory(config, layer_idx, use_rope=True),
         "llama attention no rope" : _make_llama_attention_factory(config, layer_idx, use_rope=False),
         "gpt2 attention"   : lambda: GPT2Attention(config=config, layer_idx=layer_idx),
-        "mamba mixer" : lambda: MambaMixer(config, layer_idx=layer_idx),
+        "mamba mixer" : lambda: MambaMixer(config, layer_idx=layer_idx), # pyright: ignore[reportArgumentType]
 
         "llama mlp" : lambda: LlamaMLP(config),
         "gpt2 mlp"  : lambda: GPT2MLP(config.n_inner if config.n_inner is not None else 4 * config.hidden_size, config),
@@ -130,5 +130,25 @@ def SPEC_TO_MODULE(spec_name: str, config: PretrainedConfig, layer_idx: int) -> 
         raise Exception("Not all \"supported\" blocks can be instantiated! Make "
                         "sure `MAPPING` in this function and `SUPPORTED_BLOCKS` "
                         "are equal in this file")
-    return MAPPING[spec_name]()
+    
+    if spec_name in MAPPING:
+        return MAPPING[spec_name]()
+
+    # if this isn't a predefined module, do some dynamic magic
+    ## dynamically import the class
+    lib_name, class_name = spec_name.split("#")
+    lib = import_module(lib_name)
+    module_class = eval(f"lib.{class_name}")
+    if not inspect.isclass(module_class):
+        raise TypeError(f"Could not instantiate hybrid submodule!: {module_class} from {lib_name} is not a class!")
+
+    ## instantiate the class with config (and optionally layer_idx)
+    args: dict[str, Any] = { "config" : config }
+    sig = inspect.signature(module_class)
+    if "layer_idx" in sig.parameters:
+        args["layer_idx"] = layer_idx
+    
+    return module_class(**args)
+
+    
 
